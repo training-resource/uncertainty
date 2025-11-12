@@ -298,17 +298,38 @@ broadly, normality: 
     forming an arc in a Q-Q plot or a long tail in a
     histogram). 
 
-```{r}
-data(equations)
-data("equations_metadata")
+```{webr-r}
+#| context: setup
+#| message: false
+#| error: false
+#| echo: false
+#| comment: NA
+
+url <- "https://raw.githubusercontent.com/training-resource/uncertainty/refs/heads/main/01-allometry/data/eq_tab_acer.csv"
+download.file(url, "eq_tab_acer.csv")
+eq_tab_acer <- read.csv("eq_tab_acer.csv")
 ```
 
 ```{r}
-# add allometry database
+#| context: setup
+#| message: false
+#| error: false
+#| echo: false
+#| eval: false
+#| comment: NA
+
+# load allometric equations
 data(equations)
 data("equations_metadata")
+
+# extract variables & species
 show_cols   = c("equation_id", "equation_taxa", "equation_allometry")
 eq_tab_acer = new_equations(subset_taxa = "Acer")
+```
+
+```{webr-r}
+
+# visualize & inspect
 head(eq_tab_acer[, show_cols])
 ```
 
