@@ -15,6 +15,8 @@ editor_options:
   markdown: 
     wrap: 60
 engine: knitr
+filters:
+  - webr
 bibliography: ../references/references.bib
 csl: ../references/apa.csl
 citeproc: true
