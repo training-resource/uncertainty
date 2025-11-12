@@ -18,10 +18,12 @@ editor_options:
   markdown: 
     wrap: 60
 engine: knitr
+
 filters:
   - webr
+
 webr:
-  packages: ['dplyr', 'psych', 'tibble']
+  packages: ['dplyr','psych','tibble']
 
 bibliography: ../references/references.bib
 csl: ../references/apa.csl
@@ -57,12 +59,12 @@ easypackages::packages(
   "ggplot2", "giscoR", 
   "htmltools",
   "janitor", "jsonlite", 
-  "lattice", "leaflet.providers", "leafem", "lwgeom", "leaflet",
+  "lattice", "leaflet.providers", "leafem", "lwgeom", "leaflet", "lmtest",
   "kableExtra", "kernlab", "knitr", 
-  "mapedit", "mapview", "maptiles", "Mlmetrics", 
+  "mapedit", "mapview", "maptiles", "Mlmetrics", "moments",
   "olsrr", "openxlsx",
   "plotly", "psych", 
-  "randomForest", "rasterVis", "raster","RColorBrewer", "rmarkdown", "renv",
+  "randomForest", "raster","RColorBrewer", "rmarkdown", "renv",
   "s2", "sf", "scales", "sits","spdep", "stars", "stringr",
   "terra", "tmap", "tmaptools", "tidymodels", "tidyverse", "tune", 
   "useful",
@@ -87,9 +89,10 @@ set.seed(8787)
 #renv::restore() # Debugger, Lifesaver
 
 options(repos = c(CRAN = "https://cloud.r-project.org"),
-        htmltools.dir.version = FALSE, 
-        htmltools.preserve.raw = FALSE
-        )
+	htmltools.dir.version = FALSE, 
+  htmltools.preserve.raw = FALSE,
+  scipen = 999
+	)
 
 knitr::opts_chunk$set(
   echo = TRUE, 
@@ -135,21 +138,18 @@ $$
 
 Where:
 
--   AGB: Aboveground biomass (kg)
--   DBH: Diameter at breast height (cm)
--   α, β: Allometric parameters (species/biome-specific)
--   ε: Random error term
+-   `AGB`: Aboveground biomass (kg)
+-   `DBH`: Diameter at breast height (cm)
+-   `α`, `β`: Allometric parameters (species/biome-specific)
+-   `ε`: Random error term
 
 Allometric equations predict aboveground biomass from
 diameter measurements using species or biome-specific
 parameters. Uncertainty compounds from three main sources:
-model selection (tropical vs. temperate equations,
-species-specific vs. generic), parameter estimation
-(regression standard errors, sample sizes), and field
-measurements (DBH precision ±0.5-1.0 cm, clinometer errors,
-wood density variability). Log-transformation adds
-complexity through back-transformation bias that must be
-corrected to avoid systematically underestimating biomass.
+model selection, parameter estimation, and field
+measurements. Log-transformation adds complexity through
+back-transformation bias that must be corrected to avoid
+systematically miscalulcating biomass.
 
 ### ART Exemption {.unnumbered}
 
@@ -168,7 +168,7 @@ country-specific Tier 2 parameters, and investing in
 measurement precision rather than destructive sampling.
 Let's implement this with Monte Carlo simulation.
 
-## Allometry Selection  {#sec-model-selection}
+## Allometry Selection {#sec-model-selection}
 
 In the following steps, we use the `allodb` package to
 access its global collection of allometric equations and
@@ -185,13 +185,17 @@ hickories (Carya spp.), representing the Blue Ridge and
 Piedmont regions of eastern North America.
 
 ```{r}
-#| label: allometry-import
 #| eval: false
-# load allometry database
+# load allometry database package
 library("allodb")
 
-# import dataset from allodb
+# import allomtry dataset from allodb
 data(scbi_stem1)
+```
+
+```{r}
+#| echo: false
+scbi_stem1 <- read.csv("./data/scbi_stem1.csv")
 ```
 
 ```{webr-r}
@@ -206,7 +210,7 @@ data(scbi_stem1)
 #download.file(url, "scbi_stem1.csv")
 
 # Load it into the R environment
-scbi_stem1 <- read.csv("./data/scbi_stem1.csv")
+#scbi_stem1 <- read.csv("./data/scbi_stem1.csv")
 ```
 
 By clicking "Run Code" below, we derive descriptive
@@ -219,7 +223,8 @@ dimensions of the following variables:
 -   `species`: Species epithet
 -   `Family`: Taxonomic family classification
 
-```{webr-r}
+```{r}
+#{webr-r}
 # tabulate descriptives 
 psych::describe(scbi_stem1) |> 
 	tibble::as_tibble()
@@ -244,28 +249,26 @@ equations are queried for dominant taxa using the
 4.  Sample size: Minimum n=50 trees for species-specific
     equations; n\>150 for genus-level equations
 
-::: callout-important
-Note the significant range in DBH values spanning from small
-understory trees to canopy dominants exceeding 100 cm
-diameter. This presents an early indicator or statistical
-operations and validation checks needed ahead.
+::: callout-tip
+At this early stage, it is worth taking a quick note of the
+range and spread in DBH values spanning from small
+understory cohorts to canopy dominants exceeding 100 cm
+diameter. This offers an early indicator of statistical
+operations and validation checks that may be needed ahead.
 :::
 
-```{webr-r}
+```{r}
 #| context: setup
 #| message: false
 #| error: false
 #| echo: false
 #| comment: NA
 
-url <- "https://raw.githubusercontent.com/training-resource/uncertainty/refs/heads/main/01-allometry/data/eq_tab_acer.csv"
-download.file(url, "eq_tab_acer.csv")
-eq_tab_acer <- read.csv("eq_tab_acer.csv")
+#url <- "https://raw.githubusercontent.com/training-resource/uncertainty/refs/heads/main/01-allometry/data/eq_tab_acer.csv"
+#download.file(url, "eq_tab_acer.csv")
+eq_tab_acer <- read.csv("./data/eq_tab_acer.csv")
 
-show_cols   = c(
-	"equation_id", 
-	"equation_taxa", 
-	"equation_allometry")
+show_cols   = c("equation_id", "equation_taxa", "equation_allometry")
 ```
 
 ```{r}
@@ -287,12 +290,12 @@ show_cols   = c(
 eq_tab_acer = new_equations(subset_taxa = "Acer")
 ```
 
-```{webr-r}
-# tabulate available variables for Acer genus
+```{r}
+# visualize all available variables
 dplyr::glimpse(eq_tab_acer)
 ```
 
-### Equation Criteria {.unnumbered}
+### Equation Components {.unnumbered}
 
 The filtered *Acer* equation table contains species-specific
 models (*A. rubrum*, *A. saccharum*), genus-level equations
@@ -300,7 +303,7 @@ from eastern US studies, and family-level Sapindaceae
 equations serving as taxonomic fallbacks.
 
 | Attribute | Purpose | Selection Threshold |
-|----|----|----|
+|------------------|--------------------|----------------------|
 | `equation_id` | Citation traceability | Document provenance |
 | `equation_taxa` | Taxonomic resolution | Species \> genus \> family |
 | `geographic_area` | Regional origin | Same ecoregion \> biome \> climate |
@@ -312,7 +315,7 @@ equations serving as taxonomic fallbacks.
 This structured metadata enables data-driven, auditable
 equation selection under REDD+ verification protocols.
 
-```{webr-r}
+```{r}
 # tabulate allometric equations of target Acer genus
 head(eq_tab_acer[, show_cols]) |> 
 	tibble::as_tibble()
@@ -334,58 +337,251 @@ scbi_stem1$agb <- allodb::get_biomass(
 )
 ```
 
-### Equivalence Testing {#sec-equivalence-testing .unnumbered}
+::: callout-tip
+Traditional Null Hypothesis testing is susceptible to Type
+II and III errors , where insufficient statistical power
+from small sample size leads to incorrectly accepting models
+with unacceptable differences[@paul2018validation]. The
+following validation metrics are highlighted in guidelines
+provided by the NASA Working Group on Land Product
+Calibration and Validation
+[@duncansonAbovegroundWoodyBiomass2021] :
 
-Equivalence testing is a statistical validation method used
-in to demonstrate that a new model's predictions are
-acceptably similar or "equivalent" to independent
-observations or an accepted reference estimate. This
-similarity is defined as being within a predefined,
-acceptable margin of difference; the equivalence margin.
+-   Statistical Power: Minimum sample size considered to
+    ensure statistical power, targeting \>50 per class or
+    species.
+-   Equivalence Margin: Acceptable parity, often set as a
+    percentage of equivalence threshold (\<25% RMSE~*rel*~)
+-   Data Structures: Validation data exhibits similar
+    dimensions as calibration data, such as tree-size
+    structure and range, particularly among largest cohorts
+    which hold disproportionate share of biomass variable.
+:::
 
-Unlike traditional Null Hypothesis Significance Testing
-(NHST), which only tests if models are statistically
-different, ET asks whether models are similar enough for
-operational use. This approach is essential because
-traditional NHST is susceptible to Type II errors (false
-negatives), where insufficient statistical power (e.g.,
-small sample size, *`N`*) leads to incorrectly accepting
-models with unacceptable differences. For instance, studies
-have shown that *`N`* \< 15 samples often lack the
-statistical power to reject invalid models
-[@paul2018validation]. For more detailed guidance, we
-recommed consulting the technical guidelines provided by the
-NASA Working Group on Land Product Calibration and
-Validation [@duncansonAbovegroundWoodyBiomass2021].
-Specifically, the following key performance metrics are
-emphasized:
+## Normality Testing
 
--   Statistical Power: A minimum sample size is considered
-    to ensure adequate statistical power, targeting \>50 per
-    class or species.
--   Equivalence Margin: Define the acceptable maximum
-    difference, often set as a percentage of equivalence
-    test threshold, i.e \<25% minimum detectable negligible
-    difference.
--   Dataset Structure: The validation dataset should possess
-    a similar structural distribution as the calibration
-    dataset, such as tree-size structure
--   Data Coverage: Ensure inclusion of critical dimensional
-    elements, including across small and large cohorts, as
-    large elements often hold a disproportionately large
-    share of the biomass variable.
+on-normal distributions violate assumptions of parametric
+statistics, inflating uncertainty estimates. Identifying the
+true probability distribution enables appropriate
+transformations that reduce reported uncertainty—directly
+reducing carbon credit deductions.
 
-#### Step 1: Equivalence Thresholds  {.unnumbered}
+Accurate probability density functions (PDFs) are essential
+for uncertainty modeling. We assess whether DBH and AGB
+conform to normal distributions using multiple diagnostic
+tests:
 
-A primary threshold of ±25% of relative error (90% CI) is
-recommended, while secondary thresholds are approximated as
-follows:
+-   Skewness & Kurtosis: Quantify asymmetry and tail
+    behavior
+-   Shapiro-Wilk test: Formal normality test (p \< 0.05
+    rejects normality)
+-   Wilcoxon test: Non-parametric alternative for median
+    testing
 
--   Systematic bias \< ±5% relative RSME (90% CI)
--   RMSE within 1.5× calibration dataset RMSE
--   Adequate sample size across diameter distribution
+Expected result: Both variables will show significant
+right-skew (many small trees, few large dominants),
+violating normality assumptions and justifying
+log-transformation in subsequent modeling.
 
-```{webr-r}
+```{r}
+# Calculate skewness and kurtosis
+dbh_skew <- moments::skewness(scbi_stem1$dbh)
+dbh_kurt <- moments::kurtosis(scbi_stem1$dbh)
+agb_skew <- moments::skewness(scbi_stem1$agb)
+agb_kurt <- moments::kurtosis(scbi_stem1$agb)
+
+# Shapiro-Wilks normality test
+shapiro_dbh <- shapiro.test(scbi_stem1$dbh)
+shapiro_agb <- shapiro.test(scbi_stem1$agb)
+
+# Wilcoxon non-parametric test
+wilcox_dbh <- wilcox.test(scbi_stem1$dbh)
+wilcox_agb <- wilcox.test(scbi_stem1$agb)
+
+# Visualize distribution - DBH
+h1 <- hist(scbi_stem1$dbh, breaks = 30, plot = FALSE)
+max_density_dbh <- max(h1$density, dnorm(
+	h1$mids, mean = mean(scbi_stem1$dbh), sd = sd(scbi_stem1$dbh))) * 1.2
+plot(h1, col = "lightblue", prob = T, 
+	main = "DBH Distribution", xlab = "DBH (cm)", 
+  ylim = c(0, max_density_dbh))
+xfit <- seq(min(scbi_stem1$dbh), max(scbi_stem1$dbh), length = 100)
+yfit <- dnorm(xfit, mean = mean(scbi_stem1$dbh), sd = sd(scbi_stem1$dbh))
+lines(xfit, yfit, col = "red", lwd = 2)
+text(x = max(scbi_stem1$dbh), y = max(h1$density) * 1.15, 
+	labels = sprintf("Skewness: %.3f\nKurtosis: %.3f\nShapiro-W p: %.3f\nWilcoxon p: %.3f",
+	dbh_skew, dbh_kurt, shapiro_dbh$p.value, wilcox_dbh$p.value),
+  adj = c(1, 1), cex = 0.8) 
+
+# Visualize distribution - AGB
+h2 <- hist(scbi_stem1$agb, breaks = 30, plot = FALSE)
+max_density_agb <- max(h2$density, dnorm(
+	h2$mids, mean = mean(scbi_stem1$agb), sd = sd(scbi_stem1$agb))) * 1.2
+plot(h2, col = "lightblue", prob = T,
+	main = "AGB Distribution", xlab = "AGB (kg)", 
+  ylim = c(0, max_density_agb))
+xfit <- seq(min(scbi_stem1$agb), max(scbi_stem1$agb), length = 100)
+yfit <- dnorm(xfit, mean = mean(scbi_stem1$agb), sd = sd(scbi_stem1$agb))
+lines(xfit, yfit, col = "red", lwd = 2)
+text(x = max(scbi_stem1$agb), y = max(h2$density) * 1.15,
+  labels = sprintf("Skewness: %.3f\nKurtosis: %.3f\nShapiro-W p: %.3f\nWilcoxon p: %.3f",
+  agb_skew, agb_kurt, shapiro_agb$p.value, wilcox_agb$p.value),
+  adj = c(1, 1), cex = 0.8)
+```
+
+High positive skewness (\>2) and Shapiro-Wilk p \< 0.001
+confirm both variables deviate significantly from normality.
+This violation of parametric assumptions would inflate
+uncertainty estimates if left untreated, resulting in
+unnecessary carbon credit deductions.
+
+## Bivariate Testing
+
+Heteroscedasticity (non-constant variance) violates ordinary
+least squares assumptions, producing unreliable standard
+errors and inflated uncertainty estimates. Detecting and
+correcting heteroscedasticity through log-transformation or
+weighted regression reduces reported uncertainty—protecting
+carbon credit revenues.
+
+The Breusch-Pagan test formally tests for heteroscedasticity
+by regressing squared residuals on predictors:
+
+-   Null hypothesis (H₀): Variance is constant
+    (homoscedastic)
+-   Alternative (H₁): Variance changes with predictor values
+    (heteroscedastic)
+-   Decision rule: p \< 0.05 =\> Reject H₀, confirming
+    heteroscedasticity
+
+Expected result: Large trees exhibit greater prediction
+variance than small trees due to the power-law relationship
+(AGB ∝ DBH\^2.5). This pattern inflates uncertainty
+estimates for canopy dominants, the trees holding most
+biomass. Log-transformation stabilizes variance across tree
+sizes.
+
+```{r}
+plot(scbi_stem1$dbh, scbi_stem1$agb,
+  col = factor(scbi_stem1$genus),
+  pch = 16, cex = 0.8,
+  xlab = "DBH (cm)", ylab = "AGB (kg)",
+  main = "DBH-AGB Relationship by Genus")
+
+# Test for non-constant variance
+dbh_agb_lm <- lm(agb ~ dbh, data = scbi_stem1)
+bp_test <- lmtest::bptest(dbh_agb_lm)
+cat(sprintf("Breusch-Pagan test p-value: %.4f\n", bp_test$p.value))
+```
+
+Results yielding p value of \< 0.001 confirms
+heteroscedasticity, with variance increasing with tree size.
+The "funnel shape" in the scatterplot visually demonstrates
+this pattern. Without correction, uncertainty estimates will
+be biased upward, particularly for large trees that dominate
+biomass estimates.
+
+Required corrections:
+
+1.  Log-transformation of both variables (primary solution)
+2.  Weighted regression (alternative if log-transformation
+    inadequate)
+3.  Robust standard errors (supplements log-transformation)
+
+The next section demonstrates how log-transformation
+simultaneously addresses non-normality and
+heteroscedasticity, dramatically reducing uncertainty.
+
+## Log-Transformation Rationale {#sec-log-rationale}
+
+Using un-transformed linear regression on allometric data
+produces 150-200% relative RMSE, resulting in carbon credit
+deductions of 40-60%. Log-transformation reduces RMSE to
+\<10%, cutting deductions to \<5%—the difference between
+project viability and failure.
+
+### The Mathematical Problem
+
+Allometric relationships follow a power law, not linear
+relationship:
+
+$$AGB = \alpha \times DBH^{\beta}$$
+
+Where β typically ranges from 2.3-2.7, meaning biomass
+scales with DBH raised to a power. Attempting to fit this
+with linear regression (AGB = a + b \* DBH) fundamentally
+misspecifies the functional form.
+
+Consequences of linear misspecification:
+
+1.  Massive prediction errors: RMSE of 200-300 kg for trees
+    where true AGB is 100 kg (200-300% relative error)
+2.  Systematic bias: Underestimates large trees,
+    overestimates small trees
+3.  Inflated uncertainty: Cannot capture exponential growth
+    pattern, forcing residuals into noise
+4.  Heteroscedasticity: Variance explodes at large diameters
+
+### The Log-Transformation Solution
+
+Taking logarithms linearizes the power-law relationship:
+
+$$\ln(AGB) = \ln(\alpha) + \beta \times \ln(DBH) + \epsilon$$
+
+This transformation:
+
+-   Converts power law to linear form (β becomes a slope
+    coefficient)
+-   Stabilizes variance across tree sizes (homoscedasticity)
+-   Normalizes residuals (satisfies OLS assumptions)
+-   Reduces RMSE by 90-95% (from 200% to 5-10%)
+
+Financial impact: A 1M tonne CO₂e project valued at \$5M
+faces:
+
+-   Untransformed model: 50% uncertainty deduction = \$2.5M
+    loss
+-   Log-transformed model: 8% uncertainty deduction = \$400k
+    loss
+-   Net benefit: \$2.1M additional revenue from proper
+    transformation
+
+```{r}
+# Fit both models for comparison
+linear_model <- lm(agb ~ dbh, data = scbi_stem1)
+log_model <- lm(log(agb) ~ log(dbh), data = scbi_stem1)
+
+# Extract RMSE
+rmse_linear <- sqrt(mean(residuals(linear_model)^2))
+rmse_log <- sqrt(mean(residuals(log_model)^2))
+
+# Calculate relative RMSE
+mean_agb <- mean(scbi_stem1$agb)
+rel_rmse_linear <- (rmse_linear / mean_agb) * 100
+rel_rmse_log <- (exp(rmse_log) - 1) * 100  # Back-transform log-scale RMSE
+
+cat(sprintf("Linear Model RMSE: %.1f kg (%.0f%%)\n", rmse_linear, rel_rmse_linear))
+cat(sprintf("Log-Transformed Model RMSE: %.2f on log-scale (%.1f%% relative)\n", 
+            rmse_log, rel_rmse_log))
+cat(sprintf("\nUncertainty reduction: %.0f percentage points\n", 
+            rel_rmse_linear - rel_rmse_log))
+```
+
+This section sets up the critical justification for the
+cross-validation workflow in the next section, where we
+implement log-transformed models and quantify the
+uncertainty reduction that protects carbon revenues.
+
+### Age / Diameter Classes {.unnumbered}
+
+Stratification by size class or age cohort involves a
+critical component in forest biomass modeling. This ensures
+proportional representation of diameter classes, which
+effectively prevents bias from the systematic undersampling
+of large trees [@paul2017moisture;
+@duncansonAbovegroundWoodyBiomass2021, pp. 100].
+
+```{r}
 # Filter by adequate sample size (n ≥ 50)
 species_counts <- scbi_stem1 |>
   dplyr::group_by(genus, species) |>
@@ -400,18 +596,7 @@ lirio_data <- scbi_stem1 |>
   dplyr::filter(!is.na(dbh), !is.na(agb))
 cat(sprintf("\nLiriodendron tulipifera sample size: %d trees\n", nrow(lirio_data)))
 cat(sprintf("DBH range: %.1f - %.1f cm\n", min(lirio_data$dbh), max(lirio_data$dbh)))
-```
 
-#### Step 2: Age Class Stratification
-
-Stratification by size class or age cohort involves a
-critical component in forest biomass modeling. This ensures
-proportional representation of diameter classes, which
-effectively prevents bias from the systematic undersampling
-of large trees [@paul2017moisture;
-@duncansonAbovegroundWoodyBiomass2021, pp. 100].
-
-```{r}
 # derive diameter class stratification
 lirio_data <- lirio_data |> dplyr::mutate(dbh_class = cut(dbh, 
 	breaks = c(0, 10, 20, 30, 40, 50, 100),
@@ -430,7 +615,7 @@ size_distribution <- lirio_data |>
 print(size_distribution)
 
 # Stratified split: 80% calibration, 20% validation
-# Maintain proportional representation across diameter classes
+# Maintain proportional representation across classes
 train_idx <- lirio_data |>
   dplyr::mutate(row_id = row_number()) |> 
 	dplyr::group_by(dbh_class) |>
@@ -447,267 +632,118 @@ cat("\nValidation set size distribution:\n")
 print(table(validation_data$dbh_class))
 ```
 
-#### Step 3: Evaluate Against Reference Data {.unnumbered}
+## Monte Carlo Cross-Validation
+
+This section introduces the design of the Monte Carlo
+simulation regime, including:
+
+-   Simulation parameters are defined to balance
+    computational efficiency and statistical robustness.
+-   Cross-validation techniques are employed to evaluate
+    model performance and identify bias or variance.
+
+The `LGOCV` acronym used in the `caret` package functions
+below stands for "leave one group out cross validation". We
+select the % of test data that is set out from the build
+upon which the model will be repeatedly trained.
 
 ```{r}
-#| eval: false
-
-# Log-transformed linear model (standard allometric form)
-calibration_model <- lm(log(agb) ~ log(dbh), data = calibration_data)
-
-# Extract parameters and uncertainty
-model_summary <- summary(calibration_model)
-alpha_est <- coef(calibration_model)[1]
-beta_est <- coef(calibration_model)[2]
-alpha_se <- model_summary$coefficients[1, 2]
-beta_se <- model_summary$coefficients[2, 2]
-sigma_residual <- model_summary$sigma
-
-# Variance-covariance matrix (for Monte Carlo simulation)
-vcov_matrix <- vcov(calibration_model)
-
-# Baskerville correction factor for log-transformation bias
-baskerville_cf <- exp(sigma_residual^2 / 2)
-
-# Display calibration results
-cat("Calibration Model Parameters:\n")
-cat(sprintf("α = %.4f (SE = %.4f)\n", alpha_est, alpha_se))
-cat(sprintf("β = %.4f (SE = %.4f)\n", beta_est, beta_se))
-cat(sprintf("Residual SE: %.4f\n", sigma_residual))
-cat(sprintf("R² = %.4f\n", model_summary$r.squared))
-cat(sprintf("Baskerville CF = %.4f\n", baskerville_cf))
-cat(sprintf("Calibration RMSE: %.2f kg\n", 
-            sqrt(mean((exp(fitted(calibration_model)) * baskerville_cf - calibration_data$agb)^2))))
-```
-
-#### Step 4: Apply Model to Validation Data
-
-```{r}
-# Predict biomass on validation data
-validation_data$predicted_agb <- exp(alpha_est + beta_est * log(validation_data$dbh)) * baskerville_cf
-
-# Calculate residuals
-validation_data <- validation_data %>%
-  mutate(
-    residual = predicted_agb - agb,
-    relative_residual = residual / agb,
-    abs_relative_residual = abs(relative_residual)
-  )
-
-# Summary statistics
-cat("\nValidation Set Performance:\n")
-cat(sprintf("Mean predicted AGB: %.2f kg\n", mean(validation_data$predicted_agb)))
-cat(sprintf("Mean observed AGB: %.2f kg\n", mean(validation_data$agb)))
-cat(sprintf("Mean residual: %.2f kg\n", mean(validation_data$residual)))
-```
-
-#### Step 5: Run Equivalence Test
-
-Following Paul et al. (2018) protocol with 25% threshold:
-
-```{r}
-# Function: Equivalence test with NASA-CEOS specifications
-equivalence_test <- function(observed, predicted, threshold = 0.25, conf_level = 0.90) {
-  
-  # Remove any NA values
-  valid_idx <- !is.na(observed) & !is.na(predicted) & observed > 0
-  observed <- observed[valid_idx]
-  predicted <- predicted[valid_idx]
-  n <- length(observed)
-  
-  # Calculate relative difference
-  relative_diff <- (predicted - observed) / observed
-  
-  # Mean relative difference (systematic bias)
-  mean_rel_diff <- mean(relative_diff)
-  
-  # Standard error of mean relative difference
-  se_rel_diff <- sd(relative_diff) / sqrt(n)
-  
-  # Calculate confidence interval
-  # For 90% CI, use 1.645; for 95% CI, use 1.96
-  z_crit <- qnorm(1 - (1 - conf_level) / 2)
-  ci_lower <- mean_rel_diff - z_crit * se_rel_diff
-  ci_upper <- mean_rel_diff + z_crit * se_rel_diff
-  
-  # Equivalence test: CI must fall entirely within [-threshold, +threshold]
-  is_equivalent <- (ci_lower > -threshold) && (ci_upper < threshold)
-  
-  # Additional validation metrics
-  rmse <- sqrt(mean((predicted - observed)^2))
-  rmse_pct <- rmse / mean(observed) * 100
-  mae <- mean(abs(predicted - observed))
-  mae_pct <- mae / mean(observed) * 100
-  
-  # Correlation and R²
-  r_squared <- cor(predicted, observed)^2
-  
-  # Percentage of predictions within threshold
-  within_threshold <- mean(abs(relative_diff) < threshold) * 100
-  
-  # Results list
-  results <- list(
-    # Primary equivalence test results
-    equivalence_threshold = threshold,
-    confidence_level = conf_level,
-    is_equivalent = is_equivalent,
-    
-    # Bias metrics
-    mean_bias = mean_rel_diff,
-    mean_bias_pct = mean_rel_diff * 100,
-    ci_lower = ci_lower,
-    ci_upper = ci_upper,
-    ci_lower_pct = ci_lower * 100,
-    ci_upper_pct = ci_upper * 100,
-    
-    # Accuracy metrics
-    rmse = rmse,
-    rmse_pct = rmse_pct,
-    mae = mae,
-    mae_pct = mae_pct,
-    r_squared = r_squared,
-    
-    # Distribution metrics
-    within_threshold_pct = within_threshold,
-    
-    # Sample characteristics
-    n_samples = n,
-    min_observed = min(observed),
-    max_observed = max(observed),
-    mean_observed = mean(observed)
-  )
-  
-  return(results)
-}
-
-# Run equivalence test
-equiv_results <- equivalence_test(
-  observed = validation_data$agb,
-  predicted = validation_data$predicted_agb,
-  threshold = 0.25,  # ±25% per NASA-CEOS
-  conf_level = 0.90  # 90% confidence interval
+#| warning: false
+#| message: false
+#| error: false
+monte_carlo <- trainControl(
+  method = "LGOCV",
+  number = 10,      # number of iterations
+  p = 0.8,          # percentage resampled 
+  savePredictions = "final"
 )
 
-# Display formatted results
-cat("\n", strrep("=", 70), "\n", sep="")
-cat("EQUIVALENCE TEST RESULTS (NASA-CEOS Protocol)\n")
-cat(strrep("=", 70), "\n", sep="")
-cat(sprintf("\nValidation Sample Size: %d trees\n", equiv_results$n_samples))
-cat(sprintf("Equivalence Threshold: ±%.0f%%\n", equiv_results$equivalence_threshold * 100))
-cat(sprintf("Confidence Level: %.0f%%\n\n", equiv_results$confidence_level * 100))
+# Model trained with log-transformed covariates (".")
+lm_monte_carlo <- train(
+  log(agb) ~ log(dbh) + genus + species,
+  data = scbi_stem1, 
+  method = "lm",
+  na.action = na.omit,
+  trControl = monte_carlo
+)
 
-cat("PRIMARY TEST RESULTS:\n")
-cat(sprintf("  Equivalence Status: %s\n", 
-            ifelse(equiv_results$is_equivalent, "EQUIVALENT ✓", "NOT EQUIVALENT ✗")))
-cat(sprintf("  Mean Bias: %.2f%% (%.2f kg)\n", 
-            equiv_results$mean_bias_pct, 
-            equiv_results$mean_bias * equiv_results$mean_observed))
-cat(sprintf("  90%% CI: [%.2f%%, %.2f%%]\n", 
-            equiv_results$ci_lower_pct, 
-            equiv_results$ci_upper_pct))
 
-cat("\nACCURACY METRICS:\n")
-cat(sprintf("  RMSE: %.2f kg (%.1f%%)\n", equiv_results$rmse, equiv_results$rmse_pct))
-cat(sprintf("  MAE: %.2f kg (%.1f%%)\n", equiv_results$mae, equiv_results$mae_pct))
-cat(sprintf("  R²: %.4f\n", equiv_results$r_squared))
-cat(sprintf("  Predictions within ±25%%: %.1f%%\n", equiv_results$within_threshold_pct))
+lm_monte_carlo_a <- train(
+  log(agb) ~ log(dbh),
+  data = scbi_stem1, 
+  method = "lm",
+  na.action = na.omit,
+  trControl = monte_carlo
+)
 
-cat("\nSAMPLE CHARACTERISTICS:\n")
-cat(sprintf("  Observed biomass range: %.1f - %.1f kg\n", 
-            equiv_results$min_observed, 
-            equiv_results$max_observed))
-cat(sprintf("  Mean observed biomass: %.1f kg\n", equiv_results$mean_observed))
-cat("="^70, "\n", sep="")
+print(lm_monte_carlo)
 ```
 
-#### Step 6: Visualize Results
+### Visualize Residuals
+
+To enable access to these predictions, we need to instruct
+`caret` to retain the resampled predictions by setting
+`savePredictions = "final"` in our `trainControl()`
+function. It’s important to be aware that if you’re working
+with a large dataset or numerous resampling iterations, the
+resulting `train()` object may grow significantly in size.
+This happens because caret must store a record of every row,
+including both the observed values and predictions, for each
+resampling iteration. By visualizing the results, we can
+offer insights into the performance of our model on the
+resampled data.
 
 ```{r}
-library(ggplot2)
+# Extract cross-validated predictions
+cv_predictions <- lm_monte_carlo$pred
 
-# Create comprehensive validation plot
-p1 <- ggplot(validation_data, aes(x = agb, y = predicted_agb)) +
-  geom_point(alpha = 0.5, size = 2) +
-  geom_abline(slope = 1, intercept = 0, color = "blue", linewidth = 1) +
-  geom_smooth(method = "lm", color = "red", se = TRUE, linewidth = 1) +
-  # Add equivalence bounds (±25%)
-  geom_abline(slope = 1.25, intercept = 0, color = "orange", 
-              linetype = "dashed", linewidth = 0.8) +
-  geom_abline(slope = 0.75, intercept = 0, color = "orange", 
-              linetype = "dashed", linewidth = 0.8) +
-  coord_fixed(ratio = 1, xlim = c(0, max(validation_data$agb) * 1.1),
-              ylim = c(0, max(validation_data$predicted_agb) * 1.1)) +
-  annotate("text", x = max(validation_data$agb) * 0.7, 
-           y = max(validation_data$agb) * 0.9,
-           label = sprintf("R² = %.3f\nRMSE = %.1f%%\nBias = %.1f%%", 
-                          equiv_results$r_squared, 
-                          equiv_results$rmse_pct,
-                          equiv_results$mean_bias_pct),
-           hjust = 0, size = 4) +
-  labs(
-    title = "Equivalence Test: Observed vs. Predicted Biomass",
-    subtitle = sprintf("Liriodendron tulipifera (n=%d) | %s",
-                      equiv_results$n_samples,
-                      ifelse(equiv_results$is_equivalent, 
-                            "Model EQUIVALENT ✓", "Model NOT EQUIVALENT ✗")),
-    x = "Observed AGB (kg)",
-    y = "Predicted AGB (kg)",
-    caption = "Dashed lines show ±25% equivalence bounds | Blue line = 1:1 | Red line = fitted"
-  ) +
-  theme_minimal()
+# Calculate metrics
+rmse_cv <- sqrt(mean((cv_predictions$pred - cv_predictions$obs)^2))
+mae_cv <- mean(abs(cv_predictions$pred - cv_predictions$obs))
+r2_cv <- cor(cv_predictions$pred, cv_predictions$obs)^2
+head(cv_predictions)
 
-print(p1)
+# Display metrics
+cat("\nCross-Validation Results:\n")
+cat(strrep("=", 50), "\n", sep = "")
+cat(sprintf("RMSE: %.2f kg\n", rmse_cv))
+cat(sprintf("MAE: %.2f kg\n", mae_cv))
+cat(sprintf("R²: %.4f\n", r2_cv))
+cat(strrep("=", 50), "\n", sep = "")
 
-# Relative residual plot with equivalence bounds
-p2 <- ggplot(validation_data, aes(x = agb, y = relative_residual)) +
-  geom_hline(yintercept = 0, color = "blue", linewidth = 1) +
-  geom_hline(yintercept = c(-0.25, 0.25), color = "orange", 
-             linetype = "dashed", linewidth = 1) +
-  geom_point(alpha = 0.5, size = 2) +
-  geom_smooth(method = "loess", color = "red", se = TRUE, linewidth = 1) +
-  # Add confidence interval for mean bias
-  geom_hline(yintercept = equiv_results$ci_lower, color = "darkgreen", 
-             linetype = "dotted", linewidth = 1) +
-  geom_hline(yintercept = equiv_results$ci_upper, color = "darkgreen", 
-             linetype = "dotted", linewidth = 1) +
-  ylim(-0.5, 0.5) +
-  labs(
-    title = "Relative Residuals with Equivalence Bounds",
-    subtitle = sprintf("Mean bias = %.1f%% | 90%% CI: [%.1f%%, %.1f%%]",
-                      equiv_results$mean_bias_pct,
-                      equiv_results$ci_lower_pct,
-                      equiv_results$ci_upper_pct),
-    x = "Observed AGB (kg)",
-    y = "Relative Residual (proportion)",
-    caption = "Orange dashed = ±25% bounds | Green dotted = 90% CI of mean bias"
-  ) +
-  theme_minimal()
+# Visualize
+ggplot(cv_predictions, aes(x = pred, y = obs)) +
+  geom_point(alpha = 0.3, shape = 1) + 
+  geom_abline(slope = 1, intercept = 0, color = 'blue', linewidth = 1) +
+  geom_smooth(method = "lm", color = "red", se = TRUE) +
+  coord_fixed() + labs(title = "Cross-Validated Predictions", subtitle = sprintf(
+  	"RMSE = %.1f kg | R² = %.3f | n = %d", rmse_cv, r2_cv, nrow(cv_predictions)),
+  	x = "Predicted AGB (kg)", y = "Observed AGB (kg)") + theme_minimal()
 
-print(p2)
-
-# Histogram of relative residuals with equivalence bounds
-p3 <- ggplot(validation_data, aes(x = relative_residual * 100)) +
-  geom_histogram(bins = 30, fill = "steelblue", alpha = 0.7, color = "black") +
-  geom_vline(xintercept = 0, color = "blue", linewidth = 1) +
-  geom_vline(xintercept = c(-25, 25), color = "orange", 
-             linetype = "dashed", linewidth = 1) +
-  geom_vline(xintercept = equiv_results$mean_bias_pct, 
-             color = "red", linewidth = 1) +
-  labs(
-    title = "Distribution of Relative Residuals",
-    subtitle = sprintf("%.1f%% of predictions within ±25%% bounds",
-                      equiv_results$within_threshold_pct),
-    x = "Relative Residual (%)",
-    y = "Frequency",
-    caption = "Blue = zero bias | Orange = equivalence bounds | Red = mean bias"
-  ) +
-  theme_minimal()
-
-print(p3)
 ```
 
-Interpretation:
+## Uncertainty Quantification
 
--   Equivalent: Model can be applied without modification
--   Not equivalent: Develop local calibration or use
-    alternative model
+```{r}
+# Calculate uncertainty as percentage
+mean_agb <- mean(scbi_stem1$agb, na.rm = TRUE)
+uncertainty_pct <- (rmse_cv / mean_agb) * 100
+
+cat(sprintf("\nUncertainty Metrics:\n"))
+cat(strrep("=", 50), "\n", sep = "")
+cat(sprintf("Mean AGB: %.1f kg\n", mean_agb))
+cat(sprintf("Relative RMSE: %.1f%%\n", uncertainty_pct))
+
+# ART-TREES classification
+tier <- ifelse(uncertainty_pct <= 10, "Tier 3 (≤10%)",
+               ifelse(uncertainty_pct <= 20, "Tier 2 (10-20%)", "Tier 1 (>20%)"))
+
+# Calculate approximate UA factor (ART-TREES Equation 11)
+hw_90_pct <- uncertainty_pct / 100
+ua_factor <- 0.524417 * (hw_90_pct / 1.645006)
+
+cat(sprintf("\nUncertainty Deduction Estimate:\n"))
+cat(sprintf("Half-width 90%% CI: %.1f%%\n", hw_90_pct * 100))
+cat(sprintf("UA factor: %.4f\n", ua_factor))
+cat(sprintf("Estimated deduction: %.1f%% of biomass\n", ua_factor * 100))
+```

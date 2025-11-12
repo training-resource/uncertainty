@@ -430,13 +430,14 @@ Critical Insights
 
 -   Correlations essential: Ignoring interdependencies
     underestimates uncertainty 15-30% [@yanai2010a;
-    @keller2001biomass]
+    @keller2001a]
 -   Distribution selection matters: Beta/log-normal \>
-    truncated normal for bounded parameters [@picard2015]
+    truncated normal for bounded parameters [@picard2015a]
 -   Bootstrap required: When theoretical distributions
-    unknown [@molto2013]
+    unknown [@molto2013a]
 -   Sensitivity analysis guides investment: Sobol indices
-    identify high-impact targets [@chen2015b; @holdaway2014]
+    identify high-impact targets [@chen2015b;
+    @holdaway2014a]
 
 IPCC Error Propagation
 
