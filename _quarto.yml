@@ -1,0 +1,80 @@
+project:
+  type: book
+
+book:
+  title: "REDD+ Uncertainty"
+  author: 
+    - name: Seamus Murphy
+      url: https://scholar.google.com/citations?hl=en&user=jDGq9I4AAAAJ
+      orcid: 0000-0002-1792-0351 
+      email: seamusrobertmurphy@gmail.com
+  date: today
+  open-graph: true 
+  page-footer:
+    left: "[Source](https://github.com/seamusrobertmurphy/uncertainty)"
+    right: |
+      [LinkedIn](https://linkedin.com/in/seamusrobertmurphy) | 
+      [Resume](https://drive.google.com/uc?export=download&id=13YLhsRCAMMHQw-jd2SJdaRJH9udBGytP) | 
+      [Scholar](https://scholar.google.com/citations?hl=en&user=jDGq9I4AAAAJ)
+
+  site-url: https://seamusrobertmurphy.quarto.pub/uncertainty
+  repo-url: https://github.com/seamusrobertmurphy/uncertainty
+  repo-branch: main
+  repo-actions: [edit, issue]
+
+  chapters:
+    - index.qmd
+    - 01-allometry/index.qmd
+    - 02-emission-factors/index.qmd
+    - 03-activity-data/index.qmd
+
+  appendices:
+    - references/index.qmd
+
+bibliography: references/references.bib
+csl: references/apa.csl
+citeproc: true  
+
+filters:
+  - quarto
+
+sidebar:
+    title: "REDD+ Uncertainty"
+    search: true
+    style: "docked"
+    collapse-level: 4
+
+format:
+  html:
+    toc: true
+    toc-location: right
+    toc-depth: 3
+    toc-title: "**On this page**"
+    number-sections: true
+    embed-resources: false
+    theme: 
+      - styles.scss
+      - default
+    code-fold: false
+    code-summary: "Code"
+    code-tools: true
+    code-link: true
+    title-block-style: plain
+    knitr:
+      opts_chunk:
+        out.width: 100%
+        R.options:
+          width: 60
+
+engine: knitr
+
+knitr:
+  opts_chunk: 
+    collapse: true
+    comment: "#" 
+    R.options:
+      knitr.graphics.auto_pdf: true
+      dplyr.print_min: 6
+      dplyr.print_max: 6
+      stars.crs: 17
+      digits: 3

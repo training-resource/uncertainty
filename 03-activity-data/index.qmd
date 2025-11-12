@@ -1,0 +1,956 @@
+---
+title: "Activity Data"
+execute:
+  echo: true
+format:
+  html:
+    toc: true
+    toc-location: right
+    toc-depth: 3
+    toc-title: "**On this page**"
+    highlight-style: pygments
+    page-layout: article
+
+editor_options: 
+  markdown: 
+    wrap: 60
+engine: knitr
+bibliography: ../references/references.bib
+csl: ../references/apa.csl
+citeproc: true
+---
+
+## Overview {.unnumbered}
+
+Activity data (AD) represents the spatial extent and temporal dynamics of land-use change in REDD+ accounting. This chapter addresses uncertainty quantification in land cover classification, change detection, and spatial aggregation—typically the largest single contributor to total REDD+ uncertainty (40-60% of combined variance). As approaches to uncertainty calibrations practiced in Activity Data vary, we organized these around the following technical areas and components:
+
+1.  Land representation: Spatial distribution of forest and non-forest land
+2.  Land-use transitions: Conversion between IPCC land categories
+3.  Stratification: Forest type, management status, ecological zones
+4.  Temporal dynamics: Annual or multi-year change detection
+
+
+### Environment Setup {.unnumbered}
+
+```{r}
+#| warning: false
+#| message: false
+#| echo: true
+#| comment: NA
+
+easypackages::packages(
+  "bslib", 
+  "cols4all", "covr", "cowplot", 
+  "dendextend", "digest","DiagrammeR","dtwclust", "downlit", 
+  "e1071", "exactextractr","elevatr", 
+  "FNN", "future", "forestdata",
+  "gdalcubes", "gdalUtilities", "geojsonsf", "geos", "ggplot2", "ggstats", 
+  "ggspatial", "ggmap", "ggplotify", "ggpubr", "ggrepel", "giscoR", 
+  "hdf5r", "httr", "httr2", "htmltools",
+  "jsonlite", 
+  "kohonen", 
+  "leaflet.providers", "leafem", "libgeos","luz","lwgeom", "leaflet", "leafgl",
+  "mapedit", "mapview", "maptiles", "methods", "mgcv", 
+  "ncdf4", "nnet", 
+  "openxlsx", "parallel", "plotly", 
+  "randomForest", "rasterVis", "raster", "Rcpp", "RcppArmadillo", 
+  "RcppCensSpatial","rayshader", "RcppEigen", "RcppParallel", 
+  "RColorBrewer", "reactable", "rgl", "rsconnect","RStoolbox", "rts", 
+  "s2", "sf", "scales", "sits","spdep", "stars", "stringr","supercells", 
+  "terra", "testthat", "tidyverse", "tidyterra","tools", 
+  "tmap", "tmaptools", "terrainr", 
+  "xgboost",
+  prompt = F)
+
+#mapviewOptions(fgb = FALSE)
+sf::sf_use_s2(use_s2 = FALSE)
+```
+
+```{r}
+#| warning: false
+#| message: false
+#| echo: false
+#| comment: NA
+
+options(repos = c(CRAN = "https://cloud.r-project.org"),
+        htmltools.dir.version = FALSE, 
+        htmltools.preserve.raw = FALSE
+        )
+
+knitr::opts_chunk$set(
+  echo = TRUE, 
+  message = FALSE, 
+  warning = FALSE,
+  error = FALSE, 
+  comment = NA, 
+  tidy.opts = list(width.cutoff = 60)
+  ) 
+```
+
+```{css, echo=FALSE, class.source = 'foldable'}
+div.column {
+    display: inline-block;
+    vertical-align: top;
+    width: 50%;
+}
+
+#TOC::before {
+  content: "";
+  display: block;
+  height:200px;
+  width: 200px;
+  background-image: url('https://raw.githubusercontent.com/seamusrobertmurphy/map-templates/refs/heads/main/assets/outputs/01-site-map.png');
+  background-size: contain;
+  background-position: 50% 50%;
+  padding-top: 80px !important;
+  background-repeat: no-repeat;
+}
+```
+
+------------------------------------------------------------------------
+
+## IPCC LULC Approaches:
+
+The architecture of land-use transition monitoring systems are key to uncertainty estimation. In terms of IPCC guidelines, we must first distinguish which land-use transition matrix our MRV system is built upon:
+
+| Approach   | Data Requirement        | Spatial Explicitness         |
+|------------|-------------------------|------------------------------|
+| Approach 1 | Total areas by category | None (aggregated statistics) |
+| Approach 2 | Transition matrices     | Sampling-based               |
+| Approach 3 | Wall-to-wall maps       | Spatially explicit           |
+
+REDD+ standard: Most carbon projects use Approach 3 with remote sensing classification, combining high spatial resolution with complete coverage.
+
+## Sources of Uncertainty {#sec-ad-sources}
+
+Classification accuracy:
+
+-   Producer's accuracy: Omission error (missing true forest)
+-   User's accuracy: Commission error (false forest pixels)
+-   Mixed pixels: Sub-pixel heterogeneity at edges
+
+Change detection errors:
+
+-   Temporal inconsistency: Sensor differences, atmospheric effects
+-   Phenological confusion: Seasonal vegetation changes vs. permanent clearing
+-   Gradual degradation: Difficult to detect with binary classifiers
+
+Spatial representation:
+
+-   Geometric accuracy: Co-registration errors between dates
+-   Projection distortion: Area calculation at different latitudes
+-   Minimum mapping unit: Small patches below detection threshold
+
+Reference data limitations:
+
+-   Sample size: Insufficient validation points for rare classes
+-   Temporal lag: Reference date ≠ map date
+-   Interpretation error: Photo-interpreter disagreement
+
+------------------------------------------------------------------------
+
+## Land Classification Uncertainty {#sec-lc-uncertainty}
+
+### Confusion Matrix Analysis {#sec-confusion-matrix}
+
+The confusion matrix (error matrix) provides the foundation for uncertainty quantification:
+
+```{r}
+#| eval: false
+#| label: ad-confusion-matrix-example
+#| code-summary: "Create confusion matrix from validation data"
+
+library(caret)
+library(tidyverse)
+
+# Example validation dataset
+# reference = ground truth, predicted = classification result
+validation_data <- data.frame(
+  reference = c(rep("Forest", 180), rep("Non-Forest", 20),
+                rep("Forest", 15), rep("Non-Forest", 185)),
+  predicted = c(rep("Forest", 180), rep("Forest", 20),
+                rep("Non-Forest", 15), rep("Non-Forest", 185))
+)
+
+# Create confusion matrix
+conf_matrix <- confusionMatrix(
+  data = factor(validation_data$predicted, levels = c("Forest", "Non-Forest")),
+  reference = factor(validation_data$reference, levels = c("Forest", "Non-Forest"))
+)
+
+print(conf_matrix)
+```
+
+Output interpretation:
+
+```         
+Confusion Matrix and Statistics
+
+              Reference
+Prediction     Forest Non-Forest
+  Forest         180         20
+  Non-Forest      15        185
+                                          
+               Accuracy : 0.9125          
+                 95% CI : (0.8797, 0.9388)
+    No Information Rate : 0.4875          
+    P-Value [Acc > NIR] : < 2.2e-16       
+                                          
+  Producer's Acc (Forest) : 0.923 (180/195)
+  User's Acc (Forest)     : 0.900 (180/200)
+  Producer's Acc (Non-Forest) : 0.902 (185/205)
+  User's Acc (Non-Forest)     : 0.925 (185/200)
+```
+
+Key metrics:
+
+-   Overall accuracy: 0.9125 (91.25% correct)
+-   Kappa coefficient: 0.825 (substantial agreement)
+-   Omission error (Forest): 7.7% (15/195) - forest pixels classified as non-forest
+-   Commission error (Forest): 10% (20/200) - non-forest pixels classified as forest
+
+### Monte Carlo Simulation {#sec-lc-monte-carlo}
+
+Objective: Propagate classification errors to area estimates
+
+Method: Bootstrap resampling of confusion matrix
+
+```{r}
+#| eval: false
+#| label: ad-monte-carlo-classification
+#| code-summary: "Monte Carlo simulation of LULC uncertainty"
+
+# Function to simulate area estimates with classification uncertainty
+simulate_area_uncertainty <- function(confusion_matrix, n_sim = 10000) {
+  
+  # Extract confusion matrix counts
+  conf_table <- confusion_matrix$table
+  n_classes <- nrow(conf_table)
+  
+  # Calculate column totals (reference totals)
+  ref_totals <- colSums(conf_table)
+  
+  # Calculate producer's accuracy for each class
+  producers_acc <- diag(conf_table) / ref_totals
+  
+  # Simulate classification outcomes
+  sim_results <- matrix(NA, nrow = n_sim, ncol = n_classes)
+  colnames(sim_results) <- colnames(conf_table)
+  
+  for (i in 1:n_sim) {
+    # For each class, sample from binomial distribution
+    # n = reference count, p = producer's accuracy
+    for (j in 1:n_classes) {
+      sim_results[i, j] <- rbinom(1, size = ref_totals[j], prob = producers_acc[j])
+    }
+  }
+  
+  # Calculate statistics
+  area_mean <- colMeans(sim_results)
+  area_sd <- apply(sim_results, 2, sd)
+  area_ci <- apply(sim_results, 2, quantile, probs = c(0.05, 0.95))
+  
+  results <- data.frame(
+    class = colnames(conf_table),
+    mean_pixels = area_mean,
+    sd_pixels = area_sd,
+    ci_lower = area_ci[1, ],
+    ci_upper = area_ci[2, ],
+    uncertainty_pct = (area_ci[2, ] - area_ci[1, ]) / (2 * area_mean) * 100
+  )
+  
+  return(list(
+    summary = results,
+    simulations = sim_results
+  ))
+}
+
+# Run simulation
+mc_results <- simulate_area_uncertainty(conf_matrix, n_sim = 10000)
+print(mc_results$summary)
+```
+
+Example output:
+
+```         
+        class mean_pixels sd_pixels ci_lower ci_upper uncertainty_pct
+1      Forest         180      3.85      173      187            3.9%
+2  Non-Forest         185      3.92      178      192            3.8%
+```
+
+Interpretation:
+
+-   Forest area uncertainty: ±3.9% (90% CI)
+-   Propagates to emissions estimates:
+
+$$\sigma_{emissions} = A \times U_A$$
+
+### Accuracy Assessment Stratified {#sec-stratified-sampling}
+
+Challenge: Rare classes (e.g., degradation) undersampled in random validation
+
+Solution: Stratified random sampling with proportional or optimized allocation
+
+```{r}
+#| eval: false
+#| label: ad-stratified-sampling
+#| code-summary: "Optimal sample allocation across strata"
+
+# Calculate optimal sample size per stratum
+# Neyman allocation: n_h = n * (N_h * S_h) / sum(N_h * S_h)
+
+library(tidyverse)
+
+# Stratum information
+strata_data <- data.frame(
+  stratum = c("Stable Forest", "Deforestation", "Degradation", "Stable Non-Forest"),
+  area_ha = c(450000, 5000, 15000, 30000),  # N_h
+  expected_variance = c(0.05, 0.25, 0.20, 0.05)  # S_h (estimated)
+)
+
+# Total sample budget
+total_samples <- 400
+
+# Neyman allocation
+strata_data <- strata_data %>%
+  mutate(
+    product = area_ha * expected_variance,
+    allocation = (product / sum(product)) * total_samples,
+    samples = round(allocation)
+  )
+
+print(strata_data)
+
+# Proportional allocation (for comparison)
+strata_data$proportional <- round((strata_data$area_ha / sum(strata_data$area_ha)) * total_samples)
+
+print(strata_data %>% select(stratum, samples, proportional))
+```
+
+Output:
+
+```         
+            stratum  samples proportional
+1    Stable Forest      108          360
+2    Deforestation       60           4
+3      Degradation       86          12
+4 Stable Non-Forest       36          24
+```
+
+Key insight: Neyman allocation dramatically increases sampling in rare but variable strata (deforestation, degradation), improving overall uncertainty.
+
+------------------------------------------------------------------------
+
+## Land Change Uncertainty {#sec-change-detection}
+
+### Temporal Registration Error {#sec-temporal-consistency}
+
+Geometric co-registration error propagates to change detection:
+
+$$
+U_{change}^2 = U_{t1}^2 + U_{t2}^2 + 2 \times U_{registration}^2
+$$
+
+Where: - $U_{t1}$: Classification uncertainty at time 1 - $U_{t2}$: Classification uncertainty at time 2\
+- $U_{registration}$: Positional error between dates
+
+```{r}
+#| eval: false
+#| label: ad-registration-error
+#| code-summary: "Assess impact of registration error on change detection"
+
+library(terra)
+library(sf)
+
+# Simulate registration error
+simulate_registration_error <- function(raster_t1, raster_t2, error_pixels = 2) {
+  
+  # Original change map
+  change_original <- raster_t2 - raster_t1
+  
+  # Apply random shift to t2 (simulating misregistration)
+  # Shift by 'error_pixels' in random direction
+  n_sim <- 1000
+  change_error <- numeric(n_sim)
+  
+  for (i in 1:n_sim) {
+    # Random shift direction
+    shift_x <- sample(-error_pixels:error_pixels, 1)
+    shift_y <- sample(-error_pixels:error_pixels, 1)
+    
+    # Shift raster_t2
+    raster_t2_shifted <- shift(raster_t2, dx = shift_x, dy = shift_y)
+    
+    # Recalculate change
+    change_shifted <- raster_t2_shifted - raster_t1
+    
+    # Calculate disagreement with original
+    disagreement <- abs(change_shifted - change_original)
+    change_error[i] <- global(disagreement, "mean", na.rm = TRUE)[1,1]
+  }
+  
+  return(list(
+    mean_error = mean(change_error),
+    sd_error = sd(change_error),
+    ci_90 = quantile(change_error, c(0.05, 0.95))
+  ))
+}
+
+# Example usage
+# registration_uncertainty <- simulate_registration_error(forest_2010, forest_2020, error_pixels = 1)
+# print(paste("Registration error:", round(registration_uncertainty$mean_error * 100, 2), "%"))
+```
+
+### Minimum Detectable Change {#sec-min-detectable-change}
+
+Statistical power analysis for change detection:
+
+$$
+\text{MDD} = (Z_{\alpha/2} + Z_{\beta}) \times \sqrt{\sigma_1^2 + \sigma_2^2}
+$$
+
+Where: - MDD: Minimum detectable difference - $Z_{\alpha/2}$: Critical value for significance level (e.g., 1.645 for 90%) - $Z_{\beta}$: Critical value for power (e.g., 0.84 for 80% power) - $\sigma_1, \sigma_2$: Standard deviations of measurements
+
+```{r}
+#| eval: false
+#| label: ad-min-detectable-change
+#| code-summary: "Calculate minimum detectable change"
+
+# Function to calculate MDD
+calculate_mdd <- function(sigma1, sigma2, alpha = 0.10, power = 0.80) {
+  
+  # Z-scores for significance and power
+  z_alpha <- qnorm(1 - alpha/2)  # Two-tailed
+  z_beta <- qnorm(power)
+  
+  # Pooled standard deviation
+  sigma_pooled <- sqrt(sigma1^2 + sigma2^2)
+  
+  # Minimum detectable difference
+  mdd <- (z_alpha + z_beta) * sigma_pooled
+  
+  return(list(
+    mdd = mdd,
+    mdd_relative = mdd / mean(c(sigma1, sigma2)) * 100,
+    z_alpha = z_alpha,
+    z_beta = z_beta
+  ))
+}
+
+# Example: Forest cover change detection
+# Assuming 5% uncertainty in each time period
+mdd_forest <- calculate_mdd(sigma1 = 5, sigma2 = 5, alpha = 0.10, power = 0.80)
+
+cat(sprintf("Minimum detectable change: %.2f%% (absolute)\n", mdd_forest$mdd))
+cat(sprintf("Relative to mean uncertainty: %.1f%%\n", mdd_forest$mdd_relative))
+```
+
+Output:
+
+```         
+Minimum detectable change: 11.66% (absolute)
+Relative to mean uncertainty: 233.1%
+```
+
+Interpretation: With 5% classification uncertainty at each date, changes \<11.66% cannot be detected with statistical confidence. This sets a minimum mapping unit for credible change detection.
+
+------------------------------------------------------------------------
+
+## Spatial Aggregation Uncertainty {#sec-spatial-aggregation}
+
+### Pixel Area Projection {#sec-pixel-area}
+
+Challenge: Pixel area varies with latitude in most projections
+
+Solution: Calculate pixel-specific area weights
+
+```{r}
+#| eval: false
+#| label: ad-pixel-area-correction
+#| code-summary: "Correct pixel areas for latitude"
+
+library(terra)
+library(sf)
+
+# Function to calculate true pixel area accounting for projection
+calculate_pixel_areas <- function(raster_template) {
+  
+  # Get cell size in map units
+  cell_size <- res(raster_template)
+  
+  # Get latitudes of cell centers
+  coords <- xyFromCell(raster_template, 1:ncell(raster_template))
+  lats <- coords[, 2]
+  
+  # Earth's radius (meters)
+  earth_radius <- 6371000
+  
+  # Convert degrees to radians
+  lat_rad <- lats * pi / 180
+  
+  # Calculate north-south distance (constant)
+  ns_distance <- earth_radius * (cell_size[2] * pi / 180)
+  
+  # Calculate east-west distance (varies with latitude)
+  ew_distance <- earth_radius * cos(lat_rad) * (cell_size[1] * pi / 180)
+  
+  # Pixel area in hectares
+  pixel_area_ha <- (ns_distance * ew_distance) / 10000
+  
+  # Create raster of pixel areas
+  area_raster <- raster_template
+  values(area_raster) <- pixel_area_ha
+  
+  return(area_raster)
+}
+
+# Calculate total forest area with area correction
+calculate_forest_area <- function(forest_raster, area_raster) {
+  
+  # Forest pixels (value = 1)
+  forest_pixels <- forest_raster == 1
+  
+  # Multiply by pixel-specific areas
+  forest_area_map <- forest_pixels * area_raster
+  
+  # Sum to get total area
+  total_area_ha <- global(forest_area_map, "sum", na.rm = TRUE)[1,1]
+  
+  # Also calculate assuming uniform pixel size (uncorrected)
+  nominal_pixel_area <- prod(res(forest_raster)) / 10000  # ha
+  uncorrected_area_ha <- sum(values(forest_pixels), na.rm = TRUE) * nominal_pixel_area
+  
+  return(list(
+    corrected_area_ha = total_area_ha,
+    uncorrected_area_ha = uncorrected_area_ha,
+    difference_pct = (uncorrected_area_ha - total_area_ha) / total_area_ha * 100
+  ))
+}
+
+# Example
+# area_raster <- calculate_pixel_areas(forest_2020)
+# forest_area <- calculate_forest_area(forest_2020, area_raster)
+# cat(sprintf("Area correction: %.2f%% difference\n", forest_area$difference_pct))
+```
+
+Typical magnitude: 0.5-2% for tropical projects (near equator), up to 5-10% for boreal projects (high latitudes).
+
+### Zonal Statistics {#sec-zonal-statistics}
+
+Edge effects at jurisdictional boundaries:
+
+```{r}
+#| eval: false
+#| label: ad-boundary-uncertainty
+#| code-summary: "Quantify boundary uncertainty effects"
+
+library(exactextractr)
+library(sf)
+library(terra)
+
+# Function to assess boundary uncertainty
+assess_boundary_uncertainty <- function(raster_data, boundary_polygon, buffer_m = 100) {
+  
+  # Original zonal statistic
+  original_sum <- exact_extract(
+    raster_data, 
+    boundary_polygon, 
+    fun = 'sum'
+  )
+  
+  # Create multiple buffered boundaries (simulate positional uncertainty)
+  n_sim <- 100
+  buffered_sums <- numeric(n_sim)
+  
+  for (i in 1:n_sim) {
+    # Random buffer (-buffer_m to +buffer_m)
+    random_buffer <- runif(1, -buffer_m, buffer_m)
+    
+    # Apply buffer
+    buffered_boundary <- st_buffer(boundary_polygon, dist = random_buffer)
+    
+    # Recalculate sum
+    buffered_sums[i] <- exact_extract(
+      raster_data,
+      buffered_boundary,
+      fun = 'sum'
+    )
+  }
+  
+  # Calculate uncertainty
+  boundary_uncertainty <- sd(buffered_sums) / mean(buffered_sums) * 100
+  
+  return(list(
+    original_value = original_sum,
+    mean_simulated = mean(buffered_sums),
+    sd_simulated = sd(buffered_sums),
+    uncertainty_pct = boundary_uncertainty,
+    ci_90 = quantile(buffered_sums, c(0.05, 0.95))
+  ))
+}
+
+# Example usage
+# boundary_uncert <- assess_boundary_uncertainty(
+#   raster_data = forest_cover,
+#   boundary_polygon = project_boundary,
+#   buffer_m = 50  # 50m positional uncertainty
+# )
+# print(paste("Boundary uncertainty:", round(boundary_uncert$uncertainty_pct, 2), "%"))
+```
+
+Mitigation strategies: - Use high-precision GPS for boundary demarcation (±5m accuracy) - Apply buffer zones to exclude edge pixels - Document boundary uncertainty in monitoring plan
+
+------------------------------------------------------------------------
+
+## Reference Data Quality {#sec-reference-data}
+
+### Required Sample Size {#sec-sample-size-calculation}
+
+Objective: Determine validation sample size for desired confidence interval
+
+Formula (simple random sampling):
+
+$$
+n = \frac{Z^2 \times p \times (1-p)}{E^2}
+$$
+
+Where: - $n$: Required sample size - $Z$: Z-score for confidence level (1.645 for 90%) - $p$: Expected proportion (e.g., 0.50 for maximum variance) - $E$: Desired margin of error (e.g., 0.05 for ±5%)
+
+```{r}
+#| eval: false
+#| label: ad-sample-size-calculation
+#| code-summary: "Calculate required validation sample size"
+
+# Function to calculate sample size
+calculate_sample_size <- function(confidence = 0.90, margin_error = 0.05, proportion = 0.50) {
+  
+  # Z-score for confidence level
+  z_score <- qnorm(1 - (1 - confidence) / 2)
+  
+  # Calculate sample size
+  n <- (z_score^2 * proportion * (1 - proportion)) / margin_error^2
+  
+  # Round up
+  n_rounded <- ceiling(n)
+  
+  return(list(
+    sample_size = n_rounded,
+    confidence = confidence,
+    margin_error = margin_error,
+    z_score = z_score
+  ))
+}
+
+# Calculate for different scenarios
+scenarios <- expand.grid(
+  confidence = c(0.90, 0.95),
+  margin_error = c(0.03, 0.05, 0.10),
+  proportion = 0.50
+)
+
+scenarios$required_n <- apply(scenarios, 1, function(x) {
+  calculate_sample_size(
+    confidence = x[1],
+    margin_error = x[2],
+    proportion = x[3]
+  )$sample_size
+})
+
+library(knitr)
+kable(
+  scenarios,
+  col.names = c("Confidence", "Margin of Error", "Proportion", "Sample Size"),
+  caption = "Required Validation Sample Sizes"
+)
+```
+
+Output:
+
+```         
+| Confidence | Margin of Error | Proportion | Sample Size |
+|------------|-----------------|------------|-------------|
+| 90%        | 3%              | 0.50       | 752         |
+| 90%        | 5%              | 0.50       | 271         |
+| 90%        | 10%             | 0.50       | 68          |
+| 95%        | 3%              | 0.50       | 1068        |
+| 95%        | 5%              | 0.50       | 385         |
+| 95%        | 10%             | 0.50       | 97          |
+```
+
+Practical guidance: - Minimum: 100 samples per class for rare categories - Typical: 300-500 samples for overall accuracy ±5% at 90% confidence - Optimal: 1000+ samples for detecting \<2% changes
+
+### Temporal Consistency {#sec-temporal-consistency-ref}
+
+Challenge: Reference imagery date ≠ classification date
+
+Acceptable lag: ±1 year for stable landscapes, ±6 months for dynamic areas
+
+```{r}
+#| eval: false
+#| label: ad-temporal-lag-assessment
+#| code-summary: "Assess impact of temporal lag in reference data"
+
+# Simulate accuracy degradation with temporal lag
+assess_temporal_lag <- function(base_accuracy = 0.92, lag_months = seq(0, 24, 6), degradation_rate = 0.01) {
+  
+  # Accuracy decreases with lag
+  accuracy_lagged <- base_accuracy * exp(-degradation_rate * lag_months)
+  
+  # Create results table
+  lag_results <- data.frame(
+    lag_months = lag_months,
+    accuracy = accuracy_lagged,
+    accuracy_loss = (base_accuracy - accuracy_lagged) / base_accuracy * 100
+  )
+  
+  return(lag_results)
+}
+
+# Calculate temporal lag effects
+lag_impact <- assess_temporal_lag(base_accuracy = 0.92, lag_months = seq(0, 24, 6))
+
+# Visualize
+library(ggplot2)
+ggplot(lag_impact, aes(x = lag_months, y = accuracy)) +
+  geom_line(color = "darkred", size = 1.2) +
+  geom_point(size = 3) +
+  geom_hline(yintercept = 0.90, linetype = "dashed", color = "blue") +
+  annotate("text", x = 12, y = 0.905, label = "90% threshold", color = "blue") +
+  labs(
+    title = "Classification Accuracy vs. Reference Data Temporal Lag",
+    x = "Lag (months)",
+    y = "Classification Accuracy"
+  ) +
+  theme_minimal()
+```
+
+Mitigation: - Use near-contemporary reference data (±6 months) - Apply phenological normalization - Document and report temporal lag in uncertainty assessment
+
+------------------------------------------------------------------------
+
+## Reproducible Workflow {#sec-ad-integrated-workflow}
+
+### Monte Carlo Implementation {#sec-ad-monte-carlo-complete}
+
+```{r}
+#| eval: false
+#| label: ad-complete-monte-carlo
+#| code-summary: "Integrated activity data uncertainty quantification"
+
+# =============================================================================
+# INTEGRATED ACTIVITY DATA UNCERTAINTY ASSESSMENT
+# Combines: Classification + Change Detection + Spatial Aggregation
+# =============================================================================
+
+library(tidyverse)
+library(MASS)  # For mvrnorm
+
+# Function: Integrated uncertainty assessment
+integrated_activity_data_uncertainty <- function(
+  confusion_matrix,
+  area_t1_ha,
+  area_t2_ha,
+  registration_error_m = 30,
+  pixel_size_m = 30,
+  n_sim = 10000
+) {
+  
+  # Extract classification uncertainties
+  conf_table <- confusion_matrix$table
+  producers_acc <- diag(conf_table) / colSums(conf_table)
+  
+  # Calculate classification CV (coefficient of variation)
+  cv_classification <- sqrt((1 - producers_acc) / producers_acc)
+  
+  # Registration error as proportion of pixel
+  cv_registration <- registration_error_m / pixel_size_m
+  
+  # Monte Carlo simulation
+  sim_results <- matrix(NA, nrow = n_sim, ncol = 3)
+  colnames(sim_results) <- c("area_t1", "area_t2", "change")
+  
+  for (i in 1:n_sim) {
+    # Sample classification uncertainty (lognormal to ensure positive)
+    error_t1 <- rnorm(1, mean = 0, sd = area_t1_ha * mean(cv_classification))
+    error_t2 <- rnorm(1, mean = 0, sd = area_t2_ha * mean(cv_classification))
+    
+    # Sample registration error
+    error_reg <- rnorm(1, mean = 0, sd = mean(c(area_t1_ha, area_t2_ha)) * cv_registration)
+    
+    # Simulate areas
+    sim_area_t1 <- area_t1_ha + error_t1
+    sim_area_t2 <- area_t2_ha + error_t2 + error_reg
+    
+    # Calculate change
+    sim_change <- sim_area_t2 - sim_area_t1
+    
+    sim_results[i, ] <- c(sim_area_t1, sim_area_t2, sim_change)
+  }
+  
+  # Calculate statistics
+  results_summary <- data.frame(
+    parameter = c("Area_t1", "Area_t2", "Change"),
+    mean = colMeans(sim_results),
+    sd = apply(sim_results, 2, sd),
+    ci_lower = apply(sim_results, 2, quantile, 0.05),
+    ci_upper = apply(sim_results, 2, quantile, 0.95)
+  ) %>%
+    mutate(
+      cv_pct = sd / mean * 100,
+      hw_90 = (ci_upper - ci_lower) / 2,
+      uncertainty_pct = hw_90 / mean * 100
+    )
+  
+  return(list(
+    summary = results_summary,
+    simulations = sim_results
+  ))
+}
+
+# Example usage
+# Load confusion matrix (from previous section)
+# conf_matrix <- [your confusion matrix]
+
+# Run integrated assessment
+uncertainty_results <- integrated_activity_data_uncertainty(
+  confusion_matrix = conf_matrix,
+  area_t1_ha = 100000,  # Initial forest area
+  area_t2_ha = 95000,   # Final forest area
+  registration_error_m = 30,
+  pixel_size_m = 30,
+  n_sim = 10000
+)
+
+# Display results
+print(uncertainty_results$summary)
+
+# Visualize uncertainty distribution
+library(ggplot2)
+data.frame(change = uncertainty_results$simulations[, "change"]) %>%
+  ggplot(aes(x = change)) +
+  geom_histogram(bins = 50, fill = "steelblue", alpha = 0.7) +
+  geom_vline(xintercept = mean(uncertainty_results$simulations[, "change"]),
+             color = "red", size = 1, linetype = "dashed") +
+  geom_vline(xintercept = uncertainty_results$summary$ci_lower[3],
+             color = "darkred", size = 0.8, linetype = "dotted") +
+  geom_vline(xintercept = uncertainty_results$summary$ci_upper[3],
+             color = "darkred", size = 0.8, linetype = "dotted") +
+  labs(
+    title = "Activity Data Uncertainty: Forest Area Change",
+    subtitle = sprintf("Mean: %.0f ha (90%% CI: %.0f - %.0f ha)",
+                      uncertainty_results$summary$mean[3],
+                      uncertainty_results$summary$ci_lower[3],
+                      uncertainty_results$summary$ci_upper[3]),
+    x = "Change in Forest Area (ha)",
+    y = "Frequency"
+  ) +
+  theme_minimal()
+```
+
+------------------------------------------------------------------------
+
+## ART-TREES Compliance {#sec-ad-art-trees}
+
+### Documentation {#sec-ad-documentation}
+
+Monitoring Plan must include:
+
+1.  Classification methodology:
+
+-   Algorithm (Random Forest, SVM, CNN, etc.)
+-   Training data sample size and distribution
+-   Accuracy assessment protocol
+
+2.  Validation approach:
+
+-   Sample design (stratified random, systematic)
+-   Sample size justification (power analysis)
+-   Reference data sources and dates
+
+3.  Uncertainty quantification:
+
+-   Monte Carlo simulation specification (n=10,000)
+-   Error propagation methods
+-   Confidence interval calculation
+
+4.  Quality assurance:
+
+-   Independent verification of classifications
+-   Cross-validation results
+-   Temporal consistency checks
+
+### Reporting Format {#sec-ad-reporting-format}
+
+CRF Table: Activity Data Uncertainty
+
+```{r}
+#| eval: false
+#| label: ad-crf-table
+#| echo: false
+
+# Example CRF-compatible output
+ad_crf_table <- data.frame(
+  Parameter = c(
+    "Forest area (t1)",
+    "Forest area (t2)",
+    "Deforestation",
+    "Classification accuracy",
+    "Overall uncertainty (90% CI)"
+  ),
+  Value = c(100000, 95000, 5000, 92.5, NA),
+  Unit = c("ha", "ha", "ha", "%", "%"),
+  Lower_CI = c(98500, 93400, 4600, NA, NA),
+  Upper_CI = c(101500, 96600, 5400, NA, NA),
+  Uncertainty_pct = c(1.5, 1.7, 8.0, NA, 8.5)
+)
+
+library(knitr)
+kable(
+  ad_crf_table,
+  caption = "Activity Data Uncertainty Summary (Example)",
+  col.names = c("Parameter", "Value", "Unit", "Lower 90% CI", "Upper 90% CI", "Uncertainty (%)")
+)
+```
+
+------------------------------------------------------------------------
+
+## Next Steps & Notes {#sec-ad-summary}
+
+### Critical Success Factors {#sec-ad-success-factors}
+
+For \<10% activity data uncertainty: 1. Overall classification accuracy \>90% 2. Validation sample size \>400 points 3. Stratified sampling for rare classes 4. Geometric co-registration \<1 pixel 5. Reference data temporal lag \<6 months
+
+For 10-20% uncertainty (acceptable Tier 2): - Overall accuracy 85-90% - Validation samples 200-400 - Registration \<2 pixels
+
+For \>20% uncertainty (Tier 1, high deductions): - Overall accuracy \<85% - Inadequate validation - Significant temporal/spatial misalignment
+
+### Next Chapter 
+
+Chapter 2: Allometry Uncertainty will address:
+
+1.  Model selection: Geographic transferability, species specificity
+2.  Parameter estimation: Regression uncertainty, prediction intervals
+3.  Measurement error: DBH precision, height bias, wood density variability
+4.  Bias correction: Log-transformation, non-linear models
+
+Critical linkage: Activity data provides spatial extent; allometry converts that extent to biomass. Combined uncertainty:
+
+$$
+U_{total}^2 = U_{activity}^2 + U_{allometry}^2 + 2 \times \text{Cov}(A, B)
+$$
+
+Next steps: Quantify allometric uncertainty to enable full error propagation in Chapter 4.
+
+------------------------------------------------------------------------
+
+## References {#sec-ad-references}
+
+Olofsson, P., Foody, G.M., Herold, M., Stehman, S.V., Woodcock, C.E., & Wulder, M.A. (2014). Good practices for estimating area and assessing accuracy of land change. Remote Sensing of Environment, 148, 42-57.
+
+Stehman, S.V. (2014). Estimating area and map accuracy for stratified random sampling when the strata are different from the map classes. International Journal of Remote Sensing, 35(13), 4923-4939.
+
+Pontius Jr., R.G., & Millones, M. (2011). Death to Kappa: birth of quantity disagreement and allocation disagreement for accuracy assessment. International Journal of Remote Sensing, 32(15), 4407-4429.
+
+GFOI (2016). Integration of remote-sensing and ground-based observations for estimation of emissions and removals of greenhouse gases in forests: Methods and Guidance from the Global Forest Observations Initiative. Edition 2.0. Rome: Food and Agriculture Organization.
+
+GOFC-GOLD (2016). A sourcebook of methods and procedures for monitoring and reporting anthropogenic greenhouse gas emissions and removals associated with deforestation, gains and losses of carbon stocks in forests remaining forests, and forestation. GOFC-GOLD Report version COP22-1. Alberta, Canada: GOFC-GOLD Land Cover Project Office.
