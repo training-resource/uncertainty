@@ -34,7 +34,7 @@ Activity data (AD) represents the spatial extent and temporal dynamics of land-u
 
 ### Environment Setup {.unnumbered}
 
-```{r}
+```{web-r}
 #| warning: false
 #| message: false
 #| echo: true
