@@ -157,8 +157,8 @@ Reference data limitations:
 
 The confusion matrix (error matrix) provides the foundation for uncertainty quantification:
 
-```{r}
-#| eval: false
+```{web-r}
+#| eval: true
 #| label: ad-confusion-matrix-example
 #| code-summary: "Create confusion matrix from validation data"
 
