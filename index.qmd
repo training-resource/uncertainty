@@ -32,9 +32,10 @@ citeproc: true
 #| echo: false
 #| comment: NA
 
+
 easypackages::packages(
   "boot", 
-  "caret",
+  "caret", 
   "ggplot2",
   "knitr", "kableExtra",
   "MASS", 
@@ -43,6 +44,10 @@ easypackages::packages(
   "tidyverse", 
   "viridis",
   prompt = F)
+
+# bleeding edges
+remotes::install_github('coolbutuseless/codespacer')
+codespacer::install_codespace_files()
 ```
 
 ## Overview {.unnumbered}
@@ -68,10 +73,6 @@ However, monitoring costs must be weighed against credit
 value [@kohler2010towards]. Albeit, at a certain point,
 monitoring costs will exhibit diminishing returns and exceed
 the value gains from recovered credits
-
-**Target audience:** Carbon project developers, national GHG
-technicians, verification and validation bodies (VVBs),
-technical specialists and registry managers.
 
 #### Current State of Practice
 

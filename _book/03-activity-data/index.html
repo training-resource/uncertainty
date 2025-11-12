@@ -295,34 +295,37 @@ window.Quarto = {
 <li>Temporal dynamics: Annual or multi-year change detection</li>
 </ol>
 <section id="environment-setup" class="level3 unnumbered"><h3 class="unnumbered anchored" data-anchor-id="environment-setup">Environment Setup</h3>
-<div class="cell">
-<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="fu">easypackages</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/easypackages/man/packages.html">packages</a></span><span class="op">(</span></span>
-<span>  <span class="st">"bslib"</span>, </span>
-<span>  <span class="st">"cols4all"</span>, <span class="st">"covr"</span>, <span class="st">"cowplot"</span>, </span>
-<span>  <span class="st">"dendextend"</span>, <span class="st">"digest"</span>,<span class="st">"DiagrammeR"</span>,<span class="st">"dtwclust"</span>, <span class="st">"downlit"</span>, </span>
-<span>  <span class="st">"e1071"</span>, <span class="st">"exactextractr"</span>,<span class="st">"elevatr"</span>, </span>
-<span>  <span class="st">"FNN"</span>, <span class="st">"future"</span>, <span class="st">"forestdata"</span>,</span>
-<span>  <span class="st">"gdalcubes"</span>, <span class="st">"gdalUtilities"</span>, <span class="st">"geojsonsf"</span>, <span class="st">"geos"</span>, <span class="st">"ggplot2"</span>, <span class="st">"ggstats"</span>, </span>
-<span>  <span class="st">"ggspatial"</span>, <span class="st">"ggmap"</span>, <span class="st">"ggplotify"</span>, <span class="st">"ggpubr"</span>, <span class="st">"ggrepel"</span>, <span class="st">"giscoR"</span>, </span>
-<span>  <span class="st">"hdf5r"</span>, <span class="st">"httr"</span>, <span class="st">"httr2"</span>, <span class="st">"htmltools"</span>,</span>
-<span>  <span class="st">"jsonlite"</span>, </span>
-<span>  <span class="st">"kohonen"</span>, </span>
-<span>  <span class="st">"leaflet.providers"</span>, <span class="st">"leafem"</span>, <span class="st">"libgeos"</span>,<span class="st">"luz"</span>,<span class="st">"lwgeom"</span>, <span class="st">"leaflet"</span>, <span class="st">"leafgl"</span>,</span>
-<span>  <span class="st">"mapedit"</span>, <span class="st">"mapview"</span>, <span class="st">"maptiles"</span>, <span class="st">"methods"</span>, <span class="st">"mgcv"</span>, </span>
-<span>  <span class="st">"ncdf4"</span>, <span class="st">"nnet"</span>, </span>
-<span>  <span class="st">"openxlsx"</span>, <span class="st">"parallel"</span>, <span class="st">"plotly"</span>, </span>
-<span>  <span class="st">"randomForest"</span>, <span class="st">"rasterVis"</span>, <span class="st">"raster"</span>, <span class="st">"Rcpp"</span>, <span class="st">"RcppArmadillo"</span>, </span>
-<span>  <span class="st">"RcppCensSpatial"</span>,<span class="st">"rayshader"</span>, <span class="st">"RcppEigen"</span>, <span class="st">"RcppParallel"</span>, </span>
-<span>  <span class="st">"RColorBrewer"</span>, <span class="st">"reactable"</span>, <span class="st">"rgl"</span>, <span class="st">"rsconnect"</span>,<span class="st">"RStoolbox"</span>, <span class="st">"rts"</span>, </span>
-<span>  <span class="st">"s2"</span>, <span class="st">"sf"</span>, <span class="st">"scales"</span>, <span class="st">"sits"</span>,<span class="st">"spdep"</span>, <span class="st">"stars"</span>, <span class="st">"stringr"</span>,<span class="st">"supercells"</span>, </span>
-<span>  <span class="st">"terra"</span>, <span class="st">"testthat"</span>, <span class="st">"tidyverse"</span>, <span class="st">"tidyterra"</span>,<span class="st">"tools"</span>, </span>
-<span>  <span class="st">"tmap"</span>, <span class="st">"tmaptools"</span>, <span class="st">"terrainr"</span>, </span>
-<span>  <span class="st">"xgboost"</span>,</span>
-<span>  prompt <span class="op">=</span> <span class="cn">F</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co">#mapviewOptions(fgb = FALSE)</span></span>
-<span><span class="fu">sf</span><span class="fu">::</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/s2.html">sf_use_s2</a></span><span class="op">(</span>use_s2 <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
+<pre class="{web-r}"><code>#| warning: false
+#| message: false
+#| echo: true
+#| comment: NA
+
+easypackages::packages(
+  "bslib", 
+  "cols4all", "covr", "cowplot", 
+  "dendextend", "digest","DiagrammeR","dtwclust", "downlit", 
+  "e1071", "exactextractr","elevatr", 
+  "FNN", "future", "forestdata",
+  "gdalcubes", "gdalUtilities", "geojsonsf", "geos", "ggplot2", "ggstats", 
+  "ggspatial", "ggmap", "ggplotify", "ggpubr", "ggrepel", "giscoR", 
+  "hdf5r", "httr", "httr2", "htmltools",
+  "jsonlite", 
+  "kohonen", 
+  "leaflet.providers", "leafem", "libgeos","luz","lwgeom", "leaflet", "leafgl",
+  "mapedit", "mapview", "maptiles", "methods", "mgcv", 
+  "ncdf4", "nnet", 
+  "openxlsx", "parallel", "plotly", 
+  "randomForest", "rasterVis", "raster", "Rcpp", "RcppArmadillo", 
+  "RcppCensSpatial","rayshader", "RcppEigen", "RcppParallel", 
+  "RColorBrewer", "reactable", "rgl", "rsconnect","RStoolbox", "rts", 
+  "s2", "sf", "scales", "sits","spdep", "stars", "stringr","supercells", 
+  "terra", "testthat", "tidyverse", "tidyterra","tools", 
+  "tmap", "tmaptools", "terrainr", 
+  "xgboost",
+  prompt = F)
+
+#mapviewOptions(fgb = FALSE)
+sf::sf_use_s2(use_s2 = FALSE)</code></pre>
 <div class="cell">
 <style type="text/css">
 div.column {
