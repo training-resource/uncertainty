@@ -21,7 +21,7 @@ engine: knitr
 filters:
   - webr
 webr:
-  packages: ['ggplot2', 'dplyr', 'psych']
+  packages: ['dplyr', 'psych', 'tibble']
 
 bibliography: ../references/references.bib
 csl: ../references/apa.csl
@@ -121,13 +121,13 @@ div.column {
 }
 ```
 
-## The Allometric Equation {#sec-allometry-relationship}
+## Allometry Equations {#sec-allometry-relationship}
 
 $$
 AGB = \alpha \times DBH^{\beta}
 $$
 
-^[*Or in logarithmic form...*]{.smallcaps}^
+^[Or in logarithmic form...]{.smallcaps}^
 
 $$
 \ln(AGB) = \ln(\alpha) + \beta \times \ln(DBH) + \epsilon
@@ -151,7 +151,7 @@ wood density variability). Log-transformation adds
 complexity through back-transformation bias that must be
 corrected to avoid systematically underestimating biomass.
 
-#### ART Exemption
+### ART Exemption {.unnumbered}
 
 ART-TREES V2.0 Section 8 excludes structural uncertainty in
 allometric models from uncertainty deductions when models
@@ -168,17 +168,21 @@ country-specific Tier 2 parameters, and investing in
 measurement precision rather than destructive sampling.
 Let's implement this with Monte Carlo simulation.
 
-## Model Selection {#sec-model-selection}
+## Allometry Selection  {#sec-model-selection}
 
-We'll use the `allodb` package to access global allometric
-equations and demonstrate uncertainty propagation with real
-forest inventory data. The example dataset `scbi_stem1`
-comes from the Smithsonian Conservation Biology Institute
-[SCBI
-ForestGEO](https://docs.ropensci.org/allodb/reference/scbi_stem1.html)
-sample plots in Front Royal, Virginia, which comprises a
-subset from the 2008 initial census of a 25.6-hectare (ha)
-temperate mixed deciduous forest.
+In the following steps, we use the `allodb` package to
+access its global collection of allometric equations and
+demonstrate uncertainty propagation with real forest
+inventory data. The demonstration dataset (`scbi_stem1`)
+originates from the Smithsonian Conservation Biology
+Institute
+[ForestGEO](https://docs.ropensci.org/allodb/reference/scbi_stem1.html)
+sample plots in Front Royal, Virginia, USA. This
+25.6-hectare mature secondary forest is dominated by
+Appalachian mixed hardwood species including tulip poplar
+(Liriodendron tulipifera), oaks (Quercus spp.), and
+hickories (Carya spp.), representing the Blue Ridge and
+Piedmont regions of eastern North America.
 
 ```{r}
 #| label: allometry-import
@@ -198,105 +202,56 @@ data(scbi_stem1)
 #| comment: NA
 
 # Download the data from your published GitHub Pages URL
-url <- "https://raw.githubusercontent.com/training-resource/uncertainty/refs/heads/main/01-allometry/data/scbi_stem1.csv"
-download.file(url, "scbi_stem1.csv")
+#url <- "https://raw.githubusercontent.com/training-resource/uncertainty/refs/heads/main/01-allometry/data/scbi_stem1.csv"
+#download.file(url, "scbi_stem1.csv")
 
 # Load it into the R environment
-scbi_stem1 <- read.csv("scbi_stem1.csv")
+scbi_stem1 <- read.csv("./data/scbi_stem1.csv")
 ```
 
-In the following chunk, we hit "Run Code" to visualize the
-top rows and examine the dimensions of the dataset. Results
-should show this dataset containing 2,287 stem measurements
-from mature secondary eastern deciduous forest dominated by
-tulip poplar (*Liriodendron tulipifera*), oaks (*Quercus*
-spp.), and hickories (*Carya* spp.). representing typical
-Appalachian mixed hardwood of the Blue Ridge and Piedmont
-districts.
+Clicking "Run Code" below will derive descriptive statistics
+for the `scbi_stem1` dataset, which should report a total of
+2,287 stem measurements. Key variables include:
+
+-   `dbh`: Diameter at breast height (cm)
+-   `genus`: Taxonomic genus identification
+-   `species`: Species epithet
+-   `Family`: Taxonomic family classification
 
 ```{webr-r}
 # tabulate descriptives 
-psych::describe(scbi_stem1)
+psych::describe(scbi_stem1) |> 
+	tibble::as_tibble()
 
-# OR top rows only (delete '#')
-# print(head(scbi_stem1))
+# OR top rows (delete '#' to enable)
+# head(scbi_stem1)
 ```
 
-#### Normality Tests
+::: callout-important
+Note the significant range in DBH values spanning from small
+understory trees to canopy dominants exceeding 100 cm
+diameter. This presents an early indicator or statistical
+operations and validation checks needed ahead.
+:::
 
-Accurate selection of probability density functions (PDFs)
-is essential for modeling uncertainties in carbon stocks and
-activity data. This section describes methodologies for
-fitting PDFs to data, ensuring results are robust and
-aligned with ART-TREES best practices.
+Following best practices for allometric model selection,
+equations are queried for dominant taxa using the
+`new_equations()` function with taxonomic filters based on:
 
--   Use of statistical tests for goodness-of-fit validation.
+1.  Geographic proximity: Prioritize equations from eastern
+    North America to minimize climatic and edaphic
+    differences
 
--   Integration of domain expertise to refine parameter
-    selection.
+2.  DBH range: Ensure equation applicability spans 80% of
+    measured diameter distribution for each species to avoid
+    extrapolation bias
 
------------
+3.  Taxonomic specificity: Select species-level equations
+    where available; genus or family-level equations when
+    species-specific data absent
 
-----------
-
-The appropriate statistical term for the measure used to
-examine the asymmetry of a variable's distribution is 
-
-skewness. The specific statistical procedure used to
-formally check this is a test of skewness or a normality
-test that includes skewness analysis. 
-
-Key Terms and Concepts
-
--   Skewness: This is a numerical measure that quantifies
-    the asymmetry of a distribution. A value of zero
-    indicates a perfectly symmetrical distribution (like a
-    normal distribution), while positive values indicate a
-    right-skewed distribution and negative values indicate a
-    left-skewed distribution.
-
--   Bias: In this context, "bias" is often used
-    interchangeably with skewness in a general sense,
-    referring to a lack of symmetry. However, in formal
-    statistics, "bias" more generally refers to systematic
-    error in an estimator, so skewness is the more precise
-    term for the shape of the distribution. 
-
-Specific Tests and Checks
-
-Several methods are used to assess skewness or, more
-broadly, normality: 
-
--   Descriptive Statistics: Calculating the *skewness
-    coefficient* (e.g., Pearson's skewness coefficients or
-    moment skewness) provides a quantitative value to
-    interpret the degree and direction of the skew. Z-tests
-    for skewness can be performed by comparing the
-    calculated skewness coefficient to its standard error.
-
--   Formal Statistical Tests (Normality Tests): These tests
-    assess whether the data significantly deviates from a
-    normal distribution, which inherently includes checking
-    for significant skewness (and kurtosis).
-
-    -   D'Agostino-Pearson Omnibus Test: This test
-        specifically combines the statistical tests for both
-        skewness and kurtosis to test for overall normality.
-
-    -   Jarque-Bera Test: Another test that uses the fact
-        that a normal distribution has zero skewness and
-        kurtosis.
-
-    -   Shapiro-Wilk Test and Kolmogorov-Smirnov Test: While
-        these are general normality tests, they are
-        sensitive to deviations from normality, including
-        skewness.
-
--   Graphical Methods: Visual checks using a histogram or,
-    more effectively, a Q-Q plot(quantile-quantile plot),
-    can help visually identify skewness (e.g., points
-    forming an arc in a Q-Q plot or a long tail in a
-    histogram). 
+4.  Sample size: Minimum n=50 trees for species-specific
+    equations; n\>150 for genus-level equations
 
 ```{webr-r}
 #| context: setup
@@ -308,108 +263,189 @@ broadly, normality: 
 url <- "https://raw.githubusercontent.com/training-resource/uncertainty/refs/heads/main/01-allometry/data/eq_tab_acer.csv"
 download.file(url, "eq_tab_acer.csv")
 eq_tab_acer <- read.csv("eq_tab_acer.csv")
+
+show_cols   = c(
+	"equation_id", 
+	"equation_taxa", 
+	"equation_allometry")
 ```
 
 ```{r}
-#| context: setup
 #| message: false
 #| error: false
-#| echo: false
 #| eval: false
 #| comment: NA
-
 # load allometric equations
 data(equations)
 data("equations_metadata")
 
-# extract variables & species
-show_cols   = c("equation_id", "equation_taxa", "equation_allometry")
+# extract variables 
+show_cols   = c(
+	"equation_id", 
+	"equation_taxa", 
+	"equation_allometry")
+
+# extract genus
 eq_tab_acer = new_equations(subset_taxa = "Acer")
 ```
 
 ```{webr-r}
-
-# visualize & inspect
-head(eq_tab_acer[, show_cols])
+# tabulate available variables for Acer genus
+dplyr::glimpse(eq_tab_acer)
 ```
 
-### Equivalence Testing Framework {#sec-equivalence-testing}
+### Equation Criteria {.unnumbered}
 
-Objective: Determine if published equations are valid for
-local conditions
+The filtered *Acer* equation table contains species-specific
+models (*A. rubrum*, *A. saccharum*), genus-level equations
+from eastern US studies, and family-level Sapindaceae
+equations serving as taxonomic fallbacks.
 
-Method: Test if difference between predicted and observed
-biomass falls within acceptable threshold
+| Attribute | Purpose | Selection Threshold |
+|----|----|----|
+| `equation_id` | Citation traceability | Document provenance |
+| `equation_taxa` | Taxonomic resolution | Species \> genus \> family |
+| `geographic_area` | Regional origin | Same ecoregion \> biome \> climate |
+| `koppen_climate` | Climate matching | Match Cfa for SCBI |
+| `sample_size` | Calibration sample | n ≥ 50 (species), n ≥ 150 (genus) |
+| `dbh_min` / `dbh_max` | Validity range | Cover 80% of observed DBH |
+| `equation_allometry` | Mathematical form | Enable parameter extraction |
 
-Equivalence criteria (CEOS/NASA protocol): - Relative
-difference \< ±25% - Systematic bias \< ±5% - RMSE within
-1.5× calibration dataset RMSE
+This structured metadata enables data-driven, auditable
+equation selection under REDD+ verification protocols.
+
+```{webr-r}
+# tabulate allometric equations of target Acer genus
+head(eq_tab_acer[, show_cols]) |> 
+	tibble::as_tibble()
+```
+
+With target variables confirmed, species extracted, and
+known coordinates indentified, we compute aboveground
+biomass volume for all `scbi` trees in the following as a
+new `abg` variable.
 
 ```{r}
 #| eval: false
-#| label: allometry-equivalence-test
-#| code-summary: "Equivalence testing for model transferability"
+# derive biomass volume of scbi trees
+scbi_stem1$agb <- allodb::get_biomass(
+  dbh = scbi_stem1$dbh,
+  genus = scbi_stem1$genus,
+  species = scbi_stem1$species,
+  coords = c(-78.2, 38.9)
+)
+```
 
-library(tidyverse)
-library(MASS)
+### Equivalence Testing {#sec-equivalence-testing .unnumbered}
 
-# Function: Equivalence test for allometric models
-equivalence_test <- function(observed_biomass, predicted_biomass, threshold = 0.25) {
-  
-  # Calculate relative difference
-  relative_diff <- (predicted_biomass - observed_biomass) / observed_biomass
-  
-  # Mean relative difference (systematic bias)
-  mean_rel_diff <- mean(relative_diff, na.rm = TRUE)
-  
-  # Standard error
-  se_rel_diff <- sd(relative_diff, na.rm = TRUE) / sqrt(length(relative_diff))
-  
-  # 90% confidence interval
-  ci_lower <- mean_rel_diff - 1.645 * se_rel_diff
-  ci_upper <- mean_rel_diff + 1.645 * se_rel_diff
-  
-  # Equivalence test: CI must fall entirely within [-threshold, +threshold]
-  is_equivalent <- (ci_lower > -threshold) && (ci_upper < threshold)
-  
-  # RMSE
-  rmse <- sqrt(mean((predicted_biomass - observed_biomass)^2, na.rm = TRUE))
-  
-  # Results
-  results <- list(
-    mean_relative_difference = mean_rel_diff,
-    ci_90 = c(ci_lower, ci_upper),
-    is_equivalent = is_equivalent,
-    rmse = rmse,
-    n_samples = length(observed_biomass)
+Equivalence testing is a statistical validation method used
+in to demonstrate that a new model's predictions are
+acceptably similar or "equivalent" to independent
+observations or an accepted reference estimate. This
+similarity is defined as being within a predefined,
+acceptable margin of difference; the equivalence margin.
+
+Unlike traditional Null Hypothesis Significance Testing
+(NHST), which only tests if models are statistically
+different, ET asks whether models are similar enough for
+operational use. This approach is essential because
+traditional NHST is susceptible to Type II errors (false
+negatives), where insufficient statistical power (e.g.,
+small sample size, *`N`*) leads to incorrectly accepting
+models with unacceptable differences. For instance, studies
+have shown that *`N`* \< 15 samples often lack the
+statistical power to reject invalid models
+[@paul2018validation]. For more detailed guidance, we
+recommed consulting the technical guidelines provided by the
+NASA Working Group on Land Product Calibration and
+Validation [@duncansonAbovegroundWoodyBiomass2021].
+Specifically, the following key performance metrics are
+emphasized:
+
+-   Statistical Power: A minimum sample size is considered
+    to ensure adequate statistical power, targeting \>50 per
+    class or species.
+-   Equivalence Margin: Define the acceptable maximum
+    difference, often set as a percentage of equivalence
+    test threshold, i.e \<25% minimum detectable negligible
+    difference.
+-   Dataset Structure: The validation dataset should possess
+    a similar structural distribution as the calibration
+    dataset, such as tree-size structure
+-   Data Coverage: Ensure inclusion of critical dimensional
+    elements, including across small and large cohorts, as
+    large elements often hold a disproportionately large
+    share of the biomass variable.
+
+#### Step 1: Equivalence Thresholds  {.unnumbered}
+
+A primary threshold of ±25% of relative error (90% CI) is
+recommended, while secondary thresholds are approximated as
+follows:
+
+-   Systematic bias \< ±5% relative RSME (90% CI)
+-   RMSE within 1.5× calibration dataset RMSE
+-   Adequate sample size across diameter distribution
+
+```{webr-r}
+# Filter by adequate sample size (n ≥ 50)
+species_counts <- scbi_stem1 |>
+  dplyr::group_by(genus, species) |>
+  dplyr::summarise(n = n(), .groups = 'drop') |>
+  dplyr::filter(n >= 50)
+cat("Species meeting minimum sample (n ≥ 50):\n")
+print(species_counts)
+
+# Example: Liriodendron tulipifera (tulip poplar)
+lirio_data <- scbi_stem1 |>
+  dplyr::filter(genus == "Liriodendron", species == "tulipifera") |>
+  dplyr::filter(!is.na(dbh), !is.na(agb))
+cat(sprintf("\nLiriodendron tulipifera sample size: %d trees\n", nrow(lirio_data)))
+cat(sprintf("DBH range: %.1f - %.1f cm\n", min(lirio_data$dbh), max(lirio_data$dbh)))
+```
+
+#### Step 2: Age Class Stratification
+
+Stratification by size class or age cohort involves a
+critical component in forest biomass modeling. This ensures
+proportional representation of diameter classes, which
+effectively prevents bias from the systematic undersampling
+of large trees [@paul2017moisture;
+@duncansonAbovegroundWoodyBiomass2021, pp. 100].
+
+```{webr-r}
+# derive diameter class stratification
+lirio_data <- lirio_data |> dplyr::mutate(dbh_class = cut(dbh, 
+	breaks = c(0, 10, 20, 30, 40, 50, 100),
+	labels = c("0-10", "10-20", "20-30", "30-40", "40-50", ">50"))
+	)
+
+# Check distribution across size classes
+size_distribution <- lirio_data |>
+  dplyr::group_by(dbh_class) |>
+  dplyr::summarise(n = n(),
+    mean_dbh = mean(dbh),
+    mean_agb = mean(agb),
+    total_biomass_pct = sum(agb) / sum(lirio_data$agb) * 100,
+    .groups = 'drop'
   )
-  
-  return(results)
-}
+print(size_distribution)
 
-# Example usage: Test model M3 for Betula pendula
-# Assume we have validation data
-validation_data <- data.frame(
-  dbh_cm = c(10, 15, 20, 25, 30, 35, 40),
-  observed_agb_kg = c(12, 35, 68, 110, 165, 235, 315)
-)
+# Stratified split: 80% calibration, 20% validation
+# Maintain proportional representation across diameter classes
+train_idx <- lirio_data |>
+  dplyr::group_by(dbh_class) |>
+  dplyr::slice_sample(prop = 0.8) |>
+  dplyr::pull(row_number())
 
-# Apply Model M3: exp(-2.7584 + 2.6134 × ln(D))
-validation_data$predicted_agb_kg <- exp(-2.7584 + 2.6134 * log(validation_data$dbh_cm))
+calibration_data <- lirio_data[train_idx, ]
+validation_data <- lirio_data[-train_idx, ]
 
-# Run equivalence test
-equiv_results <- equivalence_test(
-  observed_biomass = validation_data$observed_agb_kg,
-  predicted_biomass = validation_data$predicted_agb_kg,
-  threshold = 0.25  # ±25%
-)
-
-# Display results
-cat("Equivalence Test Results:\n")
-cat(sprintf("Mean relative difference: %.2f%%\n", equiv_results$mean_relative_difference * 100))
-cat(sprintf("90%% CI: [%.2f%%, %.2f%%]\n", equiv_results$ci_90[1] * 100, equiv_results$ci_90[2] * 100))
-cat(sprintf("Equivalent (within ±25%%): %s\n", ifelse(equiv_results$is_equivalent, "YES", "NO")))
-cat(sprintf("RMSE: %.2f kg\n", equiv_results$rmse))
+# Verify size structure is preserved
+cat("\nCalibration set size distribution:\n")
+print(table(calibration_data$dbh_class))
+cat("\nValidation set size distribution:\n")
+print(table(validation_data$dbh_class))
 ```
 
 Interpretation: - Equivalent: Model can be applied without
