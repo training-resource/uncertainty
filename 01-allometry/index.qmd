@@ -10,7 +10,7 @@ format:
     toc-title: "**On this page**"
     highlight-style: pygments
     page-layout: article
-    df-print: tibble
+    df-print: kable
     resources: 
       - data/*
 
@@ -20,6 +20,9 @@ editor_options:
 engine: knitr
 filters:
   - webr
+webr:
+  packages: ['ggplot2', 'dplyr', 'psych']
+
 bibliography: ../references/references.bib
 csl: ../references/apa.csl
 citeproc: true
@@ -118,8 +121,6 @@ div.column {
 }
 ```
 
-------------------------------------------------------------
-
 ## The Allometric Equation {#sec-allometry-relationship}
 
 $$
@@ -150,7 +151,7 @@ wood density variability). Log-transformation adds
 complexity through back-transformation bias that must be
 corrected to avoid systematically underestimating biomass.
 
-#### ART Exemption 
+#### ART Exemption
 
 ART-TREES V2.0 Section 8 excludes structural uncertainty in
 allometric models from uncertainty deductions when models
@@ -167,8 +168,6 @@ country-specific Tier 2 parameters, and investing in
 measurement precision rather than destructive sampling.
 Let's implement this with Monte Carlo simulation.
 
-------------------------------------------------------------
-
 ## Model Selection {#sec-model-selection}
 
 We'll use the `allodb` package to access global allometric
@@ -177,9 +176,9 @@ forest inventory data. The example dataset `scbi_stem1`
 comes from the Smithsonian Conservation Biology Institute
 [SCBI
 ForestGEO](https://docs.ropensci.org/allodb/reference/scbi_stem1.html)
-plot in Front Royal, Virginia, which comprises a subset from
-the 2008 initial census of a 25.6-hectare (ha) temperate
-mixed deciduous forest.
+sample plots in Front Royal, Virginia, which comprises a
+subset from the 2008 initial census of a 25.6-hectare (ha)
+temperate mixed deciduous forest.
 
 ```{r}
 #| label: allometry-import
@@ -191,42 +190,126 @@ library("allodb")
 data(scbi_stem1)
 ```
 
-```{r}
+```{webr-r}
 #| context: setup
+#| message: false
+#| error: false
 #| echo: false
+#| comment: NA
 
 # Download the data from your published GitHub Pages URL
-url <- "https://yourusername.github.io/yourrepo/data/scbi_stem1.csv"
+url <- "https://raw.githubusercontent.com/training-resource/uncertainty/refs/heads/main/01-allometry/data/scbi_stem1.csv"
 download.file(url, "scbi_stem1.csv")
 
 # Load it into the R environment
 scbi_stem1 <- read.csv("scbi_stem1.csv")
 ```
 
-```{r}
-#| message: false
-#| error: false
-#| echo: false
-#| eval: true
-#| comment: NA
-scbi_stem1 = read.csv("./data/scbi_stem1.csv")
-```
-
-In the following chunk, we hit "Run Code" to visualize the top rows and 
-examine the dimensions of the dataset. Results should show
-this dataset containing 2,287 stem measurements from mature
-secondary eastern deciduous forest dominated by tulip poplar
-(*Liriodendron tulipifera*), oaks (*Quercus* spp.), and
-hickories (*Carya* spp.). representing typical Appalachian
-mixed hardwood of the Blue Ridge and Piedmont districts.
-
+In the following chunk, we hit "Run Code" to visualize the
+top rows and examine the dimensions of the dataset. Results
+should show this dataset containing 2,287 stem measurements
+from mature secondary eastern deciduous forest dominated by
+tulip poplar (*Liriodendron tulipifera*), oaks (*Quercus*
+spp.), and hickories (*Carya* spp.). representing typical
+Appalachian mixed hardwood of the Blue Ridge and Piedmont
+districts.
 
 ```{webr-r}
-#| code-summary: "Database of available allometric equations"
-
-# tabulate data
-head(scbi_stem1)
+# tabulate descriptives 
 psych::describe(scbi_stem1)
+
+# OR top rows only (delete '#')
+# print(head(scbi_stem1))
+```
+
+#### Normality Tests
+
+Accurate selection of probability density functions (PDFs)
+is essential for modeling uncertainties in carbon stocks and
+activity data. This section describes methodologies for
+fitting PDFs to data, ensuring results are robust and
+aligned with ART-TREES best practices.
+
+-   Use of statistical tests for goodness-of-fit validation.
+
+-   Integration of domain expertise to refine parameter
+    selection.
+
+-----------
+
+----------
+
+The appropriate statistical term for the measure used to
+examine the asymmetry of a variable's distribution is 
+
+skewness. The specific statistical procedure used to
+formally check this is a test of skewness or a normality
+test that includes skewness analysis. 
+
+Key Terms and Concepts
+
+-   Skewness: This is a numerical measure that quantifies
+    the asymmetry of a distribution. A value of zero
+    indicates a perfectly symmetrical distribution (like a
+    normal distribution), while positive values indicate a
+    right-skewed distribution and negative values indicate a
+    left-skewed distribution.
+
+-   Bias: In this context, "bias" is often used
+    interchangeably with skewness in a general sense,
+    referring to a lack of symmetry. However, in formal
+    statistics, "bias" more generally refers to systematic
+    error in an estimator, so skewness is the more precise
+    term for the shape of the distribution. 
+
+Specific Tests and Checks
+
+Several methods are used to assess skewness or, more
+broadly, normality: 
+
+-   Descriptive Statistics: Calculating the *skewness
+    coefficient* (e.g., Pearson's skewness coefficients or
+    moment skewness) provides a quantitative value to
+    interpret the degree and direction of the skew. Z-tests
+    for skewness can be performed by comparing the
+    calculated skewness coefficient to its standard error.
+
+-   Formal Statistical Tests (Normality Tests): These tests
+    assess whether the data significantly deviates from a
+    normal distribution, which inherently includes checking
+    for significant skewness (and kurtosis).
+
+    -   D'Agostino-Pearson Omnibus Test: This test
+        specifically combines the statistical tests for both
+        skewness and kurtosis to test for overall normality.
+
+    -   Jarque-Bera Test: Another test that uses the fact
+        that a normal distribution has zero skewness and
+        kurtosis.
+
+    -   Shapiro-Wilk Test and Kolmogorov-Smirnov Test: While
+        these are general normality tests, they are
+        sensitive to deviations from normality, including
+        skewness.
+
+-   Graphical Methods: Visual checks using a histogram or,
+    more effectively, a Q-Q plot(quantile-quantile plot),
+    can help visually identify skewness (e.g., points
+    forming an arc in a Q-Q plot or a long tail in a
+    histogram). 
+
+```{r}
+data(equations)
+data("equations_metadata")
+```
+
+```{r}
+# add allometry database
+data(equations)
+data("equations_metadata")
+show_cols   = c("equation_id", "equation_taxa", "equation_allometry")
+eq_tab_acer = new_equations(subset_taxa = "Acer")
+head(eq_tab_acer[, show_cols])
 ```
 
 ### Equivalence Testing Framework {#sec-equivalence-testing}
