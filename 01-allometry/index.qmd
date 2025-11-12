@@ -209,9 +209,10 @@ data(scbi_stem1)
 scbi_stem1 <- read.csv("./data/scbi_stem1.csv")
 ```
 
-Clicking "Run Code" below will derive descriptive statistics
-for the `scbi_stem1` dataset, which should report a total of
-2,287 stem measurements. Key variables include:
+By clicking "Run Code" below, we derive descriptive
+statistics for the `scbi_stem1` dataset. Results should
+report a total of 2,287 stem measurements and describe
+dimensions of the following variables:
 
 -   `dbh`: Diameter at breast height (cm)
 -   `genus`: Taxonomic genus identification
@@ -227,13 +228,6 @@ psych::describe(scbi_stem1) |>
 # head(scbi_stem1)
 ```
 
-::: callout-important
-Note the significant range in DBH values spanning from small
-understory trees to canopy dominants exceeding 100 cm
-diameter. This presents an early indicator or statistical
-operations and validation checks needed ahead.
-:::
-
 Following best practices for allometric model selection,
 equations are queried for dominant taxa using the
 `new_equations()` function with taxonomic filters based on:
@@ -241,17 +235,21 @@ equations are queried for dominant taxa using the
 1.  Geographic proximity: Prioritize equations from eastern
     North America to minimize climatic and edaphic
     differences
-
 2.  DBH range: Ensure equation applicability spans 80% of
     measured diameter distribution for each species to avoid
     extrapolation bias
-
 3.  Taxonomic specificity: Select species-level equations
     where available; genus or family-level equations when
     species-specific data absent
-
 4.  Sample size: Minimum n=50 trees for species-specific
     equations; n\>150 for genus-level equations
+
+::: callout-important
+Note the significant range in DBH values spanning from small
+understory trees to canopy dominants exceeding 100 cm
+diameter. This presents an early indicator or statistical
+operations and validation checks needed ahead.
+:::
 
 ```{webr-r}
 #| context: setup
@@ -413,7 +411,7 @@ effectively prevents bias from the systematic undersampling
 of large trees [@paul2017moisture;
 @duncansonAbovegroundWoodyBiomass2021, pp. 100].
 
-```{webr-r}
+```{r}
 # derive diameter class stratification
 lirio_data <- lirio_data |> dplyr::mutate(dbh_class = cut(dbh, 
 	breaks = c(0, 10, 20, 30, 40, 50, 100),
@@ -434,9 +432,10 @@ print(size_distribution)
 # Stratified split: 80% calibration, 20% validation
 # Maintain proportional representation across diameter classes
 train_idx <- lirio_data |>
-  dplyr::group_by(dbh_class) |>
+  dplyr::mutate(row_id = row_number()) |> 
+	dplyr::group_by(dbh_class) |>
   dplyr::slice_sample(prop = 0.8) |>
-  dplyr::pull(row_number())
+  dplyr::pull(row_id)
 
 calibration_data <- lirio_data[train_idx, ]
 validation_data <- lirio_data[-train_idx, ]
@@ -448,794 +447,267 @@ cat("\nValidation set size distribution:\n")
 print(table(validation_data$dbh_class))
 ```
 
-Interpretation: - Equivalent: Model can be applied without
-modification - Not equivalent: Develop local calibration or
-use alternative model
-
-### Model Selection Criteria {#sec-model-selection-criteria}
-
-Multi-criteria decision matrix:
-
-| Criterion | Weight | Threshold | Rationale |
-|----|----|----|----|
-| RMSE | 40% | Minimize | Prediction accuracy |
-| Geographic proximity | 25% | Same biome | Climate/soil similarity |
-| DBH range coverage | 20% | \>80% overlap | Avoid extrapolation |
-| Sample size | 15% | \>50 trees | Statistical power |
+#### Step 3: Evaluate Against Reference Data {.unnumbered}
 
 ```{r}
 #| eval: false
-#| label: allometry-model-scoring
-#| code-summary: "Multi-criteria model selection scoring"
 
-# Function: Score models for selection
-score_allometric_models <- function(models_df, validation_data, target_dbh_range) {
-  
-  # Calculate RMSE for each model
-  models_df$rmse <- NA
-  
-  for (i in 1:nrow(models_df)) {
-    # Apply model equation (simplified for illustration)
-    if (models_df$Form[i] == "α×D^β") {
-      predicted <- models_df$Alpha[i] * validation_data$dbh_cm^models_df$Beta[i]
-    } else {  # exp(α+β×ln(D))
-      predicted <- exp(models_df$Alpha[i] + models_df$Beta[i] * log(validation_data$dbh_cm))
-    }
-    
-    models_df$rmse[i] <- sqrt(mean((predicted - validation_data$observed_agb_kg)^2))
-  }
-  
-  # Normalize RMSE score (lower is better, scale 0-1)
-  models_df$rmse_score <- 1 - (models_df$rmse - min(models_df$rmse)) / (max(models_df$rmse) - min(models_df$rmse))
-  
-  # Geographic proximity score (1 = same country, 0.5 = same biome, 0 = different)
-  models_df$geo_score <- ifelse(models_df$Country == "UK", 1.0,
-                                 ifelse(models_df$Country %in% c("Ireland", "Sweden"), 0.5, 0))
-  
-  # DBH range overlap score
-  # (Simplified: assumes target range 5-50 cm)
-  models_df$range_score <- 0.8  # Placeholder
-  
-  # Composite score
-  models_df$total_score <- (
-    models_df$rmse_score * 0.40 +
-    models_df$geo_score * 0.25 +
-    models_df$range_score * 0.20 +
-    0.15  # Sample size score (placeholder)
-  )
-  
-  # Rank models
-  models_df <- models_df %>%
-    arrange(desc(total_score))
-  
-  return(models_df)
-}
-
-# Example usage
-# scored_models <- score_allometric_models(allometric_equations, validation_data, c(5, 50))
-# print(scored_models %>% select(Model_ID, Species, RMSE, total_score))
-```
-
-------------------------------------------------------------
-
-## Model Tuning {#sec-parameter-uncertainty}
-
-### Regression Uncertainty Quantification {#sec-regression-uncertainty}
-
-Standard error of coefficients from regression:
-
-$$
-SE(\hat{\beta}) = \sqrt{\frac{\sigma^2}{\sum(x_i - \bar{x})^2}}
-$$
-
-Where: - $\hat{\beta}$: Estimated coefficient - $\sigma^2$:
-Residual variance - $x_i$: Predictor values (ln(DBH))
-
-```{r}
-#| eval: false
-#| label: allometry-parameter-uncertainty
-#| code-summary: "Extract parameter uncertainty from regression"
-
-library(tidyverse)
-
-# Example: Fit allometric model to calibration data
-calibration_data <- data.frame(
-  dbh_cm = c(10, 15, 20, 25, 30, 35, 40, 45, 50),
-  agb_kg = c(12, 35, 68, 110, 165, 235, 315, 410, 520)
-)
-
-# Log-transform for linear regression
-calibration_data$ln_dbh <- log(calibration_data$dbh_cm)
-calibration_data$ln_agb <- log(calibration_data$agb_kg)
-
-# Fit model: ln(AGB) = α + β × ln(DBH)
-model_fit <- lm(ln_agb ~ ln_dbh, data = calibration_data)
+# Log-transformed linear model (standard allometric form)
+calibration_model <- lm(log(agb) ~ log(dbh), data = calibration_data)
 
 # Extract parameters and uncertainty
-model_summary <- summary(model_fit)
-
-# Coefficients
-alpha_est <- coef(model_fit)[1]
-beta_est <- coef(model_fit)[2]
-
-# Standard errors
+model_summary <- summary(calibration_model)
+alpha_est <- coef(calibration_model)[1]
+beta_est <- coef(calibration_model)[2]
 alpha_se <- model_summary$coefficients[1, 2]
 beta_se <- model_summary$coefficients[2, 2]
-
-# Variance-covariance matrix
-vcov_matrix <- vcov(model_fit)
-
-# Residual standard error (for Baskerville correction)
 sigma_residual <- model_summary$sigma
 
-# Display results
-cat("Allometric Model Fit Results:\n")
-cat(sprintf("α = %.4f ± %.4f\n", alpha_est, alpha_se))
-cat(sprintf("β = %.4f ± %.4f\n", beta_est, beta_se))
+# Variance-covariance matrix (for Monte Carlo simulation)
+vcov_matrix <- vcov(calibration_model)
+
+# Baskerville correction factor for log-transformation bias
+baskerville_cf <- exp(sigma_residual^2 / 2)
+
+# Display calibration results
+cat("Calibration Model Parameters:\n")
+cat(sprintf("α = %.4f (SE = %.4f)\n", alpha_est, alpha_se))
+cat(sprintf("β = %.4f (SE = %.4f)\n", beta_est, beta_se))
 cat(sprintf("Residual SE: %.4f\n", sigma_residual))
-cat(sprintf("R-squared: %.4f\n", model_summary$r.squared))
-
-# 90% confidence intervals for parameters
-alpha_ci <- alpha_est + c(-1, 1) * qt(0.95, df = model_fit$df.residual) * alpha_se
-beta_ci <- beta_est + c(-1, 1) * qt(0.95, df = model_fit$df.residual) * beta_se
-
-cat(sprintf("α 90%% CI: [%.4f, %.4f]\n", alpha_ci[1], alpha_ci[2]))
-cat(sprintf("β 90%% CI: [%.4f, %.4f]\n", beta_ci[1], beta_ci[2]))
+cat(sprintf("R² = %.4f\n", model_summary$r.squared))
+cat(sprintf("Baskerville CF = %.4f\n", baskerville_cf))
+cat(sprintf("Calibration RMSE: %.2f kg\n", 
+            sqrt(mean((exp(fitted(calibration_model)) * baskerville_cf - calibration_data$agb)^2))))
 ```
 
-### Monte Carlo Parameter Resampling {#sec-parameter-resampling}
-
-Approach: Sample from multivariate normal distribution of
-parameter estimates
+#### Step 4: Apply Model to Validation Data
 
 ```{r}
-#| eval: false
-#| label: allometry-monte-carlo-parameters
-#| code-summary: "Monte Carlo resampling of allometric parameters"
+# Predict biomass on validation data
+validation_data$predicted_agb <- exp(alpha_est + beta_est * log(validation_data$dbh)) * baskerville_cf
 
-library(MASS)  # For mvrnorm
-
-# Function: Monte Carlo parameter uncertainty propagation
-monte_carlo_allometry <- function(model_fit, new_dbh, n_sim = 10000) {
-  
-  # Extract parameter estimates
-  param_est <- coef(model_fit)
-  
-  # Extract variance-covariance matrix
-  param_vcov <- vcov(model_fit)
-  
-  # Sample parameters from multivariate normal
-  param_samples <- mvrnorm(n = n_sim, mu = param_est, Sigma = param_vcov)
-  
-  # Initialize results
-  biomass_predictions <- matrix(NA, nrow = n_sim, ncol = length(new_dbh))
-  
-  # Baskerville correction factor
-  sigma_model <- summary(model_fit)$sigma
-  baskerville <- exp(sigma_model^2 / 2)
-  
-  # Monte Carlo simulation
-  for (i in 1:n_sim) {
-    alpha_sim <- param_samples[i, 1]
-    beta_sim <- param_samples[i, 2]
-    
-    # Predict biomass with sampled parameters
-    ln_biomass_pred <- alpha_sim + beta_sim * log(new_dbh)
-    
-    # Back-transform with Baskerville correction
-    biomass_predictions[i, ] <- exp(ln_biomass_pred) * baskerville
-  }
-  
-  # Calculate statistics
-  biomass_mean <- colMeans(biomass_predictions)
-  biomass_sd <- apply(biomass_predictions, 2, sd)
-  biomass_ci_lower <- apply(biomass_predictions, 2, quantile, 0.05)
-  biomass_ci_upper <- apply(biomass_predictions, 2, quantile, 0.95)
-  
-  # Uncertainty as percentage
-  biomass_uncertainty_pct <- (biomass_ci_upper - biomass_ci_lower) / (2 * biomass_mean) * 100
-  
-  results <- data.frame(
-    dbh_cm = new_dbh,
-    biomass_mean_kg = biomass_mean,
-    biomass_sd_kg = biomass_sd,
-    ci_lower_kg = biomass_ci_lower,
-    ci_upper_kg = biomass_ci_upper,
-    uncertainty_pct = biomass_uncertainty_pct
+# Calculate residuals
+validation_data <- validation_data %>%
+  mutate(
+    residual = predicted_agb - agb,
+    relative_residual = residual / agb,
+    abs_relative_residual = abs(relative_residual)
   )
-  
-  return(list(
-    summary = results,
-    simulations = biomass_predictions
-  ))
-}
 
-# Example usage
-# New DBH values to predict
-new_dbh_values <- seq(5, 50, by = 5)
-
-# Run Monte Carlo simulation
-mc_results <- monte_carlo_allometry(
-  model_fit = model_fit,
-  new_dbh = new_dbh_values,
-  n_sim = 10000
-)
-
-# Display results
-print(mc_results$summary)
-
-# Visualize uncertainty
-library(ggplot2)
-ggplot(mc_results$summary, aes(x = dbh_cm, y = biomass_mean_kg)) +
-  geom_line(color = "darkblue", size = 1.2) +
-  geom_ribbon(aes(ymin = ci_lower_kg, ymax = ci_upper_kg), alpha = 0.3, fill = "steelblue") +
-  labs(
-    title = "Allometric Model Predictions with 90% Confidence Intervals",
-    subtitle = "Parameter uncertainty propagated through Monte Carlo simulation (n=10,000)",
-    x = "DBH (cm)",
-    y = "Aboveground Biomass (kg)"
-  ) +
-  theme_minimal()
+# Summary statistics
+cat("\nValidation Set Performance:\n")
+cat(sprintf("Mean predicted AGB: %.2f kg\n", mean(validation_data$predicted_agb)))
+cat(sprintf("Mean observed AGB: %.2f kg\n", mean(validation_data$agb)))
+cat(sprintf("Mean residual: %.2f kg\n", mean(validation_data$residual)))
 ```
 
-Typical uncertainty magnitudes: - Small trees (DBH 5-10 cm):
-±15-25% - Medium trees (DBH 20-30 cm): ±10-15% - Large trees
-(DBH \>40 cm): ±8-12%
+#### Step 5: Run Equivalence Test
 
-------------------------------------------------------------
-
-## Error Propagation {#sec-measurement-error}
-
-### DBH Measurement Precision {#sec-dbh-precision}
-
-Sources of DBH error: 1. Instrument precision: ±0.5 cm
-(diameter tape) to ±1.0 cm (calipers) 2. Measurement height:
-Breast height (1.3m) ±5 cm 3. Tree form irregularities:
-Buttresses, branches at 1.3m 4. Operator variability:
-Inter-measurer differences
+Following Paul et al. (2018) protocol with 25% threshold:
 
 ```{r}
-#| eval: false
-#| label: allometry-dbh-error
-#| code-summary: "Propagate DBH measurement error"
-
-# Function: Propagate DBH measurement error through allometry
-propagate_dbh_error <- function(true_dbh, dbh_error_sd, alpha, beta, n_sim = 10000) {
+# Function: Equivalence test with NASA-CEOS specifications
+equivalence_test <- function(observed, predicted, threshold = 0.25, conf_level = 0.90) {
   
-  # Sample DBH measurements with error
-  dbh_measurements <- rnorm(n_sim, mean = true_dbh, sd = dbh_error_sd)
+  # Remove any NA values
+  valid_idx <- !is.na(observed) & !is.na(predicted) & observed > 0
+  observed <- observed[valid_idx]
+  predicted <- predicted[valid_idx]
+  n <- length(observed)
   
-  # Ensure positive values
-  dbh_measurements <- pmax(dbh_measurements, 0.1)
+  # Calculate relative difference
+  relative_diff <- (predicted - observed) / observed
   
-  # Calculate biomass for each measurement
-  biomass_estimates <- alpha * dbh_measurements^beta
+  # Mean relative difference (systematic bias)
+  mean_rel_diff <- mean(relative_diff)
   
-  # Summary statistics
-  biomass_mean <- mean(biomass_estimates)
-  biomass_sd <- sd(biomass_estimates)
-  biomass_cv <- biomass_sd / biomass_mean * 100
-  biomass_ci <- quantile(biomass_estimates, c(0.05, 0.95))
+  # Standard error of mean relative difference
+  se_rel_diff <- sd(relative_diff) / sqrt(n)
   
-  # True biomass (no error)
-  biomass_true <- alpha * true_dbh^beta
+  # Calculate confidence interval
+  # For 90% CI, use 1.645; for 95% CI, use 1.96
+  z_crit <- qnorm(1 - (1 - conf_level) / 2)
+  ci_lower <- mean_rel_diff - z_crit * se_rel_diff
+  ci_upper <- mean_rel_diff + z_crit * se_rel_diff
   
-  # Bias from measurement error
-  bias_pct <- (biomass_mean - biomass_true) / biomass_true * 100
+  # Equivalence test: CI must fall entirely within [-threshold, +threshold]
+  is_equivalent <- (ci_lower > -threshold) && (ci_upper < threshold)
   
+  # Additional validation metrics
+  rmse <- sqrt(mean((predicted - observed)^2))
+  rmse_pct <- rmse / mean(observed) * 100
+  mae <- mean(abs(predicted - observed))
+  mae_pct <- mae / mean(observed) * 100
+  
+  # Correlation and R²
+  r_squared <- cor(predicted, observed)^2
+  
+  # Percentage of predictions within threshold
+  within_threshold <- mean(abs(relative_diff) < threshold) * 100
+  
+  # Results list
   results <- list(
-    true_dbh = true_dbh,
-    mean_biomass = biomass_mean,
-    true_biomass = biomass_true,
-    bias_percent = bias_pct,
-    cv_percent = biomass_cv,
-    ci_90 = biomass_ci
+    # Primary equivalence test results
+    equivalence_threshold = threshold,
+    confidence_level = conf_level,
+    is_equivalent = is_equivalent,
+    
+    # Bias metrics
+    mean_bias = mean_rel_diff,
+    mean_bias_pct = mean_rel_diff * 100,
+    ci_lower = ci_lower,
+    ci_upper = ci_upper,
+    ci_lower_pct = ci_lower * 100,
+    ci_upper_pct = ci_upper * 100,
+    
+    # Accuracy metrics
+    rmse = rmse,
+    rmse_pct = rmse_pct,
+    mae = mae,
+    mae_pct = mae_pct,
+    r_squared = r_squared,
+    
+    # Distribution metrics
+    within_threshold_pct = within_threshold,
+    
+    # Sample characteristics
+    n_samples = n,
+    min_observed = min(observed),
+    max_observed = max(observed),
+    mean_observed = mean(observed)
   )
   
   return(results)
 }
 
-# Example: Assess DBH measurement error impact
-dbh_values <- c(10, 20, 30, 40, 50)
-dbh_error_sd <- 0.5  # ±0.5 cm standard deviation
-
-# Model M9 parameters: α = 0.028, β = 2.71
-results_list <- lapply(dbh_values, function(dbh) {
-  propagate_dbh_error(
-    true_dbh = dbh,
-    dbh_error_sd = dbh_error_sd,
-    alpha = 0.028,
-    beta = 2.71,
-    n_sim = 10000
-  )
-})
-
-# Compile results
-dbh_error_summary <- data.frame(
-  dbh_cm = dbh_values,
-  cv_pct = sapply(results_list, function(x) x$cv_percent),
-  bias_pct = sapply(results_list, function(x) x$bias_percent)
+# Run equivalence test
+equiv_results <- equivalence_test(
+  observed = validation_data$agb,
+  predicted = validation_data$predicted_agb,
+  threshold = 0.25,  # ±25% per NASA-CEOS
+  conf_level = 0.90  # 90% confidence interval
 )
 
-print(dbh_error_summary)
+# Display formatted results
+cat("\n", strrep("=", 70), "\n", sep="")
+cat("EQUIVALENCE TEST RESULTS (NASA-CEOS Protocol)\n")
+cat(strrep("=", 70), "\n", sep="")
+cat(sprintf("\nValidation Sample Size: %d trees\n", equiv_results$n_samples))
+cat(sprintf("Equivalence Threshold: ±%.0f%%\n", equiv_results$equivalence_threshold * 100))
+cat(sprintf("Confidence Level: %.0f%%\n\n", equiv_results$confidence_level * 100))
+
+cat("PRIMARY TEST RESULTS:\n")
+cat(sprintf("  Equivalence Status: %s\n", 
+            ifelse(equiv_results$is_equivalent, "EQUIVALENT ✓", "NOT EQUIVALENT ✗")))
+cat(sprintf("  Mean Bias: %.2f%% (%.2f kg)\n", 
+            equiv_results$mean_bias_pct, 
+            equiv_results$mean_bias * equiv_results$mean_observed))
+cat(sprintf("  90%% CI: [%.2f%%, %.2f%%]\n", 
+            equiv_results$ci_lower_pct, 
+            equiv_results$ci_upper_pct))
+
+cat("\nACCURACY METRICS:\n")
+cat(sprintf("  RMSE: %.2f kg (%.1f%%)\n", equiv_results$rmse, equiv_results$rmse_pct))
+cat(sprintf("  MAE: %.2f kg (%.1f%%)\n", equiv_results$mae, equiv_results$mae_pct))
+cat(sprintf("  R²: %.4f\n", equiv_results$r_squared))
+cat(sprintf("  Predictions within ±25%%: %.1f%%\n", equiv_results$within_threshold_pct))
+
+cat("\nSAMPLE CHARACTERISTICS:\n")
+cat(sprintf("  Observed biomass range: %.1f - %.1f kg\n", 
+            equiv_results$min_observed, 
+            equiv_results$max_observed))
+cat(sprintf("  Mean observed biomass: %.1f kg\n", equiv_results$mean_observed))
+cat("="^70, "\n", sep="")
 ```
 
-Expected output:
-
-```         
-  dbh_cm cv_pct bias_pct
-1     10   13.5     4.2
-2     20    6.8     1.1
-3     30    4.5     0.5
-4     40    3.4     0.3
-5     50    2.7     0.2
-```
-
-Key insight: Relative error decreases with tree size due to
-the power law relationship (β \> 2).
-
-### Height Measurement Bias {#sec-height-bias}
-
-Common height measurement methods:
-
-| Method            | Precision | Bias            | Cost     |
-|-------------------|-----------|-----------------|----------|
-| Clinometer        | ±5-10%    | Underestimation | Low      |
-| Laser rangefinder | ±2-5%     | Minimal         | Moderate |
-| TLS (LiDAR)       | ±1-2%     | Minimal         | High     |
-
-Mitigation: Use two-variable allometry (DBH + Height) only
-when height can be measured precisely
-
-------------------------------------------------------------
-
-## Bias Correction {#sec-bias-correction}
-
-### The Baskerville Correction {#sec-baskerville}
-
-Problem: Log-transformation bias in back-transformation
-
-Uncorrected (WRONG): $$
-\hat{B} = \exp(\hat{\alpha} + \hat{\beta} \times \ln(DBH))
-$$
-
-Systematically underestimates biomass!
-
-Baskerville-corrected (CORRECT): $$
-\hat{B} = \exp\left(\hat{\alpha} + \hat{\beta} \times \ln(DBH) + \frac{\sigma^2}{2}\right)
-$$
-
-Where $\sigma^2$ = residual variance from log-scale
-regression
+#### Step 6: Visualize Results
 
 ```{r}
-#| eval: false
-#| label: allometry-baskerville
-#| code-summary: "Demonstrate Baskerville correction necessity"
+library(ggplot2)
 
-library(tidyverse)
-
-# Simulated calibration data
-set.seed(123)
-n_trees <- 50
-calibration_sim <- data.frame(
-  dbh_cm = runif(n_trees, 5, 50)
-)
-
-# True biomass with lognormal error
-calibration_sim$true_biomass_kg <- 0.05 * calibration_sim$dbh_cm^2.5 * exp(rnorm(n_trees, 0, 0.2))
-
-# Fit log-transformed model
-calibration_sim$ln_dbh <- log(calibration_sim$dbh_cm)
-calibration_sim$ln_biomass <- log(calibration_sim$true_biomass_kg)
-
-model_log <- lm(ln_biomass ~ ln_dbh, data = calibration_sim)
-
-# Extract parameters
-alpha_hat <- coef(model_log)[1]
-beta_hat <- coef(model_log)[2]
-sigma_residual <- summary(model_log)$sigma
-
-# Predict on new data
-prediction_data <- data.frame(dbh_cm = seq(5, 50, by = 1))
-
-# UNCORRECTED prediction
-prediction_data$biomass_uncorrected <- exp(alpha_hat + beta_hat * log(prediction_data$dbh_cm))
-
-# BASKERVILLE-CORRECTED prediction
-baskerville_factor <- exp(sigma_residual^2 / 2)
-prediction_data$biomass_corrected <- exp(alpha_hat + beta_hat * log(prediction_data$dbh_cm)) * baskerville_factor
-
-# TRUE biomass (without error)
-prediction_data$biomass_true <- 0.05 * prediction_data$dbh_cm^2.5
-
-# Calculate bias
-prediction_data$bias_uncorrected_pct <- (prediction_data$biomass_uncorrected - prediction_data$biomass_true) / prediction_data$biomass_true * 100
-prediction_data$bias_corrected_pct <- (prediction_data$biomass_corrected - prediction_data$biomass_true) / prediction_data$biomass_true * 100
-
-# Visualize
-ggplot(prediction_data, aes(x = dbh_cm)) +
-  geom_line(aes(y = biomass_true, color = "True"), size = 1.2) +
-  geom_line(aes(y = biomass_uncorrected, color = "Uncorrected"), linetype = "dashed", size = 1) +
-  geom_line(aes(y = biomass_corrected, color = "Baskerville-Corrected"), size = 1) +
-  scale_color_manual(
-    values = c("True" = "black", "Uncorrected" = "red", "Baskerville-Corrected" = "blue"),
-    name = "Prediction Method"
-  ) +
+# Create comprehensive validation plot
+p1 <- ggplot(validation_data, aes(x = agb, y = predicted_agb)) +
+  geom_point(alpha = 0.5, size = 2) +
+  geom_abline(slope = 1, intercept = 0, color = "blue", linewidth = 1) +
+  geom_smooth(method = "lm", color = "red", se = TRUE, linewidth = 1) +
+  # Add equivalence bounds (±25%)
+  geom_abline(slope = 1.25, intercept = 0, color = "orange", 
+              linetype = "dashed", linewidth = 0.8) +
+  geom_abline(slope = 0.75, intercept = 0, color = "orange", 
+              linetype = "dashed", linewidth = 0.8) +
+  coord_fixed(ratio = 1, xlim = c(0, max(validation_data$agb) * 1.1),
+              ylim = c(0, max(validation_data$predicted_agb) * 1.1)) +
+  annotate("text", x = max(validation_data$agb) * 0.7, 
+           y = max(validation_data$agb) * 0.9,
+           label = sprintf("R² = %.3f\nRMSE = %.1f%%\nBias = %.1f%%", 
+                          equiv_results$r_squared, 
+                          equiv_results$rmse_pct,
+                          equiv_results$mean_bias_pct),
+           hjust = 0, size = 4) +
   labs(
-    title = "Importance of Baskerville Correction",
-    subtitle = "Uncorrected back-transformation systematically underestimates biomass",
-    x = "DBH (cm)",
-    y = "Biomass (kg)"
+    title = "Equivalence Test: Observed vs. Predicted Biomass",
+    subtitle = sprintf("Liriodendron tulipifera (n=%d) | %s",
+                      equiv_results$n_samples,
+                      ifelse(equiv_results$is_equivalent, 
+                            "Model EQUIVALENT ✓", "Model NOT EQUIVALENT ✗")),
+    x = "Observed AGB (kg)",
+    y = "Predicted AGB (kg)",
+    caption = "Dashed lines show ±25% equivalence bounds | Blue line = 1:1 | Red line = fitted"
   ) +
   theme_minimal()
 
-# Summary statistics
-cat("Mean bias (uncorrected):", round(mean(prediction_data$bias_uncorrected_pct), 2), "%\n")
-cat("Mean bias (corrected):", round(mean(prediction_data$bias_corrected_pct), 2), "%\n")
+print(p1)
+
+# Relative residual plot with equivalence bounds
+p2 <- ggplot(validation_data, aes(x = agb, y = relative_residual)) +
+  geom_hline(yintercept = 0, color = "blue", linewidth = 1) +
+  geom_hline(yintercept = c(-0.25, 0.25), color = "orange", 
+             linetype = "dashed", linewidth = 1) +
+  geom_point(alpha = 0.5, size = 2) +
+  geom_smooth(method = "loess", color = "red", se = TRUE, linewidth = 1) +
+  # Add confidence interval for mean bias
+  geom_hline(yintercept = equiv_results$ci_lower, color = "darkgreen", 
+             linetype = "dotted", linewidth = 1) +
+  geom_hline(yintercept = equiv_results$ci_upper, color = "darkgreen", 
+             linetype = "dotted", linewidth = 1) +
+  ylim(-0.5, 0.5) +
+  labs(
+    title = "Relative Residuals with Equivalence Bounds",
+    subtitle = sprintf("Mean bias = %.1f%% | 90%% CI: [%.1f%%, %.1f%%]",
+                      equiv_results$mean_bias_pct,
+                      equiv_results$ci_lower_pct,
+                      equiv_results$ci_upper_pct),
+    x = "Observed AGB (kg)",
+    y = "Relative Residual (proportion)",
+    caption = "Orange dashed = ±25% bounds | Green dotted = 90% CI of mean bias"
+  ) +
+  theme_minimal()
+
+print(p2)
+
+# Histogram of relative residuals with equivalence bounds
+p3 <- ggplot(validation_data, aes(x = relative_residual * 100)) +
+  geom_histogram(bins = 30, fill = "steelblue", alpha = 0.7, color = "black") +
+  geom_vline(xintercept = 0, color = "blue", linewidth = 1) +
+  geom_vline(xintercept = c(-25, 25), color = "orange", 
+             linetype = "dashed", linewidth = 1) +
+  geom_vline(xintercept = equiv_results$mean_bias_pct, 
+             color = "red", linewidth = 1) +
+  labs(
+    title = "Distribution of Relative Residuals",
+    subtitle = sprintf("%.1f%% of predictions within ±25%% bounds",
+                      equiv_results$within_threshold_pct),
+    x = "Relative Residual (%)",
+    y = "Frequency",
+    caption = "Blue = zero bias | Orange = equivalence bounds | Red = mean bias"
+  ) +
+  theme_minimal()
+
+print(p3)
 ```
 
-Typical magnitude: Uncorrected models underestimate biomass
-by 5-15% depending on residual variance.
+Interpretation:
 
-------------------------------------------------------------
-
-### Case Study: Species Uncertainty {#sec-case-study}
-
-Dataset: 167 trees across 4 species
-
-```{r}
-#| eval: false
-#| label: allometry-case-study-data
-#| code-summary: "UK forest inventory summary statistics"
-
-library(tidyverse)
-
-# Summary statistics (from your validation report)
-species_summary <- tribble(
-  ~Species, ~Count, ~Mean_DBH_cm, ~SD_DBH, ~Median_DBH, ~Range_DBH,
-  "Betula pendula", 40, 23.7, 23.1, 13.5, 76,
-  "Betula pubescens", 20, 11.1, 3.9, 9.5, 12,
-  "Picea sitchensis", 66, 19.7, 6.5, 20.0, 26,
-  "Sorbus aucuparia", 1, 8.0, NA, NA, 0
-)
-
-kable(
-  species_summary,
-  caption = "Summary Statistics: UK Forest Validation Dataset (n=167)",
-  col.names = c("Species", "n", "Mean DBH (cm)", "SD", "Median", "Range")
-)
-```
-
-### Model Performance {#sec-model-performance}
-
-Evaluation of 11 candidate equations:
-
-```{r}
-#| eval: false
-#| label: allometry-model-performance
-#| echo: false
-
-# Model performance table (from your validation work)
-model_performance <- tribble(
-  ~Model, ~Species, ~Alpha, ~Beta, ~RMSE_kg, ~ART_Status, ~Selected,
-  "M1", "B. pendula", "56.77 (±9.90)", "1.027 (±0.011)", 28.61, "Poor fit", FALSE,
-  "M2", "B. pendula", "52.08 (±9.34)", "0.684 (±0.010)", 27.00, "Poor fit", FALSE,
-  "M3", "B. pendula", "121.04 (±22.55)", "1.181 (±0.025)", 2.38, "Excellent", TRUE,
-  "M4", "B. pendula", "29.82 (±5.22)", "0.512 (±0.006)", 15.09, "Marginal", FALSE,
-  "M5", "B. pendula", NA, NA, NA, NA, FALSE,
-  "M6", "B. pubescens", "7.19 (±0.35)", "-2.200 (±0.059)", 0.14, "Excellent", FALSE,
-  "M7", "B. pubescens", "0.055 (±0.003)", "0.002 (±0.001)", 0.00, "Exceptional", TRUE,
-  "M8", "P. sitchensis", "38.76 (±1.97)", "0.526 (±0.006)", 1.98, "Good", FALSE,
-  "M9", "P. sitchensis", "30.37 (±1.47)", "0.495 (±0.004)", 1.47, "Excellent", TRUE
-)
-
-kable(
-  model_performance,
-  caption = "Model Performance Results with ART-TREES Compliance Assessment",
-  col.names = c("Model", "Species", "α (±SE)", "β (±SE)", "RMSE (kg)", "ART Status", "Selected")
-)
-```
-
-Selected models: 1. M3 (Betula pendula): RMSE = 2.38 kg, UK
-origin, excellent fit 2. M7 (Betula pubescens): RMSE = 0.00
-kg, Sweden (acceptable transferability) 3. M9 (Picea
-sitchensis): RMSE = 1.47 kg, Ireland (same biome)
-
-### Monte Carlo Simulation {#sec-case-study-uncertainty}
-
-Complete implementation for selected models:
-
-```{r}
-#| eval: false
-#| label: allometry-complete-uncertainty
-#| code-summary: "End-to-end uncertainty quantification for ART-TREES"
-
-# =============================================================================
-# ART-TREES COMPLIANT ALLOMETRY UNCERTAINTY ASSESSMENT
-# Combines: Parameter uncertainty + Measurement error + Bias correction
-# =============================================================================
-
-library(tidyverse)
-library(MASS)
-
-# Function: Complete allometry uncertainty assessment
-complete_allometry_uncertainty <- function(
-  calibration_data,
-  validation_data,
-  dbh_error_sd = 0.5,
-  n_sim = 10000
-) {
-  
-  # Step 1: Fit allometric model
-  calibration_data$ln_dbh <- log(calibration_data$dbh_cm)
-  calibration_data$ln_agb <- log(calibration_data$agb_kg)
-  
-  model_fit <- lm(ln_agb ~ ln_dbh, data = calibration_data)
-  
-  # Step 2: Extract parameters and uncertainty
-  param_est <- coef(model_fit)
-  param_vcov <- vcov(model_fit)
-  sigma_residual <- summary(model_fit)$sigma
-  baskerville <- exp(sigma_residual^2 / 2)
-  
-  # Step 3: Monte Carlo simulation
-  biomass_sims <- matrix(NA, nrow = n_sim, ncol = nrow(validation_data))
-  
-  for (i in 1:n_sim) {
-    # Sample parameters
-    params_sim <- mvrnorm(1, mu = param_est, Sigma = param_vcov)
-    alpha_sim <- params_sim[1]
-    beta_sim <- params_sim[2]
-    
-    # Sample DBH with measurement error
-    dbh_sim <- rnorm(nrow(validation_data), 
-                     mean = validation_data$dbh_cm, 
-                     sd = dbh_error_sd)
-    dbh_sim <- pmax(dbh_sim, 0.1)  # Ensure positive
-    
-    # Predict biomass with Baskerville correction
-    ln_biomass_pred <- alpha_sim + beta_sim * log(dbh_sim)
-    biomass_sims[i, ] <- exp(ln_biomass_pred) * baskerville
-  }
-  
-  # Step 4: Calculate statistics
-  results_summary <- data.frame(
-    dbh_cm = validation_data$dbh_cm,
-    biomass_mean_kg = colMeans(biomass_sims),
-    biomass_sd_kg = apply(biomass_sims, 2, sd),
-    ci_lower_kg = apply(biomass_sims, 2, quantile, 0.05),
-    ci_upper_kg = apply(biomass_sims, 2, quantile, 0.95)
-  ) %>%
-    mutate(
-      uncertainty_pct = (ci_upper_kg - ci_lower_kg) / (2 * biomass_mean_kg) * 100,
-      hw_90 = (ci_upper_kg - ci_lower_kg) / 2
-    )
-  
-  # Step 5: Validation metrics
-  if ("observed_agb_kg" %in% colnames(validation_data)) {
-    results_summary$observed_kg <- validation_data$observed_agb_kg
-    results_summary$bias_pct <- (results_summary$biomass_mean_kg - results_summary$observed_kg) / results_summary$observed_kg * 100
-    
-    overall_rmse <- sqrt(mean((results_summary$biomass_mean_kg - results_summary$observed_kg)^2))
-    overall_bias <- mean(results_summary$bias_pct)
-  } else {
-    overall_rmse <- NA
-    overall_bias <- NA
-  }
-  
-  return(list(
-    summary = results_summary,
-    simulations = biomass_sims,
-    model_fit = model_fit,
-    rmse = overall_rmse,
-    mean_bias_pct = overall_bias
-  ))
-}
-
-# Example usage with Model M3 (Betula pendula)
-# Calibration data (from published equation)
-calibration_m3 <- data.frame(
-  dbh_cm = seq(5, 40, by = 5),
-  agb_kg = exp(-2.7584 + 2.6134 * log(seq(5, 40, by = 5)))
-)
-
-# Validation data (field measurements)
-validation_m3 <- data.frame(
-  dbh_cm = c(10, 15, 20, 25, 30, 35),
-  observed_agb_kg = c(12, 35, 68, 110, 165, 235)
-)
-
-# Run complete assessment
-uncertainty_m3 <- complete_allometry_uncertainty(
-  calibration_data = calibration_m3,
-  validation_data = validation_m3,
-  dbh_error_sd = 0.5,
-  n_sim = 10000
-)
-
-# Display results
-print(uncertainty_m3$summary)
-cat(sprintf("\nOverall RMSE: %.2f kg\n", uncertainty_m3$rmse))
-cat(sprintf("Mean bias: %.2f%%\n", uncertainty_m3$mean_bias_pct))
-```
-
-------------------------------------------------------------
-
-## ART Uncertainty Deduction {#sec-allometry-art-trees}
-
-Equation 11 [@artArchitectureREDDTransactions2021, pp. 46]
-
-$$
-UA_t = 0.524417 \times \frac{HW_{90\%}}{1.645006}
-$$
-
-Example calculation:
-
-```{r}
-#| eval: false
-#| label: allometry-uncertainty-deduction
-#| code-summary: "Calculate ART-TREES uncertainty deduction"
-
-# Example: Plot-level biomass estimate
-plot_data <- data.frame(
-  plot_id = 1:3,
-  biomass_mean_Mg_ha = c(86.94, 112.59, 260.21),
-  hw_90_Mg_ha = c(8.5, 11.0, 25.0)
-)
-
-# Calculate uncertainty adjustment factor
-plot_data <- plot_data %>%
-  mutate(
-    hw_90_pct = hw_90_Mg_ha / biomass_mean_Mg_ha,
-    UA_t = 0.524417 * (hw_90_pct / 1.645006),
-    uncertainty_deduction_Mg_ha = biomass_mean_Mg_ha * UA_t
-  )
-
-print(plot_data %>% select(plot_id, biomass_mean_Mg_ha, hw_90_pct, UA_t, uncertainty_deduction_Mg_ha))
-
-# Total uncertainty deduction
-total_deduction_pct <- sum(plot_data$uncertainty_deduction_Mg_ha) / sum(plot_data$biomass_mean_Mg_ha) * 100
-cat(sprintf("\nTotal uncertainty deduction: %.1f%%\n", total_deduction_pct))
-```
-
-### CRF Reporting Format {#sec-allometry-crf}
-
-Required documentation:
-
-```{r}
-#| eval: false
-#| label: allometry-crf-table
-#| echo: false
-
-# CRF-compatible reporting table
-allometry_crf <- data.frame(
-  Parameter = c(
-    "Species",
-    "Allometric equation",
-    "Number of calibration trees",
-    "DBH range (cm)",
-    "Parameter α (90% CI)",
-    "Parameter β (90% CI)",
-    "RMSE (kg)",
-    "Systematic bias (%)",
-    "DBH measurement error (cm)",
-    "Overall uncertainty (90% CI) (%)"
-  ),
-  Betula_pendula = c(
-    "Betula pendula",
-    "exp(-2.7584 + 2.6134 × ln(D))",
-    "50",
-    "2.9-26",
-    "-2.758 [-2.801, -2.715]",
-    "2.613 [2.588, 2.638]",
-    "2.38",
-    "-1.2",
-    "±0.5",
-    "8.7"
-  ),
-  Picea_sitchensis = c(
-    "Picea sitchensis",
-    "0.028 × D^2.71",
-    "40",
-    "2-40",
-    "N/A (power law)",
-    "2.71 [2.67, 2.75]",
-    "1.47",
-    "+0.8",
-    "±0.5",
-    "9.2"
-  )
-)
-
-kable(
-  allometry_crf,
-  caption = "ART-TREES CRF Table: Allometry Uncertainty Summary",
-  col.names = c("Parameter", "Betula pendula (M3)", "Picea sitchensis (M9)")
-)
-```
-
-------------------------------------------------------------
-
-## Notes on Next Steps {#sec-allometry-summary}
-
-For \<10% allometry uncertainty: 1. Use geographically
-proximate equations (same biome/country) 2. Validate with
-≥50 independent trees per species 3. Apply Baskerville
-correction to log-transformed models 4. Quantify DBH
-measurement error (±0.5 cm target) 5. Conduct Monte Carlo
-simulation (n=10,000)
-
-For 10-20% uncertainty (acceptable Tier 2): - Generic
-pantropical/temperate equations - Validation with 25-50
-trees - Standard regression uncertainty quantification
-
-For \>20% uncertainty (Tier 1, high deductions): - IPCC
-default biomass expansion factors (BEFs) - No validation
-data - Generic equations from distant regions
-
-### Investment Priorities {#sec-allometry-investment}
-
-ROI-ranked interventions:
-
-| Intervention | Cost | Uncertainty Reduction | Credit Gain (1M tCO₂e project) |
-|---------------|---------------|---------------|----------------|
-| Validate published equations | \$5-10k | 5-10% | \$25-50k revenue |
-| Develop country-specific equations | \$15-30k | 20-30% | \$100-150k revenue |
-| Tier 2 destructive sampling | \$50-100k | 30-40% | \$150-200k revenue |
-| Improve DBH measurement | \$2-5k | 2-5% | \$10-25k revenue |
-
-Strategic recommendation: For most projects, validating
-published equations (equivalence testing) provides the best
-ROI.
-
-### Progression to Chapter 3 {#sec-allometry-to-chapter3}
-
-Chapter 3: Emission Factors Uncertainty will address:
-
-1.  IPCC default uncertainties: CH₄ (±30-40%), N₂O (±50-60%)
-2.  Combustion completeness: Fire intensity and fuel
-    moisture effects
-3.  Gas-specific factors: Species-dependent emission ratios
-4.  Field measurement protocols: FTIR, eddy covariance
-
-Critical linkage: Allometry provides biomass → Emission
-factors convert biomass to GHG
-
-$$
-\text{Emissions} = \underbrace{\text{Area}}_{\text{Ch 1}} \times \underbrace{\text{Biomass}}_{\text{Ch 2}} \times \underbrace{G_{ef}}_{\text{Ch 3}}
-$$
-
-Next steps: Quantify emission factor uncertainty to enable
-full error propagation in Chapter 4.
-
-------------------------------------------------------------
-
-## References {#sec-allometry-references}
-
-Chave, J., Andalo, C., Brown, S., et al. (2005). Tree
-allometry and improved estimation of carbon stocks and
-balance in tropical forests. Oecologia, 145(1), 87-99.
-
-Duncanson, L., Disney, M., Armston, J., et al. (2021).
-Aboveground Woody Biomass Product Validation Good Practices
-Protocol. NASA-CEOS. doi:10.5067/DOC/CEOSWGCV/LPV/AGB.001
-
-Paul, K.I., Radtke, P.J., Roxburgh, S.H., et al. (2018).
-Validation of allometric biomass models: How to have
-confidence in the application of existing models. Forest
-Ecology and Management, 412, 70-79.
-
-Molto, Q., Rossi, V., & Blanc, L. (2013). Error propagation
-in biomass estimation in tropical forests. Methods in
-Ecology and Evolution, 4(2), 175-183.
-
-Picard, N., Bosela, F.B., & Rossi, V. (2015). Reducing the
-error in biomass estimates strongly depends on model
-selection. Annals of Forest Science, 72(6), 811-823.
-
-Clifford, D., Cressie, N., England, J.R., Roxburgh, S.H., &
-Paul, K.I. (2013). Correction factors for unbiased,
-efficient estimation and prediction of biomass from log-log
-allometric models. Forest Ecology and Management, 310,
-375-381.
+-   Equivalent: Model can be applied without modification
+-   Not equivalent: Develop local calibration or use
+    alternative model
