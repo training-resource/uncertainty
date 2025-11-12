@@ -1,36 +1,18 @@
 {
-	"name": "R (Community)",
-	"build": {
-		"dockerfile": "Dockerfile",
-	},
-	"runArgs": [ "--cap-add=SYS_PTRACE", "--security-opt", "seccomp=unconfined" ],
+  "name": "RStudio Codespace",
+  // Use a Rocker image with RStudio Server built-in
+  "image": "ghcr.io/rocker-org/devcontainer/tidyverse:4.3",
 
-	// Set *default* container specific settings.json values on container create.
-	"settings": {
-		"terminal.integrated.shell.linux": "/bin/bash",
-		"r.rterm.linux": "/usr/local/bin/radian",
-		"r.bracketedPaste": true,
-		"workbench.colorTheme": "Night Owl"
-	},
+  // Configuration to forward the RStudio port (8787)
+  "forwardPorts": [8787],
 
-	// Add the IDs of extensions you want installed when the container is created.
-	"extensions": [
-		// R extensions
-		"ikuyadeu.r",
-		"REditorSupport.r-lsp",
-		// Utility extensions, feel free to adjust them
-		"coenraads.bracket-pair-colorizer-2",
-		"streetsidesoftware.code-spell-checker",
-		"eamodio.gitlens",
-		"sdras.night-owl"
-	]
+  // Command to run after the container is created to ensure RStudio starts and opens
+  "postCreateCommand": "bash .devcontainer/welcome.sh",
 
-	// Use 'forwardPorts' to make a list of ports inside the container available locally.
-	// "forwardPorts": [],
-
-	// Use 'postCreateCommand' to run commands after the container is created.
-	// "postCreateCommand": "R --version",
-
-	// Uncomment to connect as a non-root user. See https://aka.ms/vscode-remote/containers/non-root.
-	// "remoteUser": "docker"
+  // Customization to automatically open the RStudio URL
+  "customizations": {
+    "codespaces": {
+      "openFiles": [] // No files to open in VS Code interface, RStudio will open separately
+    }
+  }
 }
