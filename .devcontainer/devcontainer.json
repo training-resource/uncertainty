@@ -1,49 +1,19 @@
 {
-	"name": "R (rocker/tidyverse)",
-   	"image": "ghcr.io/rocker-org/devcontainer/tidyverse:4.3",
-
-	"features": {
-		"ghcr.io/rocker-org/devcontainer-features/quarto-cli:1": {},
-		"ghcr.io/rocker-org/devcontainer-features/apt-packages:1": {
-            	"packages": "make,gcc,g++,cmake,clang-tidy,clang-format"
-		},
-	    	"ghcr.io/rocker-org/devcontainer-features/r-packages:1": {
-			"packages": "cli,rlang,github::r4ss/r4ss,github::ss3sim/ss3sim,ggplot2,dplyr,scales,covr",
-			"installSystemRequirements": true
-		}
-	},
-	"customizations": {
-	  "vscode": {
-		  "settings": {
-			"r.rterm.linux": "/usr/local/bin/radian",
-			"r.bracketedPaste": true,
-			"r.plot.useHttpgd": true,
-			"[r]": {
-			  "editor.wordSeparators": "`~!@#%$^&*()-=+[{]}\\|;:'\",<>/?"
-			}
-		  },
-		  "extensions":[
-			"GitHub.codespaces",
-			"hbenl.vscode-test-explorer",
-			"reditorsupport.r",
-			"rdebugger.r-debugger",
-			"ms-vsliveshare.vsliveshare",
-			"mathematic.vscode-pdf"
-			]
-	  }
-	},
-	  "forwardPorts": [8787],
-	  "portsAttributes": {
-		"8787": {
-			"label": "Rstudio",
-			"requireLocalPort": true,
-			"onAutoForward": "ignore"
-		}
-	  },
-	  // "updateContentCommand": "python3 -m pip install -r requirements.txt",		  
-	  // Use 'postCreateCommand' to run commands after the container is created.
-	  "postCreateCommand": "Rscript .devcontainer/install.R",
-	  "postAttachCommand": "sudo rstudio-server start",
-	  "remoteUser": "rstudio"
-	
+  "name": "RStudio Geospatial Codespace",
+  "dockerComposeFile": "./docker-compose.yml",
+  "service": "rstudio",
+  "workspaceFolder": "/home/rstudio/workspace",
+  "settings": {
+    "terminal.integrated.shell.linux": "/bin/bash"
+  },
+  "forwardPorts": [8787],
+  "portsAttributes": {
+    "8787": {
+      "label": "rstudio",
+      "onAutoForward": "openPreview"
+    }
+  },
+"postStartCommand": "chmod +x /home/rstudio/workspace/post_start.sh && /home/rstudio/workspace/post_start.sh",
+  "extensions": []
 }
+
