@@ -1,3 +1,19 @@
+
+Codespace installation steps:
+
+1. web-r extension (Bash)
+2. codespace rstudio
+3. Github Classroom: https://classroom.github.com/classrooms/243510957-redd-uncertainty/new_assignments/continue?current_step=1&skip_to=2
+
+
+
+
+
+
+
+
+
+
 ---
 execute:
   echo: true

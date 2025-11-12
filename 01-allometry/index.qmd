@@ -10,6 +10,9 @@ format:
     toc-title: "**On this page**"
     highlight-style: pygments
     page-layout: article
+    df-print: tibble
+    resources: 
+      - data/*
 
 editor_options: 
   markdown: 
@@ -24,48 +27,45 @@ citeproc: true
 
 ## Overview {.unnumbered}
 
-Allometric equations translate tree diameter measurements
-into biomass estimates, forming the foundation of forest
-carbon accounting. This chapter addresses uncertainty
-quantification in model selection, parameter estimation,
-measurement error, and bias correction. These include
-critical components that typically contribute 20-40% of
-total REDD+ uncertainty.
+Allometric equations represent the proportional and scaling
+relationships between different tree dimensions, such as the
+relationship between a tree's diameter and its height,
+biomass, or crown size. These relationships translate tree
+diameter measurements into biomass estimates, forming the
+foundation of forest carbon accounting. This chapter
+addresses uncertainty quantification in processes of
+allometric model selection, parameter estimation, correction
+of measurement error and predictive bias.
 
 ### Environment Setup {.unnumbered}
 
 ```{r}
+#| comment: NA
 #| warning: false
 #| message: false
+#| error: false
 #| echo: true
-#| comment: NA
-
 easypackages::packages(
-  "bslib", 
-  "cols4all", "covr", "cowplot", 
-  "dendextend", "digest","DiagrammeR","dtwclust", "downlit", 
-  "e1071", "exactextractr","elevatr", 
-  "FNN", "future", "forestdata",
-  "gdalcubes", "gdalUtilities", "geojsonsf", "geos", "ggplot2", "ggstats", 
-  "ggspatial", "ggmap", "ggplotify", "ggpubr", "ggrepel", "giscoR", 
-  "hdf5r", "httr", "httr2", "htmltools",
-  "jsonlite", 
-  "kohonen", 
-  "leaflet.providers", "leafem", "libgeos","luz","lwgeom", "leaflet", "leafgl",
-  "mapedit", "mapview", "maptiles", "methods", "mgcv", 
-  "ncdf4", "nnet", 
-  "openxlsx", "parallel", "plotly", 
-  "randomForest", "rasterVis", "raster", "Rcpp", "RcppArmadillo", 
-  "RcppCensSpatial","rayshader", "RcppEigen", "RcppParallel", 
-  "RColorBrewer", "reactable", "rgl", "rsconnect","RStoolbox", "rts", 
-  "s2", "sf", "scales", "sits","spdep", "stars", "stringr","supercells", 
-  "terra", "testthat", "tidyverse", "tidyterra","tools", 
-  "tmap", "tmaptools", "terrainr", 
-  "xgboost",
-  prompt = F)
-
-#mapviewOptions(fgb = FALSE)
-sf::sf_use_s2(use_s2 = FALSE)
+  "ropensci/allodb", "animation", 
+  "BIOMASS",
+  "cols4all", "covr", "cowplot", "caret",
+  "dataMaid", "DescTools", "dplyr",
+  "FawR", "ForestToolsRS", "forestdata",
+  "ggplot2", "giscoR", 
+  "htmltools",
+  "janitor", "jsonlite", 
+  "lattice", "leaflet.providers", "leafem", "lwgeom", "leaflet",
+  "kableExtra", "kernlab", "knitr", 
+  "mapedit", "mapview", "maptiles", "Mlmetrics", 
+  "olsrr", "openxlsx",
+  "plotly", "psych", 
+  "randomForest", "rasterVis", "raster","RColorBrewer", "rmarkdown", "renv",
+  "s2", "sf", "scales", "sits","spdep", "stars", "stringr",
+  "terra", "tmap", "tmaptools", "tidymodels", "tidyverse", "tune", 
+  "useful",
+  "webr",
+  prompt = F
+  )
 ```
 
 ```{r}
@@ -73,6 +73,15 @@ sf::sf_use_s2(use_s2 = FALSE)
 #| message: false
 #| echo: false
 #| comment: NA
+
+#install.packages("easypackages")
+sf::sf_use_s2(use_s2 = FALSE)
+set.seed(8787)
+#renv::init()
+#renv::activate()
+#renv::snapshot()
+#renv::update()s
+#renv::restore() # Debugger, Lifesaver
 
 options(repos = c(CRAN = "https://cloud.r-project.org"),
         htmltools.dir.version = FALSE, 
@@ -101,7 +110,7 @@ div.column {
   display: block;
   height:200px;
   width: 200px;
-  background-image: url('https://raw.githubusercontent.com/seamusrobertmurphy/map-templates/refs/heads/main/assets/outputs/01-site-map.png');
+  background-image: url('https://winrock.org/wp-content/uploads/2021/12/Winrock-logo-R.png');
   background-size: contain;
   background-position: 50% 50%;
   padding-top: 80px !important;
@@ -111,15 +120,13 @@ div.column {
 
 ------------------------------------------------------------
 
-## The Allometric Relationship {#sec-allometry-relationship}
-
-Fundamental equation:
+## The Allometric Equation {#sec-allometry-relationship}
 
 $$
 AGB = \alpha \times DBH^{\beta}
 $$
 
-Or in logarithmic form:
+^[*Or in logarithmic form...*]{.smallcaps}^
 
 $$
 \ln(AGB) = \ln(\alpha) + \beta \times \ln(DBH) + \epsilon
@@ -127,109 +134,99 @@ $$
 
 Where:
 
-AGB: Aboveground biomass (kg) - DBH: Diameter at breast
-height (cm) - α, β: Allometric parameters
-(species/biome-specific) - ε: Random error term
+-   AGB: Aboveground biomass (kg)
+-   DBH: Diameter at breast height (cm)
+-   α, β: Allometric parameters (species/biome-specific)
+-   ε: Random error term
 
-### Sources of Uncertainty {#sec-allometry-sources}
+Allometric equations predict aboveground biomass from
+diameter measurements using species or biome-specific
+parameters. Uncertainty compounds from three main sources:
+model selection (tropical vs. temperate equations,
+species-specific vs. generic), parameter estimation
+(regression standard errors, sample sizes), and field
+measurements (DBH precision ±0.5-1.0 cm, clinometer errors,
+wood density variability). Log-transformation adds
+complexity through back-transformation bias that must be
+corrected to avoid systematically underestimating biomass.
 
-1\. Model selection uncertainty: - Geographic
-transferability (tropical vs. temperate) - Species-specific
-vs. generic equations - Functional form (power law vs.
-polynomial)
+#### ART Exemption 
 
-2\. Parameter estimation uncertainty: - Regression
-coefficient standard errors - Sample size of calibration
-dataset - Variance-covariance structure
+ART-TREES V2.0 Section 8 excludes structural uncertainty in
+allometric models from uncertainty deductions when models
+are applied consistently between baseline and crediting
+periods. Since systematic bias cancels in net change
+calculations, you only need to quantify random error:
+parameter estimation uncertainty, measurement precision, and
+sampling uncertainty when scaling from plots to landscapes.
 
-3\. Measurement uncertainty: - DBH measurement precision
-(±0.5-1.0 cm) - Height measurement bias (clinometer error) -
-Wood density sampling variability
-
-4\. Bias correction requirements: - Log-transformation
-back-transformation bias - Non-linear model prediction
-intervals - Censored data and zero-inflation
-
-### ART Allometry Exemption {#sec-allometry-exemption}
-
-Critical policy: ART-TREES V2.0 Section 8 states:
-
-> "Structural uncertainty in allometric models is excluded
-> from uncertainty deductions when models are applied
-> consistently between baseline and crediting periods."
-
-Rationale: - Systematic bias cancels in net change
-calculations - Reduces burden on project developers -
-Focuses uncertainty on precision (random error), not
-accuracy (systematic bias)
-
-What must still be reported: - Parameter estimation
-uncertainty (confidence intervals) - Measurement precision
-(DBH, height, wood density) - Sampling uncertainty
-(plot-to-landscape scaling) - Model structural uncertainty
-(exempted for consistent application)
-
-Strategic implication: Projects can reduce uncertainty
-deductions by: 1. Demonstrating consistent model application
-2. Upgrading from Tier 1 (IPCC defaults) to Tier 2
-(country-specific) 3. Investing in measurement precision
-rather than destructive sampling
+This creates a strategic advantage: reduce uncertainty
+deductions by maintaining consistent model application
+across time periods, upgrading from IPCC Tier 1 defaults to
+country-specific Tier 2 parameters, and investing in
+measurement precision rather than destructive sampling.
+Let's implement this with Monte Carlo simulation.
 
 ------------------------------------------------------------
 
 ## Model Selection {#sec-model-selection}
 
-### Available Allometric Equations {#sec-available-equations}
-
-Example dataset: Four species in UK temperate forest
+We'll use the `allodb` package to access global allometric
+equations and demonstrate uncertainty propagation with real
+forest inventory data. The example dataset `scbi_stem1`
+comes from the Smithsonian Conservation Biology Institute
+[SCBI
+ForestGEO](https://docs.ropensci.org/allodb/reference/scbi_stem1.html)
+plot in Front Royal, Virginia, which comprises a subset from
+the 2008 initial census of a 25.6-hectare (ha) temperate
+mixed deciduous forest.
 
 ```{r}
+#| label: allometry-import
 #| eval: false
-#| label: allometry-equation-database
-#| code-summary: "Database of available allometric equations"
+# load allometry database
+library("allodb")
 
-library(tidyverse)
-library(knitr)
-
-# Database of allometric equations
-allometric_equations <- tribble(
-  ~Species, ~Model_ID, ~Form, ~Alpha, ~Beta, ~DBH_Range_cm, ~Country, ~Reference,
-  
-  # Betula pendula (Silver Birch)
-  "Betula pendula", "M1", "α×D^β", 0.25110, 2.29000, "All", "UK", "Bunce (1968)",
-  "Betula pendula", "M2", "exp(α+β×ln(D))", -2.41660, 2.42270, "2.9-30", "UK", "Bunce (1968)",
-  "Betula pendula", "M3", "exp(α+β×ln(D))", -2.75840, 2.61340, "2.9-26", "UK", "Bunce (1968)",
-  "Betula pendula", "M4", "exp(α+β×ln(D))", -2.16250, 2.30780, "3.3-16", "UK", "Hamilton (1975)",
-  "Betula pendula", "M5", "exp(α+β×ln(D))", -2.64230, 2.46780, "3.5-23", "UK", "Hamilton (1975)",
-  
-  # Betula pubescens (Downy Birch)
-  "Betula pubescens", "M6", "exp(α+β×ln(D))", -2.16200, 2.30780, "10-90", "UK", "Matthews (1987)",
-  "Betula pubescens", "M7", "α×D^β", 0.00029, 2.50038, "0.8-8.5", "Sweden", "Johansson (1999)",
-  
-  # Picea sitchensis (Sitka Spruce)
-  "Picea sitchensis", "M8", "exp(α+β×ln(D))", -3.03000, 2.55670, "3-283", "USA", "Gholz (1979)",
-  "Picea sitchensis", "M9", "α×D^β", 0.02800, 2.71000, "2-40", "Ireland", "Black (2004)",
-  
-  # Sorbus aucuparia (Rowan)
-  "Sorbus aucuparia", "M10", "exp(α+β×ln(D))", -2.21180, 2.41330, "3-64", "USA", "Jenkins (2003)",
-  "Sorbus aucuparia", "M11", "exp(α+β×ln(D))", -2.92550, 2.41090, "3-60", "USA", "Jenkins (2003)"
-)
-
-kable(
-  allometric_equations,
-  caption = "Available Allometric Equations by Species",
-  col.names = c("Species", "Model", "Form", "α", "β", "DBH Range (cm)", "Country", "Reference")
-)
+# import dataset from allodb
+data(scbi_stem1)
 ```
 
-Output:
+```{r}
+#| context: setup
+#| echo: false
 
-```         
-| Species | Model | Form | α | β | DBH Range | Country | Reference |
-|---------|-------|------|---|---|-----------|---------|-----------|
-| Betula pendula | M1 | α×D^β | 0.251 | 2.29 | All | UK | Bunce (1968) |
-| Betula pendula | M2 | exp(α+β×ln(D)) | -2.417 | 2.423 | 2.9-30 | UK | Bunce (1968) |
-| ... | ... | ... | ... | ... | ... | ... | ... |
+# Download the data from your published GitHub Pages URL
+url <- "https://yourusername.github.io/yourrepo/data/scbi_stem1.csv"
+download.file(url, "scbi_stem1.csv")
+
+# Load it into the R environment
+scbi_stem1 <- read.csv("scbi_stem1.csv")
+```
+
+```{r}
+#| message: false
+#| error: false
+#| echo: false
+#| eval: true
+#| comment: NA
+scbi_stem1 = read.csv("./data/scbi_stem1.csv")
+```
+
+In the following chunk, we hit "Run Code" to visualize the top rows and 
+examine the dimensions of the dataset. Results should show
+this dataset containing 2,287 stem measurements from mature
+secondary eastern deciduous forest dominated by tulip poplar
+(*Liriodendron tulipifera*), oaks (*Quercus* spp.), and
+hickories (*Carya* spp.). representing typical Appalachian
+mixed hardwood of the Blue Ridge and Piedmont districts.
+
+
+```{webr-r}
+#| code-summary: "Database of available allometric equations"
+
+# tabulate data
+head(scbi_stem1)
+psych::describe(scbi_stem1)
 ```
 
 ### Equivalence Testing Framework {#sec-equivalence-testing}
@@ -1042,7 +1039,7 @@ data - Generic equations from distant regions
 ROI-ranked interventions:
 
 | Intervention | Cost | Uncertainty Reduction | Credit Gain (1M tCO₂e project) |
-|--------------|--------------|--------------|--------------------|
+|---------------|---------------|---------------|----------------|
 | Validate published equations | \$5-10k | 5-10% | \$25-50k revenue |
 | Develop country-specific equations | \$15-30k | 20-30% | \$100-150k revenue |
 | Tier 2 destructive sampling | \$50-100k | 30-40% | \$150-200k revenue |

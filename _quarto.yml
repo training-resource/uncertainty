@@ -29,6 +29,7 @@ book:
 
   appendices:
     - references/index.qmd
+    - references/glossary.qmd
 
 bibliography: references/references.bib
 csl: references/apa.csl

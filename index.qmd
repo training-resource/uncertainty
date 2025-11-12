@@ -44,10 +44,6 @@ easypackages::packages(
   "tidyverse", 
   "viridis",
   prompt = F)
-
-# bleeding edges
-remotes::install_github('coolbutuseless/codespacer')
-codespacer::install_codespace_files()
 ```
 
 ## Overview {.unnumbered}
@@ -60,9 +56,7 @@ Standard V2.0 [@artREDDEnvironmentalExcellence2021;
 uncertainty as merely a penalty, this framework treats it as
 a strategic tool for identifying dominant error sources and
 optimizing credit issuance
-[@camaraUncertaintyActiveLearning;
-@duncansonAbovegroundWoodyBiomass2021;
-@camaraUncertaintyActiveLearning;
+[@camaraUncertaintyActiveLearning2024; @simoes2021satellite;
 @duncansonAbovegroundWoodyBiomass2021].
 
 Projects investing in targeted uncertainty reduction can
@@ -70,9 +64,7 @@ achieve 5-15% more credits through reduced deductions,
 premium pricing from enhanced credibility, lower
 verification costs, and methodological improvements.
 However, monitoring costs must be weighed against credit
-value [@kohler2010towards]. Albeit, at a certain point,
-monitoring costs will exhibit diminishing returns and exceed
-the value gains from recovered credits
+value [@kohler2010towards].
 
 #### Current State of Practice
 
@@ -82,33 +74,32 @@ of participating countries report activity data uncertainty,
 only 4-14% report emission factor uncertainty and allometric
 uncertainty [@butler2024uncertainty]. This asymmetry does
 not reflect the actual relative importance of these sources.
-@pelletierREDDEmissionsEstimation2013 demonstrated through
-Panama case studies that methodological choices in emission
-factors and modelling assumptions can produce emission flux
-variations ranging from 4.2% to 262.2% of reference levels.
-Rather than technical limitations alone, this selective
-reporting reflects a fundamental misalignment between
-scientific rigor and financial incentives in results-based
-payment systems.
+Research has demonstrated that methodological choices in
+emission factors and modelling assumptions can produce
+emission flux variations ranging from 4.2% to 262.2% of
+reference levels [@pelletierREDDEmissionsEstimation2013].
+Rather than technical limitations alone, such selective
+reporting reveals a worrying misalignment between rigor and
+financial incentives in results-based payment systems.
 
 #### The Perverse Incentive
 
-@butler2024uncertainty identify a critical policy failure of
-this selective uncertainty reporting: "Because uncertainty
-factors into the payments made, there is a perverse
-incentive for countries to omit or underestimate sources of
-uncertainty. Including more sources of uncertainty makes the
-confidence intervals wider, giving a false impression that
-the quality of the estimates is worse." This creates a
-troubling paradox where comprehensive uncertainty
-assessment, the hallmark of rigorous science, leads to wider
-confidence intervals and consequently lower payments, while
-incomplete uncertainty assessment produces narrower
-confidence intervals and higher payments. Countries are
-effectively penalized for methodological rigor and
-transparency, incentivizing selective reporting that
-undermines the environmental integrity of the entire REDD+
-framework.
+@butler2024uncertainty described this critical policy
+failure of selective uncertainty reporting as a kind of
+perverse incentive: "Because uncertainty factors into the
+payments made, there is a perverse incentive for countries
+to omit or underestimate sources of uncertainty. Including
+more sources of uncertainty makes the confidence intervals
+wider, giving a false impression that the quality of the
+estimates is worse." This creates a troubling paradox where
+comprehensive uncertainty assessment, the hallmark of
+rigorous science, leads to wider confidence intervals and
+consequently lower payments, while incomplete uncertainty
+assessment produces narrower confidence intervals and higher
+payments. Countries are effectively penalized for
+methodological rigor and transparency, incentivizing
+selective reporting that undermines the environmental
+integrity of the entire REDD+ framework.
 
 Recognizing this fundamental design flaw, some results-based
 payment programs have implemented mitigation strategies to
@@ -127,49 +118,7 @@ refinement.
 
 ## Uncertainty Requirements
 
-#### IPCC Requirements
-
-The IPCC Good Practice Guidance establishes five key
-principles for uncertainty reporting:
-
-1.  Transparency: Document all assumptions, data sources,
-    and methods
-2.  Consistency: Apply methods uniformly across time series
-3.  Comparability: Enable cross-country and cross-sector
-    comparison
-4.  Completeness: Include all relevant sources and sinks
-5.  Accuracy: Minimize bias and reduce uncertainties
-
-Uncertainty reporting tiers:
-
-| Tier | Approach | Uncertainty Method | Typical Uncertainty |
-|----|----|----|----|
-| Tier 1 | IPCC defaults | Expert judgment ranges | ±50-100% |
-| Tier 2 | Country-specific | Propagation of errors | ±30-50% |
-| Tier 3 | Detailed inventory | Monte Carlo simulation | ±20-30% |
-
-##### Managed Land Proxy
-
-The Managed Land Proxy (MLP) approach affects uncertainty
-treatment in the following components:
-
--   Fire detection omission/commission errors
--   Fuel consumption parameter variance
--   Emission factor measurement error
--   Spatial aggregation uncertainty
-
-The Managed Land Proxy (MLP) approach excludes from
-uncertainty the following components:
-
--   Inter-annual variability (IAV) from natural disturbances
--   Climate-driven fluctuations in fire regimes
--   Long-term carbon balance assumptions
-
-Rationale: IAV represents true variation, not measurement
-error, and is expected to balance over multi-decadal
-timescales.
-
-#### ART Requirements
+#### ART-TREES Requirements
 
 Section 8 of the ART Standard mandates the following
 criteria:
@@ -193,7 +142,7 @@ Penalty threshold: Uncertainty deductions apply when 90% CI
 half-width exceeds threshold, calculated as:
 
 $$
-\text{Deduction applies when: } \frac{HW_{90\%}}{\text{Mean estimate}} > \text{Threshold}
+\text{} \frac{HW_{90\%}}{\text{Mean estimate}} > \text{Threshold}
 $$
 
 Equation 10: Uncertainty adjustment factor
@@ -208,9 +157,51 @@ $$
 UNC_t = (GHGER_t + GHGREMV_t) \times UA_t
 $$
 
+#### IPCC Guidelines
+
+The IPCC Good Practice Guidance establishes five key
+principles for uncertainty reporting:
+
+1.  Transparency: Document all assumptions, data sources,
+    and methods
+2.  Consistency: Apply methods uniformly across time series
+3.  Comparability: Enable cross-country and cross-sector
+    comparison
+4.  Completeness: Include all relevant sources and sinks
+5.  Accuracy: Minimize bias and reduce uncertainties
+
+Uncertainty reporting tiers:
+
+| Tier | Approach | Uncertainty Method | Typical Uncertainty |
+|----|----|----|----|
+| Tier 1 | IPCC defaults | Expert judgment ranges | ±50-100% |
+| Tier 2 | Country-specific | Propagation of errors | ±30-50% |
+| Tier 3 | Detailed inventory | Monte Carlo simulation | ±20-30% |
+
+#### IPCC's Managed Land Proxy
+
+The Managed Land Proxy (MLP) approach affects uncertainty
+treatment in the following components:
+
+-   Fire detection omission/commission errors
+-   Fuel consumption parameter variance
+-   Emission factor measurement error
+-   Spatial aggregation uncertainty
+
+The Managed Land Proxy (MLP) approach excludes from
+uncertainty the following components:
+
+-   Inter-annual variability (IAV) from natural disturbances
+-   Climate-driven fluctuations in fire regimes
+-   Long-term carbon balance assumptions
+
+Rationale: IAV represents true variation, not measurement
+error, and is expected to balance over multi-decadal
+timescales.
+
 ------------------------------------------------------------
 
-## Uncertainty Sources
+## Uncertainty Drivers
 
 This guide addresses the dominant sources of uncertainty in
 REDD+ carbon accounting, organized by typical magnitude of
@@ -218,15 +209,15 @@ contribution to total variance:
 
 ### Chapter 1: Allometry {#sec-overview-ch2}
 
-@pelletierREDDEmissionsEstimation2013 demonstrate that
-allometric models are a critical source of systematic bias,
-and "a globally concerted effort to improve allometric
-equations for tropical forests" is needed. Unlike random
-measurement errors, allometric uncertainty is systematic,
-meaning it cannot be reduced by simply measuring more trees.
-It also geographically variable, as equations developed in
-one tropical region often introduce substantial bias when
-applied elsewhere.
+Allometric models are a critical and pervasive source of
+systematic bias, so much so that some call for a concerted
+global effort to improve allometric equations for tropical
+forests [@pelletierREDDEmissionsEstimation2013]. Unlike
+random measurement errors, allometric uncertainty is
+systematic, meaning it cannot be reduced by simply measuring
+more trees. It also geographically variable, as equations
+developed in one tropical region often introduce substantial
+bias when applied elsewhere.
 
 While the ART-TREES Standard V2.0 exempts structural
 allometric uncertainty when models are applied consistently
@@ -463,172 +454,3 @@ $$
 
 Key insight: Relative uncertainties combine in quadrature
 for multiplicative models; correlations critical.
-
-#### Modelling vs. Recurring Sources
-
-Framework from @pelletier2024bayesian distinguishes temporal
-behavior:
-
-| Source Type | Definition | Examples | Typical Magnitude |
-|----|----|----|----|
-| Modelling sources | Model parameters & assumptions | Fallow classification, growth rates | 4-262% (highest) |
-| Recurring sources | Measurement errors | Activity data, emission factors | 30-50% |
-
-: Modelling sources vs. recurring sources of uncertainty
-
-> "The highest error propagated using Monte Carlo
-> simulations was caused by modelling sources of
-> uncertainty, which calls for special attention to ensure
-> consistency in REDD+ reporting which is essential for
-> securing environmental integrity."
-> [@pelletier2024bayesian]
-
-Strategic implication: Modelling sources can be standardized
-across jurisdictions (one-time investment), while recurring
-sources require continuous monitoring (ongoing costs).
-
-#### Sensitivity Analysis Framework
-
-Sobol indices identify variance contributions:
-
--   First-order effects (S~i~): Direct contribution
--   Total effects (ST~i~): Direct + interactions
--   Typical results: Activity data (S~i~ = 0.42) \>\>
-    Biomass (0.31) \>\> Combustion factor (0.18) \>\>
-    Emission factor (0.03)
-
-Complementary methods:
-
--   Partial correlation coefficients
--   Tornado diagrams for parameter ranking
--   Panama case study [@pelletier2024bayesian]: Fallow
-    classification and carbon accumulation = highest
-    sensitivity
-
-#### Optimization Strategies
-
-Investment hierarchy (based on Sobol indices + cost):
-
-| Intervention | Variance Reduced | Cost | ROI Tier | Priority |
-|----|----|----|----|----|
-| Activity data QA/QC | 42% → 30% (12 pp) | \$30-50k | Very High | 1 |
-| Enhanced plot sampling | 31% → 20% (11 pp) | \$50-100k | High | 2 |
-| Tier 2 allometry | 31% → 22% (9 pp) | \$15-30k | Very High | 3 |
-| Ground C~f~ measurement | 18% → 12% (6 pp) | \$20-40k | Moderate | 4 |
-| FTIR emission factors | 3% → 2% (1 pp) | \$50-100k | Very Low | 5 |
-
-: Cost-benefit ranking for uncertainty reduction (Chapter 4
-detail)
-
-Temporal aggregation provision:
-
--   5-year recalculation: Aggregate uncertainty across
-    crediting period
--   Recovery mechanism: Over-deducted credits issued if
-    cumulative uncertainty decreases
--   Typical benefit: 5-10 percentage point reduction from
-    temporal averaging
--   Example: Individual-year deductions = 492,500 t CO~2~;
-    Aggregated = 406,700 t CO~2~ → Recovery: 85,800 t CO~2~
-
-#### Key Deliverables
-
-Decision support tools:
-
--   Sensitivity analysis: Sobol indices for top 5
-    contributors
--   Cost-benefit matrix: ROI ranking for interventions
--   Optimization roadmap: 5-year incremental improvement
-    pathway
--   SimVoi tool: Open-source R Shiny for interactive Monte
-    Carlo (Guyana example)
-
-ART-TREES reporting:
-
--   CRF tables: Parameter distributions, correlation matrix,
-    Monte Carlo results
--   VVB audit checklist: Simulation design, distributions,
-    correlations, calculations
--   Documentation standards: Reproducible workflows with
-    embedded code
-
-------------------------------------------------------------
-
-#### Software Systems
-
-All analyses in this book use R (≥4.2.0) with the following
-packages:
-
-Core packages:
-
-``` r
-# Statistical analysis
-library(MASS)      # Multivariate normal sampling
-library(boot)      # Bootstrap resampling
-library(caret)     # Cross-validation
-
-# Monte Carlo simulation
-library(mc2d)      # Two-dimensional Monte Carlo
-library(sensitivity) # Sobol sensitivity analysis
-
-# Visualization
-library(ggplot2)   # Publication-quality graphics
-library(plotly)    # Interactive plots
-```
-
-Specialized packages:
-
-``` r
-# Allometry
-library(BIOMASS)   # Pantropical allometric equations
-library(allodb)    # Global allometry database
-
-# Spatial analysis
-library(terra)     # Raster processing
-library(sf)        # Vector spatial data
-library(exactextractr) # Zonal statistics
-
-# Reporting
-library(knitr)     # Dynamic documents
-library(rmarkdown) # Report generation
-```
-
-#### Key Terminology
-
-Precision vs. Accuracy:
-
--   Precision: Reproducibility of measurements (random
-    error)
--   Accuracy: Closeness to true value (systematic bias)
-
-Confidence intervals:
-
--   90% CI: Range containing true value with 90% probability
--   Half-width: Distance from mean to CI bound = (Upper -
-    Lower) / 2
-
-Error types:
-
--   Type 1: False rejection of null hypothesis (α error)
--   Type 2: False acceptance of null hypothesis (β error)
--   Type 3: Solving the wrong problem (asking the wrong
-    question)
--   Type 4: Applying results outside valid domain
-    (extrapolation)
-
-IPCC Tiers:
-
--   Tier 1: IPCC default methods and parameters
--   Tier 2: Country-specific methods or parameters
--   Tier 3: Higher-order methods (models, repeated
-    measurements)
-
-LULC Approaches:
-
--   Approach 1: Total area change (no spatial data)
--   Approach 2: Tracking of land-use conversions (transition
-    matrices)
--   Approach 3: Spatially explicit tracking (wall-to-wall
-    maps)
-
-------------------------------------------------------------

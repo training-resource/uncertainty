@@ -1,0 +1,204 @@
+## Glossary & Addendum
+
+
+Modelling vs. Recurring Sources
+
+Framework from @pelletier2024bayesian distinguishes temporal behavior:
+
+Source Type
+
+Definition
+
+Examples
+
+Typical Magnitude
+
+Modelling sources
+
+Model parameters & assumptions
+
+Fallow classification, growth rates
+
+4-262% (highest)
+
+Recurring sources
+
+Measurement errors
+
+Activity data, emission factors
+
+30-50%
+
+Modelling sources vs. recurring sources of uncertainty
+
+"The highest error propagated using Monte Carlo simulations was caused by modelling sources of uncertainty, which calls for special attention to ensure consistency in REDD+ reporting which is essential for securing environmental integrity." [@pelletier2024bayesian]
+
+Strategic implication: Modelling sources can be standardized across jurisdictions (one-time investment), while recurring sources require continuous monitoring (ongoing costs).
+
+Sensitivity Analysis Framework
+
+Sobol indices identify variance contributions:
+
+First-order effects (Si): Direct contribution
+
+Total effects (STi): Direct + interactions
+
+Typical results: Activity data (Si = 0.42) >> Biomass (0.31) >> Combustion factor (0.18) >> Emission factor (0.03)
+
+Complementary methods:
+
+Partial correlation coefficients
+
+Tornado diagrams for parameter ranking
+
+Panama case study [@pelletier2024bayesian]: Fallow classification and carbon accumulation = highest sensitivity
+
+Optimization Strategies
+
+Investment hierarchy (based on Sobol indices + cost):
+
+Intervention
+
+Variance Reduced
+
+Cost
+
+ROI Tier
+
+Priority
+
+Activity data QA/QC
+
+42% → 30% (12 pp)
+
+$30-50k
+
+Very High
+
+1
+
+Enhanced plot sampling
+
+31% → 20% (11 pp)
+
+$50-100k
+
+High
+
+2
+
+Tier 2 allometry
+
+31% → 22% (9 pp)
+
+$15-30k
+
+Very High
+
+3
+
+Ground Cf measurement
+
+18% → 12% (6 pp)
+
+$20-40k
+
+Moderate
+
+4
+
+FTIR emission factors
+
+3% → 2% (1 pp)
+
+$50-100k
+
+Very Low
+
+5
+
+Cost-benefit ranking for uncertainty reduction (Chapter 4 detail)
+
+Temporal aggregation provision:
+
+5-year recalculation: Aggregate uncertainty across crediting period
+
+Recovery mechanism: Over-deducted credits issued if cumulative uncertainty decreases
+
+Typical benefit: 5-10 percentage point reduction from temporal averaging
+
+Example: Individual-year deductions = 492,500 t CO2; Aggregated = 406,700 t CO2 → Recovery: 85,800 t CO2
+
+Software Systems
+
+All analyses in this book use R (≥4.2.0) with the following packages:
+
+Core packages:
+
+# Statistical analysis
+library(MASS)      # Multivariate normal sampling
+library(boot)      # Bootstrap resampling
+library(caret)     # Cross-validation
+
+# Monte Carlo simulation
+library(mc2d)      # Two-dimensional Monte Carlo
+library(sensitivity) # Sobol sensitivity analysis
+
+# Visualization
+library(ggplot2)   # Publication-quality graphics
+library(plotly)    # Interactive plots
+
+Specialized packages:
+
+# Allometry
+library(BIOMASS)   # Pantropical allometric equations
+library(allodb)    # Global allometry database
+
+# Spatial analysis
+library(terra)     # Raster processing
+library(sf)        # Vector spatial data
+library(exactextractr) # Zonal statistics
+
+# Reporting
+library(knitr)     # Dynamic documents
+library(rmarkdown) # Report generation
+
+Key Terminology
+
+Precision vs. Accuracy:
+
+Precision: Reproducibility of measurements (random error)
+
+Accuracy: Closeness to true value (systematic bias)
+
+Confidence intervals:
+
+90% CI: Range containing true value with 90% probability
+
+Half-width: Distance from mean to CI bound = (Upper - Lower) / 2
+
+Error types:
+
+Type 1: False rejection of null hypothesis (α error)
+
+Type 2: False acceptance of null hypothesis (β error)
+
+Type 3: Solving the wrong problem (asking the wrong question)
+
+Type 4: Applying results outside valid domain (extrapolation)
+
+IPCC Tiers:
+
+Tier 1: IPCC default methods and parameters
+
+Tier 2: Country-specific methods or parameters
+
+Tier 3: Higher-order methods (models, repeated measurements)
+
+LULC Approaches:
+
+Approach 1: Total area change (no spatial data)
+
+Approach 2: Tracking of land-use conversions (transition matrices)
+
+Approach 3: Spatially explicit tracking (wall-to-wall maps)
