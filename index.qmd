@@ -48,23 +48,27 @@ easypackages::packages(
 
 ## Overview {.unnumbered}
 
-This resource was commissioned by
+This training resource was commissioned by
 
-provides methodological guidance for quantifying, reporting,
-and reducing uncertainty in REDD+ carbon accounting under
-IPCC 2019 Refinements and ART-TREES Standard V2.0
-[@artREDDEnvironmentalExcellence2021;
+This training resource was commissioned by Winrock
+International under its JTAP portfolio (20065-2025-ICA-03)
+as a Foundation Module for uncertainty quantification
+training in jurisdictional REDD+ carbon accounting. The
+following training curriculum provides methodological
+guidance for quantifying, reporting, and reducing
+uncertainty in REDD+ carbon accounting in accordance with
+ART-TREES Standard (V2.0) requirements and the IPCC 2019
+guidelines [@artREDDEnvironmentalExcellence2021;
 @ipcc2019Refinement20062019a]. Rather than viewing
 uncertainty as merely a penalty, this framework treats it as
 a strategic tool for identifying dominant error sources and
 optimizing credit issuance
 [@camaraUncertaintyActiveLearning2024; @simoes2021satellite;
-@duncansonAbovegroundWoodyBiomass2021].
-
-Projects investing in targeted uncertainty reduction can
-achieve greater credits generation through minimzed
-deductions, as well as stronger pricing from enhanced
-credibility, lower verification and monitoring costs
+@duncansonAbovegroundWoodyBiomass2021]. Projects investing
+in targeted uncertainty reduction can achieve improved
+crediting reveneue through minimizing penalty deductions, as
+well as through stronger pricing from enhanced credibility
+and lower verification and monitoring costs
 [@kohler2010towards].
 
 #### Current State of Practice
@@ -164,7 +168,7 @@ principles for uncertainty reporting:
 4.  Completeness: Include all relevant sources and sinks
 5.  Accuracy: Minimize bias and reduce uncertainties
 
-#### The Managed Land Proxy Approach
+#### The Managed Land Proxy
 
 The Managed Land Proxy (MLP) Approach[^index-1] is
 recommended by the IPCC to reduce uncertainty, primarily by
@@ -185,27 +189,25 @@ challenge through:
     first-order approximation of anthropogenic emissions,
     assuming human-induced effects occurs on managed lands
     [@ciais2005europe; @book; @pilli2016modelling].
-
 -   Managing Natural Effects: The MLP traditionally relies
     on the assumption that CO~2~ fluxes from natural effects
     average out over time and space
     [@ipccChapter2Generic2019a, pp. 2.68].
 
 The MLP methodology provides guidance to reduce IAV-driven
-uncertainty through disaggregation, which separates the
-total MLP estimate into the following components to reveal a
-trend associated with human activity that is expected to
-have lower IAV [@canadell2007contributions;
+uncertainty through disaggregation [@allen2025geological].
+In these terms, dissaggregation involves separation of the
+total MLP estimate between the following components to
+reveal a trend associated with human activity that is
+expected to have lower IAV [@canadell2007contributions;
 @vetter2008analyzing; @ipccRevisitingUseManaged2010;
 @brando2014abrupt; @henttonen2017environment]:
 
 1.  Quantify Total MLP Flux: Estimate total
     emissions/removals on managed land.
-
 2.  Identify Natural Disturbance (ND) Fluxes: Identify and
     estimate CO~2~ emissions and subsequent removals caused
     by NDs [@genet2018role; @miller2012trends].
-
 3.  Subtract and Report: Subtract the ND component from the
     MLP total. The remainder is the estimated emissions
     associated with human activity, which is expected to
@@ -218,7 +220,6 @@ time.
 -   Emissions & Removals: CO~2~ emissions from an ND event
     are expected to be balanced by subsequent removals
     (regrowth) on the same land.
-
 -   Consistency: It is good practice to disaggregate CO~2~
     removals to the ND component until the initial ND
     emissions have been fully balanced. Once balanced,
@@ -227,22 +228,23 @@ time.
 
 ## Uncertainty Drivers
 
-This training curriculum addresses the dominant sources of
-uncertainty in REDD+ carbon accounting, organized by typical
-magnitude of contribution to total variance:
+This training curriculum addresses the following sources of
+uncertainty in REDD+ carbon accounting:
 
 ### Chapter 1: Allometry {#sec-overview-ch2}
 
-Allometric models are a critical and pervasive source of
-systematic bias, so much so that some call for a concerted
-global effort to improve allometric equations for tropical
-forests. Unlike random measurement errors, allometric
-uncertainty is systematic, meaning it cannot be reduced by
-simply measuring more trees. It also geographically
-variable, as equations developed in one tropical region
-often introduce substantial bias when applied elsewhere.
+Allometric models are a critical source of systematic bias.
+Due to their pervasive trends, some have called for a
+concerted global effort to improve allometric equations for
+tropical forests [@vorster2020variability;
+@wayson2015estimating]. Unlike random measurement errors,
+allometric uncertainty is systematic, meaning it cannot be
+reduced by simply measuring more trees. It also
+geographically variable, as equations developed in one
+tropical region often introduce substantial bias when
+applied elsewhere.
 
-While the ART-TREES Standard V2.0 exempts structural
+While the ART-TREES Standard (V2.0) exempts structural
 allometric uncertainty when models are applied consistently
 between baseline and crediting periods, recognizing that
 biases cancel through differencing, this pragmatic provision
@@ -261,50 +263,44 @@ include:
 Model selection:
 
 -   Geographic transferability of published equations
+    [@duncanson2017implications; @picard2015a]
 -   Species-specific vs. generic models
+    [@martinez2020species; @shang2025allometric]
 -   Diameter range extrapolation beyond calibration data
+    [@vorster2020variability]
 
 Parameter estimation:
 
 -   Regression coefficient standard errors
+    [@wayson2015estimating]
 -   Residual variance and heteroscedasticity
+    [@parresol1993modeling; @nickless2011method]
 -   Sample size limitations in calibration datasets
     [@roxburgh2015guidelines; @duncanson2015small].
 
 Measurement error:
 
--   DBH measurement precision (±0.5-1.0 cm)
--   Height measurement bias (clinometer/laser)
+-   DBH measurement precision [@martin2022accuracy]
+-   Height measurement bias from clinometer and laser
+    calibrations [@ojoatre2019assessing]
 -   Wood density and debris variance[@yanai2010a]
 
 Bias correction:
 
 -   Maximum Likelihood Ratio (MLR) bias correction
+    [@aholoukpe2018allometric]
 -   Restricted Maximum Likelihood (REML) bias correction
+    [@zapata2012probability]
 -   Baskerville bias correction [@baskerville1972use;
     @clifford2013a]
 -   Species-specific height correction
     [@st2004retrospective; @andersen2006a]
 -   Moisture content correction factors
     [@roxburgh2015guidelines]
--   Non-linear and intercept-only model prediction
-    intervals.
+-   Non-linear and intercept-only model prediction intervals
+    [@dutcua2018using; @ploton2020spatial]
 -   Censored data and zero-inflation bootstrapping
-
-Key methods: Monte Carlo parameter resampling
-[@mcroberts2016a], prediction interval calculation,
-equivalence testing and cross-validation for model selection
-[@ploton2020spatial], destructive sampling campaigns when
-cost-effective.
-
-ART-TREES exemption: Structural uncertainty in allometric
-models excluded when applied consistently in baseline and
-crediting periods, reducing burden on project developers but
-not eliminating actual uncertainty.
-
-Strategic importance: Under-reported (only 4-14% of
-countries) but potentially dominant source once quantified
-[@butler2024uncertainty].
+    [@white2025small; @mcroberts2016a]
 
 ### Chapter 2: Emission Factor {#sec-overview-ch3}
 
@@ -390,8 +386,9 @@ quantifying map accuracy uncertainty and the emerging need
 to characterize uncertainty in the modelling assumptions
 that link activity data to carbon stock changes.
 
-Activity data (A) represents the spatial extent and temporal
-dynamics of forest change. Uncertainty sources include:
+Activity data (AD) represents the spatial extent and
+temporal dynamics of forest change. Uncertainty sources
+include:
 
 Land cover classification:
 
