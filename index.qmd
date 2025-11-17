@@ -79,7 +79,8 @@ does not reflect the relative importance of these specific
 metrics to crediting. For instance, research suggests that
 related design choices in emission factors and modelling
 assumptions can produce emission flux variations ranging
-from 4.2% to 262.2% of reference levels. Rather than
+from 4.2% to 262.2% of reference levels
+[@pelletierREDDEmissionsEstimation2013]. Rather than
 technical limitations alone, this kind of selective
 reporting reveals a worrying misalignment between rigor and
 financial incentives in results-based payment systems.
@@ -165,10 +166,10 @@ principles for uncertainty reporting:
 
 #### The Managed Land Proxy Approach
 
-The Managed Land Proxy (MLP) Approach is recommended by the
-IPCC to reduce uncertainty, primarily by establishing a
-clear boundary for reporting anthropogenic emissions
-[@ipcc2006Chapter1Introduction, pp. 1.5;
+The Managed Land Proxy (MLP) Approach[^index-1] is
+recommended by the IPCC to reduce uncertainty, primarily by
+establishing a clear boundary for reporting anthropogenic
+emissions [@ipcc2006Chapter1Introduction, pp. 1.5;
 @ipccRevisitingUseManaged2010]. This is crucial for managing
 the uncertainty caused by Inter-Annual Variability (IAV),
 the high year-to-year fluctuation in emissions/removals
@@ -194,7 +195,7 @@ The MLP methodology provides guidance to reduce IAV-driven
 uncertainty through disaggregation, which separates the
 total MLP estimate into the following components to reveal a
 trend associated with human activity that is expected to
-have lower IAV ([@canadell2007contributions;
+have lower IAV [@canadell2007contributions;
 @vetter2008analyzing; @ipccRevisitingUseManaged2010;
 @brando2014abrupt; @henttonen2017environment]:
 
@@ -477,3 +478,8 @@ $$
 
 Key insight: Relative uncertainties combine in quadrature
 for multiplicative models; correlations critical.
+
+[^index-1]: As an useful learning resource, we recommend
+    reviewing the following seminar hosted by IPCC in
+    November, 2024:
+    <https://www.youtube.com/live/1UbHDFMHEEU?si=rw3LjaoQZ8QRFCkv>
