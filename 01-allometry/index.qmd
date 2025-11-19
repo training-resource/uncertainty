@@ -134,13 +134,10 @@ import subprocess, sys
 
 # Quick package install 
 subprocess.run([sys.executable, "-m", "pip", "install", "-q",
-  "contextily", 
-  "folium", "geopandas", "kaleido",
-  "matplotlib", "numpy", "openpyxl", 
-  "pandas", "plotly", "pysal", "pyproj", "rasterio",
+  "contextily", "folium", "geopandas", "kaleido", "matplotlib", 
+  "numpy", "openpyxl", "pandas", "plotly", "pysal", "pyproj", "rasterio",
   "scikit-learn", "scipy", "seaborn", "statsmodels", "shapely", 
-  "xarray"
-  ], check=True, capture_output=True)
+  "xarray"], check=True, capture_output=True)
 
 # Import packages into runtime
 import pandas as pd, numpy as np
@@ -171,13 +168,21 @@ div.column {
 }
 ```
 
-## Allometric Modelling {#sec-allometry-relationship}
+## Allometry Equations {#sec-allometry-relationship}
+
+Allometric equations predict aboveground biomass from
+diameter measurements using species or biome-specific
+parameters and estimation. Therefore, uncertainty compounds
+from three main sources: model selection, parameter
+estimation, and field measurements. As shown below,
+log-transformation adds additional complexity through
+back-transformation required in majority biomass estimates:
 
 $$
 AGB = \alpha \times DBH^{\beta}
 $$
 
-^[Or in logarithmic form...]{.smallcaps}^
+^and\ in\ logarithmic\ form...^
 
 $$
 \ln(AGB) = \ln(\alpha) + \beta \times \ln(DBH) + \epsilon
@@ -187,16 +192,8 @@ Where:
 
 -   `AGB`: Aboveground biomass (kg)
 -   `DBH`: Diameter at breast height (cm)
--   `α`, `β`: Allometric parameters (species/biome-specific)
+-   `α`, `β`: Modelling parameters
 -   `ε`: Random error term
-
-Allometric equations predict aboveground biomass from
-diameter measurements using species or biome-specific
-parameters and estimation. Therefore, uncertainty compounds
-from three main sources: model selection, parameter
-estimation, and field measurements. Log-transformation adds
-complexity through back-transformation bias that must be
-corrected to avoid systematic errors in biomass estimations.
 
 ### ART Exemption {.unnumbered}
 
@@ -236,6 +233,7 @@ composition of the Blue Ridge and Piedmont regions.
 ```{r}
 #| comment: NA
 #| message: false
+#| warning: false
 #| error: false
 #| echo: true
 # import allometry from allodb
@@ -252,10 +250,9 @@ utils::write.csv(demo_data_r, "./data/scbi_stem1.csv")
 ```{python}
 #| comment: NA
 #| message: false
+#| warning: false
 #| error: false
 #| echo: true
-import pandas as pd
-
 demo_data_py = pd.read_csv("./data/scbi_stem1.csv")
 ```
 
@@ -274,21 +271,51 @@ demo_data_py = pd.read_csv("./data/scbi_stem1.csv")
 #scbi_stem1 <- read.csv("./data/scbi_stem1.csv")
 ```
 
-By clicking "Run Code" below, we derive descriptive
-statistics for the `scbi_stem1` dataset. Results should
-report a total of 2,287 stem measurements and describe
-dimensions of the following variables:
+In the following chunks, we filter the `scbi_stem1` dataset
+to remove entries with missing values and outliers, before
+deriving descriptive statistics to check the variables'
+dimensions. Results show a total of 2,287 stem measurements
+and describe dimensions of the following variables:
 
 -   `dbh`: Diameter at breast height (cm)
 -   `genus`: Taxonomic genus identification
 -   `species`: Species epithet
 -   `Family`: Taxonomic family classification
 
+### Tidy Data (R) {.unnumbered}
+
 ```{r}
-#{webr-r} # Enable this line in markdown to "Run Code"
-# head(scbi_stem1) # Top rows only
-psych::describe(scbi_stem1) |> 
+#| comment: NA
+#| message: false
+#| warning: false
+#| error: false
+#| echo: true
+# tidy raw data
+demo_data_r |>
+	dplyr::filter(!is.na(dbh)) |>
+	dplyr::filter(dbh >= 5, dbh <= 100)
+
+# check distributions
+psych::describe(demo_data_r) |> 
 	tibble::as_tibble()
+```
+
+### Tidy Data (Python) {.unnumbered}
+
+```{python}
+#| comment: NA
+#| message: false
+#| warning: false
+#| error: false
+#| echo: true
+# tidy
+demo_data_py = (demo_data_py
+    .query('dbh.notna()')
+    .query('dbh >= 5 & dbh <= 100')
+)
+
+# check distributions
+demo_data_py.describe().T
 ```
 
 Following best practices for allometric model selection,
@@ -308,11 +335,10 @@ equations are queried for dominant taxa using the
     equations; n\>150 for genus-level equations
 
 ::: callout-tip
-At this early stage, it is worth taking a quick note of the
-range and spread in DBH values spanning from small
-understory cohorts to canopy dominants exceeding 100 cm
-diameter. This offers an early indicator of statistical
-operations and validation checks that may be needed ahead.
+In this early stage of workflow, it can be useful to take a
+quick note of the range and spread in DBH values. This
+offers an early indication of statistical operations and
+validation checks that may be needed ahead.
 :::
 
 ```{r}
