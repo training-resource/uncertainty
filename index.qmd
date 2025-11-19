@@ -48,8 +48,6 @@ easypackages::packages(
 
 ## Overview {.unnumbered}
 
-This training resource was commissioned by
-
 This training resource was commissioned by Winrock
 International under its JTAP portfolio (20065-2025-ICA-03)
 as a Foundation Module for uncertainty quantification
@@ -283,7 +281,7 @@ Measurement error:
 -   DBH measurement precision [@martin2022accuracy]
 -   Height measurement bias from clinometer and laser
     calibrations [@ojoatre2019assessing]
--   Wood density and debris variance[@yanai2010a]
+-   Wood density and debris variance [@yanai2010a]
 
 Bias correction:
 

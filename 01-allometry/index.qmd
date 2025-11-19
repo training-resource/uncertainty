@@ -14,20 +14,20 @@ format:
     resources: 
       - data/*
 
-editor_options: 
-  markdown: 
-    wrap: 60
 engine: knitr
-
+jupyter: python3
 filters:
   - webr
-
 webr:
   packages: ['dplyr','psych','tibble']
+
 
 bibliography: ../references/references.bib
 csl: ../references/apa.csl
 citeproc: true
+editor_options: 
+  markdown: 
+    wrap: 60
 ---
 
 ## Overview {.unnumbered}
@@ -38,11 +38,23 @@ relationship between a tree's diameter and its height,
 biomass, or crown size. These relationships translate tree
 diameter measurements into biomass estimates, forming the
 foundation of forest carbon accounting. This chapter
-addresses uncertainty quantification in processes of
-allometric model selection, parameter estimation, correction
-of measurement error and predictive bias.
+compares three candidate allometry equations for aboveground
+biomass estimation to demonstrate use of error metrics in
+model selection and model optimization specifically to
+minimize carbon credit deductions through uncertainty
+reductions.
 
-### Environment Setup {.unnumbered}
+::: callout-note
+While Section 8 exempts structural allometric uncertainty
+when models are applied consistently, the choice of which
+model to apply directly impacts reported uncertainty.
+Selecting a model with 20% RMSE versus 8% RMSE determines
+whether your project faces a 6% or 2% carbon credit
+deduction, representing a difference worth \$200k in a 1M
+tCO~2~^-e^ project at \$5/tonne.
+:::
+
+### Environment Setup (R) {.unnumbered}
 
 ```{r}
 #| comment: NA
@@ -56,15 +68,15 @@ easypackages::packages(
   "cols4all", "covr", "cowplot", "caret",
   "dataMaid", "DescTools", "dplyr",
   "FawR", "ForestToolsRS", "forestdata",
-  "ggplot2", "giscoR", 
+  "ggplot2", "giscoR", "ggfortify",
   "htmltools",
   "janitor", "jsonlite", 
-  "lattice", "leaflet.providers", "leafem", "lwgeom", "leaflet", "lmtest",
+  "lattice", "leaflet.providers", "leaflet", "lmtest", "lwgeom", 
   "kableExtra", "kernlab", "knitr", 
   "mapedit", "mapview", "maptiles", "Mlmetrics", "moments",
   "olsrr", "openxlsx",
   "plotly", "psych", 
-  "randomForest", "raster","RColorBrewer", "rmarkdown", "renv",
+  "randomForest", "raster","RColorBrewer", "rmarkdown", "renv", "reticulate",
   "s2", "sf", "scales", "sits","spdep", "stars", "stringr",
   "terra", "tmap", "tmaptools", "tidymodels", "tidyverse", "tune", 
   "useful",
@@ -102,6 +114,40 @@ knitr::opts_chunk$set(
   comment = NA, 
   tidy.opts = list(width.cutoff = 60)
   ) 
+
+
+reticulate::use_python("/Applications/Xcode.app/Contents/Developer/usr/bin/python3", required = T)
+#reticulate::use_python("/Users/seamus/Library/Python/3.9/bin/python3", required = T)
+```
+
+### Environment Setup (Python) {.unnumbered}
+
+```{python}
+#| comment: NA
+#| warning: false
+#| message: false
+#| error: false
+#| echo: true
+# Installer prerequisites
+import subprocess, sys
+
+# Quick package install 
+subprocess.run([sys.executable, "-m", "pip", "install", "-q",
+  "contextily", 
+  "folium", "geopandas", "kaleido",
+  "matplotlib", "numpy", "openpyxl", 
+  "pandas", "plotly", "pysal", "pyproj", "rasterio",
+  "scikit-learn", "scipy", "seaborn", "statsmodels", "shapely", 
+  "xarray"
+  ], check=True, capture_output=True)
+
+# Import packages into runtime
+import pandas as pd, numpy as np
+import matplotlib.pyplot as plt, seaborn as sns
+import plotly.express as px, plotly.graph_objects as go
+from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
+from sklearn.model_selection import train_test_split
+import geopandas as gpd, rasterio, folium
 ```
 
 ```{css, echo=FALSE, class.source = 'foldable'}
@@ -114,17 +160,17 @@ div.column {
 #TOC::before {
   content: "";
   display: block;
-  height:200px;
+  height:100px;
   width: 200px;
   background-image: url('https://winrock.org/wp-content/uploads/2021/12/Winrock-logo-R.png');
   background-size: contain;
   background-position: 50% 50%;
-  padding-top: 80px !important;
+  padding-top: 1px !important;
   background-repeat: no-repeat;
 }
 ```
 
-## Allometry Equations {#sec-allometry-relationship}
+## Allometric Modelling {#sec-allometry-relationship}
 
 $$
 AGB = \alpha \times DBH^{\beta}
@@ -145,11 +191,11 @@ Where:
 
 Allometric equations predict aboveground biomass from
 diameter measurements using species or biome-specific
-parameters. Uncertainty compounds from three main sources:
-model selection, parameter estimation, and field
-measurements. Log-transformation adds complexity through
-back-transformation bias that must be corrected to avoid
-systematically miscalulcating biomass.
+parameters and estimation. Therefore, uncertainty compounds
+from three main sources: model selection, parameter
+estimation, and field measurements. Log-transformation adds
+complexity through back-transformation bias that must be
+corrected to avoid systematic errors in biomass estimations.
 
 ### ART Exemption {.unnumbered}
 
@@ -168,38 +214,52 @@ country-specific Tier 2 parameters, and investing in
 measurement precision rather than destructive sampling.
 Let's implement this with Monte Carlo simulation.
 
-## Allometry Selection {#sec-model-selection}
+## Model Selection {#sec-model-selection}
 
 In the following steps, we use the `allodb` package to
 access its global collection of allometric equations and
 demonstrate uncertainty propagation with real forest
 inventory data. The demonstration dataset (`scbi_stem1`)
-originates from the Smithsonian Conservation Biology
+comprises a subset of the Smithsonian Conservation Biology
 Institute
 [ForestGEO](https://docs.ropensci.org/allodb/reference/scbi_stem1.html)
-sample plots in Front Royal, Virginia, USA. This
+plot sample located in Front Royal, Virginia. This
 25.6-hectare mature secondary forest is dominated by
 Appalachian mixed hardwood species including tulip poplar
-(Liriodendron tulipifera), oaks (Quercus spp.), and
-hickories (Carya spp.), representing the Blue Ridge and
-Piedmont regions of eastern North America.
+(*Liriodendron tulipifera*), oaks (*Quercus spp*.), and
+hickories (*Carya spp*.), representing typical stand
+composition of the Blue Ridge and Piedmont regions.
+
+### Import Data (R) {.unnumbered}
 
 ```{r}
-#| eval: false
-# load allometry database package
+#| comment: NA
+#| message: false
+#| error: false
+#| echo: true
+# import allometry from allodb
 library("allodb")
-
-# import allomtry dataset from allodb
 data(scbi_stem1)
+
+# save local copy 
+demo_data_r = scbi_stem1 
+utils::write.csv(demo_data_r, "./data/scbi_stem1.csv")
 ```
 
-```{r}
-#| echo: false
-scbi_stem1 <- read.csv("./data/scbi_stem1.csv")
+### Import Data (Python) {.unnumbered}
+
+```{python}
+#| comment: NA
+#| message: false
+#| error: false
+#| echo: true
+import pandas as pd
+
+demo_data_py = pd.read_csv("./data/scbi_stem1.csv")
 ```
 
 ```{webr-r}
-#| context: setup
+#| context: setup #webr setting
 #| message: false
 #| error: false
 #| echo: false
@@ -224,13 +284,10 @@ dimensions of the following variables:
 -   `Family`: Taxonomic family classification
 
 ```{r}
-#{webr-r}
-# tabulate descriptives 
+#{webr-r} # Enable this line in markdown to "Run Code"
+# head(scbi_stem1) # Top rows only
 psych::describe(scbi_stem1) |> 
 	tibble::as_tibble()
-
-# OR top rows (delete '#' to enable)
-# head(scbi_stem1)
 ```
 
 Following best practices for allometric model selection,
@@ -288,11 +345,9 @@ show_cols   = c(
 
 # extract genus
 eq_tab_acer = new_equations(subset_taxa = "Acer")
-```
 
-```{r}
-# visualize all available variables
-dplyr::glimpse(eq_tab_acer)
+# if needed, visualize all available variables
+#dplyr::glimpse(eq_tab_acer)
 ```
 
 ### Equation Components {.unnumbered}
@@ -322,9 +377,9 @@ head(eq_tab_acer[, show_cols]) |>
 ```
 
 With target variables confirmed, species extracted, and
-known coordinates indentified, we compute aboveground
-biomass volume for all `scbi` trees in the following as a
-new `abg` variable.
+known coordinates identified, we compute aboveground biomass
+volume for all `scbi` trees in the following as a new `abg`
+variable.
 
 ```{r}
 #| eval: false
@@ -363,6 +418,7 @@ violating normality assumptions and justifying
 log-transformation in subsequent modeling.
 
 ```{r}
+#| eval: false
 # Calculate skewness and kurtosis
 dbh_skew <- moments::skewness(scbi_stem1$dbh)
 dbh_kurt <- moments::kurtosis(scbi_stem1$dbh)
@@ -370,8 +426,20 @@ agb_skew <- moments::skewness(scbi_stem1$agb)
 agb_kurt <- moments::kurtosis(scbi_stem1$agb)
 
 # Shapiro-Wilks normality test
-shapiro_dbh <- shapiro.test(scbi_stem1$dbh)
-shapiro_agb <- shapiro.test(scbi_stem1$agb)
+n <- nrow(scbi_stem1)
+if (n > 5000) {
+  set.seed(123)  # For reproducibility
+  sample_idx <- sample(1:n, 5000)
+  shapiro_dbh <- shapiro.test(scbi_stem1$dbh[sample_idx])
+  shapiro_agb <- shapiro.test(scbi_stem1$agb[sample_idx])
+  shapiro_note <- " (sampled 5000)"
+} else {
+  shapiro_dbh <- shapiro.test(scbi_stem1$dbh)
+  shapiro_agb <- shapiro.test(scbi_stem1$agb)
+  shapiro_note <- ""
+}
+#shapiro_dbh <- shapiro.test(scbi_stem1$dbh)
+#shapiro_agb <- shapiro.test(scbi_stem1$agb)
 
 # Wilcoxon non-parametric test
 wilcox_dbh <- wilcox.test(scbi_stem1$dbh)
@@ -441,6 +509,7 @@ biomass. Log-transformation stabilizes variance across tree
 sizes.
 
 ```{r}
+#| eval: false
 plot(scbi_stem1$dbh, scbi_stem1$agb,
   col = factor(scbi_stem1$genus),
   pch = 16, cex = 0.8,
@@ -486,10 +555,10 @@ relationship:
 
 $$AGB = \alpha \times DBH^{\beta}$$
 
-Where β typically ranges from 2.3-2.7, meaning biomass
+where β typically ranges from 2.3-2.7, meaning biomass
 scales with DBH raised to a power. Attempting to fit this
 with linear regression (AGB = a + b \* DBH) fundamentally
-misspecifies the functional form.
+mis-specifies the functional form.
 
 Consequences of linear misspecification:
 
@@ -526,6 +595,7 @@ faces:
     transformation
 
 ```{r}
+#| eval: false
 # Fit both models for comparison
 linear_model <- lm(agb ~ dbh, data = scbi_stem1)
 log_model <- lm(log(agb) ~ log(dbh), data = scbi_stem1)
@@ -564,6 +634,7 @@ of large trees [@paul2017moisture;
 @duncansonAbovegroundWoodyBiomass2021, pp. 100].
 
 ```{r}
+#| eval: false
 # Filter by adequate sample size (n ≥ 50)
 species_counts <- scbi_stem1 |>
   dplyr::group_by(genus, species) |>
@@ -637,6 +708,7 @@ select the % of test data that is set out from the build
 upon which the model will be repeatedly trained.
 
 ```{r}
+#| eval: false
 #| warning: false
 #| message: false
 #| error: false
@@ -683,6 +755,7 @@ offer insights into the performance of our model on the
 resampled data.
 
 ```{r}
+#| eval: false
 #| layout-ncol: 2
 # Extract cross-validated predictions
 cv_predictions <- lm_monte_carlo$pred
@@ -732,6 +805,7 @@ residual_plot
 ## Uncertainty Quantification
 
 ```{r}
+#| eval: false
 # Calculate uncertainty as percentage
 mean_agb <- mean(scbi_stem1$agb, na.rm = TRUE)
 uncertainty_pct <- (rmse_cv / mean_agb) * 100
@@ -760,6 +834,7 @@ knitr::kable(
 ```
 
 ```{r}
+#| eval: false
 mean_agb <- mean(scbi_stem1$agb, na.rm = TRUE)
 rmse_relative <- (rmse_cv / mean_agb) * 100
 
@@ -805,11 +880,11 @@ cat(sprintf("Net credited value: $%.2fM\n",
     (linear) to 0.1% (log-transformed)
 
 ::: callout-caution
-**Carbon credit deduction: `r round(ua_factor * 100, 1)`% of
-project credits**
+Carbon credit deduction: `round(ua_factor x 100, 1)%` of
+project credits
 :::
 
-### Allometric Uncertainty Reduction Best Practices 
+### Allometric Uncertainty Reduction Best Practices
 
 To achieve commercially viable uncertainty levels (\<10%
 RMSE) and minimize carbon credit deductions:
@@ -828,7 +903,7 @@ RMSE) and minimize carbon credit deductions:
 ### Investment Priorities by ROI
 
 | Intervention | Cost | Uncertainty Reduction | Revenue Protected\* |
-|--------------|--------------|------------------|---------------|
+|---------------|---------------|----------------|---------------|
 | Log-transformation | \$0 | 180-190 percentage points | \$900k-\$950k |
 | Improved DBH measurement | \$2-5k | 2-5 percentage points | \$10-25k |
 | Species-specific equations | \$15-30k | 5-10 percentage points | \$25-50k |
