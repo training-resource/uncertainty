@@ -127,6 +127,7 @@ reticulate::use_python("/Applications/Xcode.app/Contents/Developer/usr/bin/pytho
 #| warning: false
 #| message: false
 #| error: false
+#| output: false
 #| echo: true
 # Installer prerequisites
 import subprocess, sys
