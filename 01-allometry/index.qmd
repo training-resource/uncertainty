@@ -133,18 +133,20 @@ reticulate::use_python("/Applications/Xcode.app/Contents/Developer/usr/bin/pytho
 import subprocess, sys
 
 # Quick package install 
-subprocess.run([sys.executable, "-m", "pip", "install", "-q",
-  "contextily", "folium", "geopandas", "kaleido", "matplotlib", 
-  "numpy", "openpyxl", "pandas", "plotly", "pysal", "pyproj", "rasterio",
-  "scikit-learn", "scipy", "seaborn", "statsmodels", "shapely", 
+subprocess.run([sys.executable, "-m", "pip", "install", "--quiet", "-q",
+  "contextily", "folium", "geopandas", "kaleido", "matplotlib", "numpy", 
+  "openpyxl", "pandas", "plotly", "pysal", "pyproj", "pingouin","rasterio",
+  "scikit-learn", "scipy", "seaborn", "statsmodels", "shapely", "skimpy",
   "xarray"], check=True, capture_output=True)
 
 # Import packages into runtime
 import pandas as pd, numpy as np
 import matplotlib.pyplot as plt, seaborn as sns
+import pingouin as pg
 import plotly.express as px, plotly.graph_objects as go
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.model_selection import train_test_split
+from skimpy import skim
 import geopandas as gpd, rasterio, folium
 ```
 
@@ -291,7 +293,7 @@ and describe dimensions of the following variables:
 #| error: false
 #| echo: true
 # tidy raw data
-demo_data_r |>
+demo_data_r = demo_data_r |>
 	dplyr::filter(!is.na(dbh)) |>
 	dplyr::filter(dbh >= 5, dbh <= 100)
 
@@ -310,12 +312,19 @@ psych::describe(demo_data_r) |>
 #| echo: true
 # tidy
 demo_data_py = (demo_data_py
-    .query('dbh.notna()')
+		.query('dbh.notna()')
     .query('dbh >= 5 & dbh <= 100')
+		.reset_index(drop=True)  # to avoid KeyError
 )
 
 # check distributions
-demo_data_py.describe().T
+#demo_data_py.describe().T
+skim(demo_data_py)
+#pg.describe(demo_data_py)
+```
+
+```{python}
+
 ```
 
 Following best practices for allometric model selection,
