@@ -368,7 +368,7 @@ data("equations_metadata")
 
 # extract downstream variables 
 show_cols   = c(
-	"ref_id", "equation_taxa", "allometry_specificity", "equation_allometry", "equation_form",
+	"ref_id", "equation_taxa", "allometry_specificity", "equation_allometry", 
 	"dependent_variable", "independent_variable", "dbh_min_cm", "dbh_max_cm", "sample_size", 
 	"stand_age_range_yr", "stand_basal_area_m2_ha", "stand_trees_ha",
 	"geographic_area", "original_coord", "lat", "long", "elev_m", 
@@ -391,7 +391,7 @@ eq_tab_acer[, show_cols]
 eq_tab_acer = read.csv("./data/eq_tab_acer.csv")
 # extract downstream variables 
 show_cols   = c(
-	"ref_id", "equation_taxa", "allometry_specificity", "equation_allometry", "equation_form",
+	"ref_id", "equation_taxa", "allometry_specificity", "equation_allometry",
 	"dependent_variable", "independent_variable", "dbh_min_cm", "dbh_max_cm", "sample_size", 
 	"stand_age_range_yr", "stand_basal_area_m2_ha", "stand_trees_ha",
 	"geographic_area", "original_coord", "lat", "long", "elev_m", 
@@ -409,10 +409,8 @@ eq_tab_acer[, show_cols]
 
 ### Equation Components {.unnumbered}
 
-The filtered *Acer* equation table contains species-specific
-models (*A. rubrum*, *A. saccharum*), genus-level equations
-from eastern US studies, and family-level Sapindaceae
-equations serving as taxonomic fallbacks.
+In the filtered `allodb` collection, we found both species-specific 
+and genus-level equations for *Acer rubrum* and *A. saccharum* allometry from eastern US.
 
 | Attribute | Purpose | Selection Threshold |
 |--------------------|--------------------|--------------------|
