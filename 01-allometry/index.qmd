@@ -45,7 +45,7 @@ minimize carbon credit deductions through uncertainty
 reductions.
 
 ::: callout-note
-While Section 8 exempts structural allometric uncertainty
+Although Section 8 exempts structural allometric uncertainty
 when models are applied consistently, the choice of which
 model to apply directly impacts reported uncertainty.
 Selecting a model with 20% RMSE versus 8% RMSE determines
@@ -116,8 +116,10 @@ knitr::opts_chunk$set(
   ) 
 
 
-reticulate::use_python("/Applications/Xcode.app/Contents/Developer/usr/bin/python3", required = T)
-#reticulate::use_python("/Users/seamus/Library/Python/3.9/bin/python3", required = T)
+reticulate::use_python(required = T,
+	"/Applications/Xcode.app/Contents/Developer/usr/bin/python3")
+#reticulate::use_python(required = T, 
+#  "/Users/seamus/Library/Python/3.9/bin/python3")
 ```
 
 ### Environment Setup (Python) {.unnumbered}
@@ -142,7 +144,6 @@ subprocess.run([sys.executable, "-m", "pip", "install", "--quiet", "-q",
 # Import packages into runtime
 import pandas as pd, numpy as np
 import matplotlib.pyplot as plt, seaborn as sns
-import pingouin as pg
 import plotly.express as px, plotly.graph_objects as go
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.model_selection import train_test_split
@@ -184,7 +185,7 @@ $$
 AGB = \alpha \times DBH^{\beta}
 $$
 
-^and\ in\ logarithmic\ form...^
+^and in logarithmic form...^
 
 $$
 \ln(AGB) = \ln(\alpha) + \beta \times \ln(DBH) + \epsilon
@@ -297,9 +298,11 @@ demo_data_r = demo_data_r |>
 	dplyr::filter(!is.na(dbh)) |>
 	dplyr::filter(dbh >= 5, dbh <= 100)
 
-# check distributions
+# check distribution 
 psych::describe(demo_data_r) |> 
 	tibble::as_tibble()
+
+psych::describe(demo_data_r)
 ```
 
 ### Tidy Data (Python) {.unnumbered}
@@ -312,19 +315,25 @@ psych::describe(demo_data_r) |>
 #| echo: true
 # tidy
 demo_data_py = (demo_data_py
-		.query('dbh.notna()')
+    .query('dbh.notna()')
     .query('dbh >= 5 & dbh <= 100')
-		.reset_index(drop=True)  # to avoid KeyError
+    .reset_index(drop=True) # avoids KeyError
 )
 
-# check distributions
-#demo_data_py.describe().T
-skim(demo_data_py)
-#pg.describe(demo_data_py)
-```
+# check distribution - numeric columns only
+numeric_data = demo_data_py.select_dtypes(include=[np.number])
 
-```{python}
-
+desc_stats = pd.DataFrame({
+    'n': numeric_data.count(),
+    'mean': numeric_data.mean(),
+    'sd': numeric_data.std(),
+    'median': numeric_data.median(),
+    'min': numeric_data.min(),
+    'max': numeric_data.max(),
+    'skew': numeric_data.skew(),
+    'kurtosis': numeric_data.kurtosis()
+}).T
+desc_stats
 ```
 
 Following best practices for allometric model selection,
@@ -394,7 +403,7 @@ from eastern US studies, and family-level Sapindaceae
 equations serving as taxonomic fallbacks.
 
 | Attribute | Purpose | Selection Threshold |
-|------------------|--------------------|----------------------|
+|--------------------|--------------------|--------------------|
 | `equation_id` | Citation traceability | Document provenance |
 | `equation_taxa` | Taxonomic resolution | Species \> genus \> family |
 | `geographic_area` | Regional origin | Same ecoregion \> biome \> climate |
@@ -939,7 +948,7 @@ RMSE) and minimize carbon credit deductions:
 ### Investment Priorities by ROI
 
 | Intervention | Cost | Uncertainty Reduction | Revenue Protected\* |
-|---------------|---------------|----------------|---------------|
+|---------------|---------------|---------------|---------------|
 | Log-transformation | \$0 | 180-190 percentage points | \$900k-\$950k |
 | Improved DBH measurement | \$2-5k | 2-5 percentage points | \$10-25k |
 | Species-specific equations | \$15-30k | 5-10 percentage points | \$25-50k |
