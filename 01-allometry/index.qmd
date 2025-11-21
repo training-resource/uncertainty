@@ -149,6 +149,7 @@ from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.model_selection import train_test_split
 from skimpy import skim
 import geopandas as gpd, rasterio, folium
+from tabulate import tabulate
 ```
 
 ```{css, echo=FALSE, class.source = 'foldable'}
@@ -299,9 +300,6 @@ demo_data_r = demo_data_r |>
 	dplyr::filter(dbh >= 5, dbh <= 100)
 
 # check distribution 
-psych::describe(demo_data_r) |> 
-	tibble::as_tibble()
-
 psych::describe(demo_data_r)
 ```
 
@@ -333,7 +331,25 @@ desc_stats = pd.DataFrame({
     'skew': numeric_data.skew(),
     'kurtosis': numeric_data.kurtosis()
 }).T
-desc_stats
+print(tabulate(desc_stats, headers='keys', tablefmt='pipe', showindex=False))
+```
+
+```{python}
+from tabulate import tabulate
+
+desc_stats = pd.DataFrame({
+    'vars': numeric_data.columns,
+    'n': numeric_data.count().values,
+    'mean': numeric_data.mean().values,
+    'sd': numeric_data.std().values,
+    'median': numeric_data.median().values,
+    'min': numeric_data.min().values,
+    'max': numeric_data.max().values,
+    'skew': numeric_data.skew().values,
+    'kurtosis': numeric_data.kurtosis().values
+}).round(2)
+
+print(tabulate(desc_stats, headers='keys', tablefmt='pipe', showindex=False))
 ```
 
 Following best practices for allometric model selection,
