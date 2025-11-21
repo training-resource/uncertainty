@@ -147,7 +147,7 @@ import matplotlib.pyplot as plt, seaborn as sns
 import plotly.express as px, plotly.graph_objects as go
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.model_selection import train_test_split
-from skimpy import skim
+from scipy import stats
 import geopandas as gpd, rasterio, folium
 from tabulate import tabulate
 ```
@@ -306,37 +306,16 @@ psych::describe(demo_data_r)
 ### Tidy Data (Python) {.unnumbered}
 
 ```{python}
-#| comment: NA
-#| message: false
-#| warning: false
-#| error: false
-#| echo: true
 # tidy
-demo_data_py = (demo_data_py
-    .query('dbh.notna()')
-    .query('dbh >= 5 & dbh <= 100')
-    .reset_index(drop=True) # avoids KeyError
-)
+demo_data_py = (
+	demo_data_py
+	.query('dbh.notna()')
+  .query('dbh >= 5 & dbh <= 100')
+  .reset_index(drop=True) # avoids KeyError
+  )
 
-# check distribution - numeric columns only
+# tabulate
 numeric_data = demo_data_py.select_dtypes(include=[np.number])
-
-desc_stats = pd.DataFrame({
-    'n': numeric_data.count(),
-    'mean': numeric_data.mean(),
-    'sd': numeric_data.std(),
-    'median': numeric_data.median(),
-    'min': numeric_data.min(),
-    'max': numeric_data.max(),
-    'skew': numeric_data.skew(),
-    'kurtosis': numeric_data.kurtosis()
-}).T
-print(tabulate(desc_stats, headers='keys', tablefmt='pipe', showindex=False))
-```
-
-```{python}
-from tabulate import tabulate
-
 desc_stats = pd.DataFrame({
     'vars': numeric_data.columns,
     'n': numeric_data.count().values,
@@ -347,9 +326,13 @@ desc_stats = pd.DataFrame({
     'max': numeric_data.max().values,
     'skew': numeric_data.skew().values,
     'kurtosis': numeric_data.kurtosis().values
-}).round(2)
+    }).round(2)
 
-print(tabulate(desc_stats, headers='keys', tablefmt='pipe', showindex=False))
+# visualize
+print(tabulate(desc_stats, 
+		headers='keys', 
+		tablefmt='pipe', 
+		showindex=False))
 ```
 
 Following best practices for allometric model selection,
@@ -369,25 +352,10 @@ equations are queried for dominant taxa using the
     equations; n\>150 for genus-level equations
 
 ::: callout-tip
-In this early stage of workflow, it can be useful to take a
-quick note of the range and spread in DBH values. This
-offers an early indication of statistical operations and
-validation checks that may be needed ahead.
+At this early of the workflow, it is helpful to check the
+range and spread of DBH values, which offer early indicators
+of statistical operations and validations needed ahead.
 :::
-
-```{r}
-#| context: setup
-#| message: false
-#| error: false
-#| echo: false
-#| comment: NA
-
-#url <- "https://raw.githubusercontent.com/training-resource/uncertainty/refs/heads/main/01-allometry/data/eq_tab_acer.csv"
-#download.file(url, "eq_tab_acer.csv")
-eq_tab_acer <- read.csv("./data/eq_tab_acer.csv")
-
-show_cols   = c("equation_id", "equation_taxa", "equation_allometry")
-```
 
 ```{r}
 #| message: false
@@ -398,18 +366,46 @@ show_cols   = c("equation_id", "equation_taxa", "equation_allometry")
 data(equations)
 data("equations_metadata")
 
-# extract variables 
+# extract downstream variables 
 show_cols   = c(
-	"equation_id", 
-	"equation_taxa", 
-	"equation_allometry")
+	"ref_id", "equation_taxa", "allometry_specificity", "equation_allometry", "equation_form",
+	"dependent_variable", "independent_variable", "dbh_min_cm", "dbh_max_cm", "sample_size", 
+	"stand_age_range_yr", "stand_basal_area_m2_ha", "stand_trees_ha",
+	"geographic_area", "original_coord", "lat", "long", "elev_m", 
+	"ecosystem_type", "koppen", "min.temp_c", "max.temp_c", "map_mm", 
+	"regression_model", "r_squared", "bias_correction_factor", 
+	"allometry_development_method"
+	)
 
-# extract genus
+# extract genus & visualize
 eq_tab_acer = new_equations(subset_taxa = "Acer")
-
-# if needed, visualize all available variables
-#dplyr::glimpse(eq_tab_acer)
+eq_tab_acer[, show_cols]
 ```
+
+```{r}
+#| context: setup
+#| message: false
+#| error: false
+#| echo: false
+#| comment: NA
+eq_tab_acer = read.csv("./data/eq_tab_acer.csv")
+# extract downstream variables 
+show_cols   = c(
+	"ref_id", "equation_taxa", "allometry_specificity", "equation_allometry", "equation_form",
+	"dependent_variable", "independent_variable", "dbh_min_cm", "dbh_max_cm", "sample_size", 
+	"stand_age_range_yr", "stand_basal_area_m2_ha", "stand_trees_ha",
+	"geographic_area", "original_coord", "lat", "long", "elev_m", 
+	"ecosystem_type", "koppen", "min.temp_c", "max.temp_c", "map_mm", 
+	"regression_model", "r_squared", "bias_correction_factor", 
+	"allometry_development_method"
+	)
+
+# Fix data formats
+eq_tab_acer = eq_tab_acer |> dplyr::mutate(
+	across(where(is.character), ~iconv(., from = "", to = "UTF-8", sub = "")))
+eq_tab_acer[, show_cols]
+```
+
 
 ### Equation Components {.unnumbered}
 
@@ -428,14 +424,8 @@ equations serving as taxonomic fallbacks.
 | `dbh_min` / `dbh_max` | Validity range | Cover 80% of observed DBH |
 | `equation_allometry` | Mathematical form | Enable parameter extraction |
 
-This structured metadata enables data-driven, auditable
+This structured metadata enables data-driven, audit-ready
 equation selection under REDD+ verification protocols.
-
-```{r}
-# tabulate allometric equations of target Acer genus
-head(eq_tab_acer[, show_cols]) |> 
-	tibble::as_tibble()
-```
 
 With target variables confirmed, species extracted, and
 known coordinates identified, we compute aboveground biomass
