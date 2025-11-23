@@ -6,8 +6,7 @@ book:
   author: 
     - name: Winrock International
       orcid: 0000-0002-1792-0351 
-      email: seamusrobertmurphy@gmail.com
-  date: today
+  date: 2025/10/30
   open-graph: true 
   page-footer:
     left: "[Source](https://github.com/training-resource/uncertainty)"
