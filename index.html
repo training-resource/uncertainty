@@ -246,7 +246,7 @@ window.Quarto = {
 <li><a href="#sec-overview-ch2" id="toc-sec-overview-ch2" class="nav-link" data-scroll-target="#sec-overview-ch2">Chapter 1: Allometry</a></li>
   <li><a href="#sec-overview-ch3" id="toc-sec-overview-ch3" class="nav-link" data-scroll-target="#sec-overview-ch3">Chapter 2: Emission Factor</a></li>
   <li><a href="#sec-overview-ch1" id="toc-sec-overview-ch1" class="nav-link" data-scroll-target="#sec-overview-ch1">Chapter 3: Activity Data</a></li>
-  <li><a href="#sec-overview-ch4" id="toc-sec-overview-ch4" class="nav-link" data-scroll-target="#sec-overview-ch4">Chapter 4: Aggregated Simulation</a></li>
+  <li><a href="#sec-overview-ch4" id="toc-sec-overview-ch4" class="nav-link" data-scroll-target="#sec-overview-ch4">Chapter 4: Monte Carlo Aggregation</a></li>
   </ul>
 </li>
   </ul>
@@ -405,7 +405,7 @@ UA_t = 0.524417 \times \frac{HW_{90\%}}{1.645006}
 </ul>
 <p>Key methods: Monte Carlo simulation of LULC classification, bootstrapping confusion matrices, spatial autocorrelation analysis, cross-validation with independent reference data.</p>
 <p>ART-TREES requirements: Activity data uncertainty typically dominates reported uncertainty (40-60% contribution when emission factors omitted), but may not dominate actual total uncertainty once all sources quantified <span class="citation" data-cites="butler2024uncertainty">(<a href="references/index.html#ref-butler2024uncertainty" role="doc-biblioref">Butler et al., 2024</a>)</span>.</p>
-</section><section id="sec-overview-ch4" class="level3"><h3 class="anchored" data-anchor-id="sec-overview-ch4">Chapter 4: Aggregated Simulation</h3>
+</section><section id="sec-overview-ch4" class="level3"><h3 class="anchored" data-anchor-id="sec-overview-ch4">Chapter 4: Monte Carlo Aggregation</h3>
 <p>This chapter Iintegrates previous sources through Monte Carlo simulation, the gold standard for REDD+ uncertainty quantification validated by 16+ peer-reviewed studies (Winrock 2025 literature review). Distinguishes “modelling sources” vs.&nbsp;“recurring sources” following <span class="citation" data-cites="pelletier2024bayesian">(<a href="references/index.html#ref-pelletier2024bayesian" role="doc-biblioref"><strong>pelletier2024bayesian?</strong></a>)</span> framework.</p>
 <p>Total uncertainty combines individual components through error propagation, with sensitivity analysis identifying highest-impact parameters for targeted reduction. Real-world implementation from Guyana TREES program demonstrates 21-percentage-point uncertainty reduction through methodological refinements.</p>
 <p>Monte Carlo Best Practices</p>
@@ -1353,7 +1353,7 @@ Zapata-Cuartas, M., Sierra, C. A., &amp; Alleman, L. (2012). Probability distrib
 <span id="cb1-345"><a href="#cb1-345" aria-hidden="true" tabindex="-1"></a>uncertainty once all sources quantified</span>
 <span id="cb1-346"><a href="#cb1-346" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">@butler2024uncertainty</span><span class="co">]</span>.</span>
 <span id="cb1-347"><a href="#cb1-347" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-348"><a href="#cb1-348" aria-hidden="true" tabindex="-1"></a><span class="fu">### Chapter 4: Aggregated Simulation {#sec-overview-ch4}</span></span>
+<span id="cb1-348"><a href="#cb1-348" aria-hidden="true" tabindex="-1"></a><span class="fu">### Chapter 4: Monte Carlo Aggregation {#sec-overview-ch4}</span></span>
 <span id="cb1-349"><a href="#cb1-349" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-350"><a href="#cb1-350" aria-hidden="true" tabindex="-1"></a>This chapter Iintegrates previous sources through Monte</span>
 <span id="cb1-351"><a href="#cb1-351" aria-hidden="true" tabindex="-1"></a>Carlo simulation, the gold standard for REDD+ uncertainty</span>
