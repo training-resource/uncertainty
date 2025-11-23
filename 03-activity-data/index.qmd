@@ -101,7 +101,7 @@ div.column {
   display: block;
   height:200px;
   width: 200px;
-  background-image: url('https://raw.githubusercontent.com/seamusrobertmurphy/map-templates/refs/heads/main/assets/outputs/01-site-map.png');
+  background-image: url('https://winrock.org/wp-content/uploads/2021/12/Winrock-logo-R.png');
   background-size: contain;
   background-position: 50% 50%;
   padding-top: 80px !important;

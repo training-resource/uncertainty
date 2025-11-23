@@ -4,19 +4,13 @@ project:
 book:
   title: "REDD+ Uncertainty"
   author: 
-    - name: Seamus Murphy
-      url: https://scholar.google.com/citations?hl=en&user=jDGq9I4AAAAJ
+    - name: Winrock International
       orcid: 0000-0002-1792-0351 
       email: seamusrobertmurphy@gmail.com
   date: today
   open-graph: true 
   page-footer:
     left: "[Source](https://github.com/training-resource/uncertainty)"
-    right: |
-      [LinkedIn](https://linkedin.com/in/seamusrobertmurphy) | 
-      [Resume](https://drive.google.com/uc?export=download&id=13YLhsRCAMMHQw-jd2SJdaRJH9udBGytP) | 
-      [Scholar](https://scholar.google.com/citations?hl=en&user=jDGq9I4AAAAJ)
-
   repo-url: https://github.com/training-resource/uncertainty
   repo-branch: main
   repo-actions: [edit, issue]
