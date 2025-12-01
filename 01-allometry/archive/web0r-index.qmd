@@ -1,33 +1,59 @@
 ---
 title: "Allometry"
+execute:
+  echo: true
+  engine: knitr
 format:
   docx:
     reference-doc: ../references/style.docx
-    toc: false
+    toc: true
+    toc-depth: 3
+    toc-title: "**Table of Contents**"
     highlight-style: pygments
+    page-layout: article
     df-print: tibble
-
-execute:
-  echo: true
-  warning: false
-  message: false
-
+    resources: 
+      - data/*
 knitr:
   opts_chunk:
     prefer-html: true
     dev: "png"
     dpi: 300
-
+  opts_knit:
+    rmarkdown.pandoc.to: "docx"
+citeproc: true
+editor: visual
+engine: knitr
+embed-resources: true
 bibliography: ../references/references.bib
 csl: ../references/apa.csl
+editor_options: 
+  markdown: 
+    wrap: 60
 ---
 
 ## Overview {.unnumbered}
 
-Allometric equations represent the proportional and scaling relationships between different tree dimensions, such as the relationship between a tree's diameter and its height, biomass, or crown size. These relationships translate tree diameter measurements into biomass estimates, forming the foundation of forest carbon accounting. This chapter compares three candidate allometry equations for aboveground biomass estimation to demonstrate use of error metrics in model selection and model optimization specifically to minimize carbon credit deductions through uncertainty reductions.
+Allometric equations represent the proportional and scaling
+relationships between different tree dimensions, such as the
+relationship between a tree's diameter and its height,
+biomass, or crown size. These relationships translate tree
+diameter measurements into biomass estimates, forming the
+foundation of forest carbon accounting. This chapter
+compares three candidate allometry equations for aboveground
+biomass estimation to demonstrate use of error metrics in
+model selection and model optimization specifically to
+minimize carbon credit deductions through uncertainty
+reductions.
 
 ::: callout-note
-Although Section 8 exempts structural allometric uncertainty when models are applied consistently, the choice of which model to apply directly impacts reported uncertainty. Selecting a model with 20% RMSE versus 8% RMSE determines whether your project faces a 6% or 2% carbon credit deduction, representing a difference worth \$200k in a 1M tCO~2~^-e^ project at \$5/tonne.
+Although Section 8 exempts structural allometric uncertainty
+when models are applied consistently, the choice of which
+model to apply directly impacts reported uncertainty.
+Selecting a model with 20% RMSE versus 8% RMSE determines
+whether your project faces a 6% or 2% carbon credit
+deduction, representing a difference worth \$200k in a 1M
+tCO~2~^-e^ project at \$5/tonne.
 :::
 
 ### Environment Setup (R) {.unnumbered}
@@ -56,6 +82,7 @@ easypackages::packages(
   "s2", "sf", "scales", "sits","spdep", "stars", "stringr",
   "terra", "tmap", "tmaptools", "tidymodels", "tidyverse", "tune", 
   "useful",
+  "webr",
   prompt = F
   )
 ```
@@ -66,6 +93,9 @@ easypackages::packages(
 #| echo: false
 #| comment: NA
 
+library(reticulate)
+
+#install.packages("easypackages")
 sf::sf_use_s2(use_s2 = FALSE)
 set.seed(8787)
 #renv::init()
@@ -124,9 +154,35 @@ import geopandas as gpd, rasterio, folium
 from tabulate import tabulate
 ```
 
+```{css, echo=FALSE, class.source = 'foldable'}
+div.column {
+    display: inline-block;
+    vertical-align: top;
+    width: 50%;
+}
+
+#TOC::before {
+  content: "";
+  display: block;
+  height:100px;
+  width: 200px;
+  background-image: url('https://winrock.org/wp-content/uploads/2021/12/Winrock-logo-R.png');
+  background-size: contain;
+  background-position: 50% 50%;
+  padding-top: 1px !important;
+  background-repeat: no-repeat;
+}
+```
+
 ## Allometry Equations {#sec-allometry-relationship}
 
-Allometric equations predict aboveground biomass from diameter measurements using species or biome-specific parameters and estimation. Therefore, uncertainty compounds from three main sources: model selection, parameter estimation, and field measurements. As shown below, log-transformation adds additional complexity through back-transformation required in majority biomass estimates:
+Allometric equations predict aboveground biomass from
+diameter measurements using species or biome-specific
+parameters and estimation. Therefore, uncertainty compounds
+from three main sources: model selection, parameter
+estimation, and field measurements. As shown below,
+log-transformation adds additional complexity through
+back-transformation required in majority biomass estimates:
 
 $$
 AGB = \alpha \times DBH^{\beta}
@@ -147,13 +203,36 @@ Where:
 
 ### ART Exemption {.unnumbered}
 
-ART-TREES V2.0 Section 8 excludes structural uncertainty in allometric models from uncertainty deductions when models are applied consistently between baseline and crediting periods. Since systematic bias cancels in net change calculations, you only need to quantify random error: parameter estimation uncertainty, measurement precision, and sampling uncertainty when scaling from plots to landscapes.
+ART-TREES V2.0 Section 8 excludes structural uncertainty in
+allometric models from uncertainty deductions when models
+are applied consistently between baseline and crediting
+periods. Since systematic bias cancels in net change
+calculations, you only need to quantify random error:
+parameter estimation uncertainty, measurement precision, and
+sampling uncertainty when scaling from plots to landscapes.
 
-This creates a strategic advantage: reduce uncertainty deductions by maintaining consistent model application across time periods, upgrading from IPCC Tier 1 defaults to country-specific Tier 2 parameters, and investing in measurement precision rather than destructive sampling. Let's implement this with Monte Carlo simulation.
+This creates a strategic advantage: reduce uncertainty
+deductions by maintaining consistent model application
+across time periods, upgrading from IPCC Tier 1 defaults to
+country-specific Tier 2 parameters, and investing in
+measurement precision rather than destructive sampling.
+Let's implement this with Monte Carlo simulation.
 
 ## Model Selection {#sec-model-selection}
 
-In the following steps, we use the `allodb` package to access its global collection of allometric equations and demonstrate uncertainty propagation with real forest inventory data. The demonstration dataset (`scbi_stem1`) comprises a subset of the Smithsonian Conservation Biology Institute [ForestGEO](https://docs.ropensci.org/allodb/reference/scbi_stem1.html) plot sample located in Front Royal, Virginia. This 25.6-hectare mature secondary forest is dominated by Appalachian mixed hardwood species including tulip poplar (*Liriodendron tulipifera*), oaks (*Quercus spp*.), and hickories (*Carya spp*.), representing typical stand composition of the Blue Ridge and Piedmont regions.
+In the following steps, we use the `allodb` package to
+access its global collection of allometric equations and
+demonstrate uncertainty propagation with real forest
+inventory data. The demonstration dataset (`scbi_stem1`)
+comprises a subset of the Smithsonian Conservation Biology
+Institute
+[ForestGEO](https://docs.ropensci.org/allodb/reference/scbi_stem1.html)
+plot sample located in Front Royal, Virginia. This
+25.6-hectare mature secondary forest is dominated by
+Appalachian mixed hardwood species including tulip poplar
+(*Liriodendron tulipifera*), oaks (*Quercus spp*.), and
+hickories (*Carya spp*.), representing typical stand
+composition of the Blue Ridge and Piedmont regions.
 
 ### Import Data (R) {.unnumbered}
 
@@ -183,7 +262,8 @@ utils::write.csv(demo_data_r, "./data/scbi_stem1.csv")
 demo_data_py = pd.read_csv("./data/scbi_stem1.csv")
 ```
 
-```{r}
+```{webr-r}
+#| context: setup #webr setting
 #| message: false
 #| error: false
 #| echo: false
@@ -197,7 +277,11 @@ demo_data_py = pd.read_csv("./data/scbi_stem1.csv")
 #scbi_stem1 <- read.csv("./data/scbi_stem1.csv")
 ```
 
-In the following chunks, we filter the `scbi_stem1` dataset to remove entries with missing values and outliers, before deriving descriptive statistics to check the variables' dimensions. Results show a total of 2,287 stem measurements and describe dimensions of the following variables:
+In the following chunks, we filter the `scbi_stem1` dataset
+to remove entries with missing values and outliers, before
+deriving descriptive statistics to check the variables'
+dimensions. Results show a total of 2,287 stem measurements
+and describe dimensions of the following variables:
 
 -   `dbh`: Diameter at breast height (cm)
 -   `genus`: Taxonomic genus identification
@@ -253,15 +337,26 @@ print(tabulate(desc_stats,
 		showindex=False))
 ```
 
-Following best practices for allometric model selection, equations are queried for dominant taxa using the `new_equations()` function with taxonomic filters based on:
+Following best practices for allometric model selection,
+equations are queried for dominant taxa using the
+`new_equations()` function with taxonomic filters based on:
 
-1.  Geographic proximity: Prioritize equations from eastern North America to minimize climatic and edaphic differences
-2.  DBH range: Ensure equation applicability spans 80% of measured diameter distribution for each species to avoid extrapolation bias
-3.  Taxonomic specificity: Select species-level equations where available; genus or family-level equations when species-specific data absent
-4.  Sample size: Minimum n=50 trees for species-specific equations; n\>150 for genus-level equations
+1.  Geographic proximity: Prioritize equations from eastern
+    North America to minimize climatic and edaphic
+    differences
+2.  DBH range: Ensure equation applicability spans 80% of
+    measured diameter distribution for each species to avoid
+    extrapolation bias
+3.  Taxonomic specificity: Select species-level equations
+    where available; genus or family-level equations when
+    species-specific data absent
+4.  Sample size: Minimum n=50 trees for species-specific
+    equations; n\>150 for genus-level equations
 
 ::: callout-tip
-At this early of the workflow, it is helpful to check the range and spread of DBH values, which offer early indicators of statistical operations and validations needed ahead.
+At this early of the workflow, it is helpful to check the
+range and spread of DBH values, which offer early indicators
+of statistical operations and validations needed ahead.
 :::
 
 ```{r}
@@ -313,12 +408,14 @@ eq_tab_acer = eq_tab_acer |> dplyr::mutate(
 eq_tab_acer[, show_cols]
 ```
 
+
 ### Equation Components {.unnumbered}
 
-In the filtered `allodb` collection, we found both species-specific and genus-level equations for *Acer rubrum* and *A. saccharum* allometry from eastern US.
+In the filtered `allodb` collection, we found both species-specific 
+and genus-level equations for *Acer rubrum* and *A. saccharum* allometry from eastern US.
 
 | Attribute | Purpose | Selection Threshold |
-|------------------------|------------------------|------------------------|
+|--------------------|--------------------|--------------------|
 | `equation_id` | Citation traceability | Document provenance |
 | `equation_taxa` | Taxonomic resolution | Species \> genus \> family |
 | `geographic_area` | Regional origin | Same ecoregion \> biome \> climate |
@@ -327,9 +424,13 @@ In the filtered `allodb` collection, we found both species-specific and genus-le
 | `dbh_min` / `dbh_max` | Validity range | Cover 80% of observed DBH |
 | `equation_allometry` | Mathematical form | Enable parameter extraction |
 
-This structured metadata enables data-driven, audit-ready equation selection under REDD+ verification protocols.
+This structured metadata enables data-driven, audit-ready
+equation selection under REDD+ verification protocols.
 
-With target variables confirmed, species extracted, and known coordinates identified, we compute aboveground biomass volume for all `scbi` trees in the following as a new `abg` variable.
+With target variables confirmed, species extracted, and
+known coordinates identified, we compute aboveground biomass
+volume for all `scbi` trees in the following as a new `abg`
+variable.
 
 ```{r}
 #| eval: false
@@ -344,15 +445,28 @@ scbi_stem1$agb <- allodb::get_biomass(
 
 ## Normality Testing
 
-Non-normal distributions violate assumptions of parametric statistics, inflating uncertainty estimates. Identifying the true probability distribution enables appropriate transformations that reduce reported uncertainty—directly reducing carbon credit deductions.
+Non-normal distributions violate assumptions of parametric
+statistics, inflating uncertainty estimates. Identifying the
+true probability distribution enables appropriate
+transformations that reduce reported uncertainty—directly
+reducing carbon credit deductions.
 
-Accurate probability density functions (PDFs) are essential for uncertainty modeling. We assess whether DBH and AGB conform to normal distributions using multiple diagnostic tests:
+Accurate probability density functions (PDFs) are essential
+for uncertainty modeling. We assess whether DBH and AGB
+conform to normal distributions using multiple diagnostic
+tests:
 
--   Skewness & Kurtosis: Quantify asymmetry and tail behavior
--   Shapiro-Wilk test: Formal normality test (p \< 0.05 rejects normality)
--   Wilcoxon test: Non-parametric alternative for median testing
+-   Skewness & Kurtosis: Quantify asymmetry and tail
+    behavior
+-   Shapiro-Wilk test: Formal normality test (p \< 0.05
+    rejects normality)
+-   Wilcoxon test: Non-parametric alternative for median
+    testing
 
-Expected result: Both variables will show significant right-skew (many small trees, few large dominants), violating normality assumptions and justifying log-transformation in subsequent modeling.
+Expected result: Both variables will show significant
+right-skew (many small trees, few large dominants),
+violating normality assumptions and justifying
+log-transformation in subsequent modeling.
 
 ```{r}
 #| eval: false
@@ -413,19 +527,37 @@ text(x = max(scbi_stem1$agb), y = max(h2$density) * 1.15,
   adj = c(1, 1), cex = 0.8)
 ```
 
-High positive skewness (\>2) and Shapiro-Wilk p \< 0.001 confirm both variables deviate significantly from normality. This violation of parametric assumptions would inflate uncertainty estimates if left untreated, resulting in unnecessary carbon credit deductions.
+High positive skewness (\>2) and Shapiro-Wilk p \< 0.001
+confirm both variables deviate significantly from normality.
+This violation of parametric assumptions would inflate
+uncertainty estimates if left untreated, resulting in
+unnecessary carbon credit deductions.
 
 ## Bivariate Testing
 
-Heteroscedasticity (non-constant variance) violates ordinary least squares assumptions, producing unreliable standard errors and inflated uncertainty estimates. Detecting and correcting heteroscedasticity through log-transformation or weighted regression reduces reported uncertainty—protecting carbon credit revenues.
+Heteroscedasticity (non-constant variance) violates ordinary
+least squares assumptions, producing unreliable standard
+errors and inflated uncertainty estimates. Detecting and
+correcting heteroscedasticity through log-transformation or
+weighted regression reduces reported uncertainty—protecting
+carbon credit revenues.
 
-The Breusch-Pagan test formally tests for heteroscedasticity by regressing squared residuals on predictors:
+The Breusch-Pagan test formally tests for heteroscedasticity
+by regressing squared residuals on predictors:
 
--   Null hypothesis (H₀): Variance is constant (homoscedastic)
--   Alternative (H₁): Variance changes with predictor values (heteroscedastic)
--   Decision rule: p \< 0.05 =\> Reject H₀, confirming heteroscedasticity
+-   Null hypothesis (H₀): Variance is constant
+    (homoscedastic)
+-   Alternative (H₁): Variance changes with predictor values
+    (heteroscedastic)
+-   Decision rule: p \< 0.05 =\> Reject H₀, confirming
+    heteroscedasticity
 
-Expected result: Large trees exhibit greater prediction variance than small trees due to the power-law relationship (AGB ∝ DBH\^2.5). This pattern inflates uncertainty estimates for canopy dominants, the trees holding most biomass. Log-transformation stabilizes variance across tree sizes.
+Expected result: Large trees exhibit greater prediction
+variance than small trees due to the power-law relationship
+(AGB ∝ DBH\^2.5). This pattern inflates uncertainty
+estimates for canopy dominants, the trees holding most
+biomass. Log-transformation stabilizes variance across tree
+sizes.
 
 ```{r}
 #| eval: false
@@ -441,33 +573,52 @@ bp_test <- lmtest::bptest(dbh_agb_lm)
 bp_test
 ```
 
-Results yielding p value of \< 0.001 confirms heteroscedasticity, with variance increasing with tree size. The "funnel shape" in the scatterplot visually demonstrates this pattern. Without correction, uncertainty estimates will be biased upward, particularly for large trees that dominate biomass estimates.
+Results yielding p value of \< 0.001 confirms
+heteroscedasticity, with variance increasing with tree size.
+The "funnel shape" in the scatterplot visually demonstrates
+this pattern. Without correction, uncertainty estimates will
+be biased upward, particularly for large trees that dominate
+biomass estimates.
 
 Required corrections:
 
 1.  Log-transformation of both variables (primary solution)
-2.  Weighted regression (alternative if log-transformation inadequate)
+2.  Weighted regression (alternative if log-transformation
+    inadequate)
 3.  Robust standard errors (supplements log-transformation)
 
-The next section demonstrates how log-transformation simultaneously addresses non-normality and heteroscedasticity, dramatically reducing uncertainty.
+The next section demonstrates how log-transformation
+simultaneously addresses non-normality and
+heteroscedasticity, dramatically reducing uncertainty.
 
 ## Log-Transformation Rationale {#sec-log-rationale}
 
-Using un-transformed linear regression on allometric data produces 150-200% relative RMSE, resulting in carbon credit deductions of 40-60%. Log-transformation reduces RMSE to \<10%, cutting deductions to \<5%—the difference between project viability and failure.
+Using un-transformed linear regression on allometric data
+produces 150-200% relative RMSE, resulting in carbon credit
+deductions of 40-60%. Log-transformation reduces RMSE to
+\<10%, cutting deductions to \<5%—the difference between
+project viability and failure.
 
 ### The Mathematical Problem
 
-Allometric relationships follow a power law, not linear relationship:
+Allometric relationships follow a power law, not linear
+relationship:
 
 $$AGB = \alpha \times DBH^{\beta}$$
 
-where β typically ranges from 2.3-2.7, meaning biomass scales with DBH raised to a power. Attempting to fit this with linear regression (AGB = a + b \* DBH) fundamentally mis-specifies the functional form.
+where β typically ranges from 2.3-2.7, meaning biomass
+scales with DBH raised to a power. Attempting to fit this
+with linear regression (AGB = a + b \* DBH) fundamentally
+mis-specifies the functional form.
 
 Consequences of linear misspecification:
 
-1.  Massive prediction errors: RMSE of 200-300 kg for trees where true AGB is 100 kg (200-300% relative error)
-2.  Systematic bias: Underestimates large trees, overestimates small trees
-3.  Inflated uncertainty: Cannot capture exponential growth pattern, forcing residuals into noise
+1.  Massive prediction errors: RMSE of 200-300 kg for trees
+    where true AGB is 100 kg (200-300% relative error)
+2.  Systematic bias: Underestimates large trees,
+    overestimates small trees
+3.  Inflated uncertainty: Cannot capture exponential growth
+    pattern, forcing residuals into noise
 4.  Heteroscedasticity: Variance explodes at large diameters
 
 ### The Log-Transformation Solution
@@ -478,16 +629,21 @@ $$\ln(AGB) = \ln(\alpha) + \beta \times \ln(DBH) + \epsilon$$
 
 This transformation:
 
--   Converts power law to linear form (β becomes a slope coefficient)
+-   Converts power law to linear form (β becomes a slope
+    coefficient)
 -   Stabilizes variance across tree sizes (homoscedasticity)
 -   Normalizes residuals (satisfies OLS assumptions)
 -   Reduces RMSE by 90-95% (from 200% to 5-10%)
 
-Financial impact: A 1M tonne CO₂e project valued at \$5M faces:
+Financial impact: A 1M tonne CO₂e project valued at \$5M
+faces:
 
--   Untransformed model: 50% uncertainty deduction = \$2.5M loss
--   Log-transformed model: 8% uncertainty deduction = \$400k loss
--   Net benefit: \$2.1M additional revenue from proper transformation
+-   Untransformed model: 50% uncertainty deduction = \$2.5M
+    loss
+-   Log-transformed model: 8% uncertainty deduction = \$400k
+    loss
+-   Net benefit: \$2.1M additional revenue from proper
+    transformation
 
 ```{r}
 #| eval: false
@@ -514,11 +670,19 @@ knitr::kable(data.frame(
   align = 'lrrr')
 ```
 
-This section sets up the critical justification for the cross-validation workflow in the next section, where we implement log-transformed models and quantify the uncertainty reduction that protects carbon revenues.
+This section sets up the critical justification for the
+cross-validation workflow in the next section, where we
+implement log-transformed models and quantify the
+uncertainty reduction that protects carbon revenues.
 
 ### Age / Diameter Classes {.unnumbered}
 
-Stratification by size class or age cohort involves a critical component in forest biomass modeling. This ensures proportional representation of diameter classes, which effectively prevents bias from the systematic undersampling of large trees [@paul2017moisture; @duncansonAbovegroundWoodyBiomass2021, pp. 100].
+Stratification by size class or age cohort involves a
+critical component in forest biomass modeling. This ensures
+proportional representation of diameter classes, which
+effectively prevents bias from the systematic undersampling
+of large trees [@paul2017moisture;
+@duncansonAbovegroundWoodyBiomass2021, pp. 100].
 
 ```{r}
 #| eval: false
@@ -581,12 +745,18 @@ knitr::kable(
 
 ## Monte Carlo Cross-Validation
 
-This section introduces the design of the Monte Carlo simulation regime, including:
+This section introduces the design of the Monte Carlo
+simulation regime, including:
 
--   Simulation parameters are defined to balance computational efficiency and statistical robustness.
--   Cross-validation techniques are employed to evaluate model performance and identify bias or variance.
+-   Simulation parameters are defined to balance
+    computational efficiency and statistical robustness.
+-   Cross-validation techniques are employed to evaluate
+    model performance and identify bias or variance.
 
-The `LGOCV` acronym used in the `caret` package functions below stands for "leave one group out cross validation". We select the % of test data that is set out from the build upon which the model will be repeatedly trained.
+The `LGOCV` acronym used in the `caret` package functions
+below stands for "leave one group out cross validation". We
+select the % of test data that is set out from the build
+upon which the model will be repeatedly trained.
 
 ```{r}
 #| eval: false
@@ -623,7 +793,17 @@ print(lm_monte_carlo)
 
 ### Visualize Residuals
 
-To enable access to these predictions, we need to instruct `caret` to retain the resampled predictions by setting `savePredictions = "final"` in our `trainControl()` function. It’s important to be aware that if you’re working with a large dataset or numerous resampling iterations, the resulting `train()` object may grow significantly in size. This happens because caret must store a record of every row, including both the observed values and predictions, for each resampling iteration. By visualizing the results, we can offer insights into the performance of our model on the resampled data.
+To enable access to these predictions, we need to instruct
+`caret` to retain the resampled predictions by setting
+`savePredictions = "final"` in our `trainControl()`
+function. It’s important to be aware that if you’re working
+with a large dataset or numerous resampling iterations, the
+resulting `train()` object may grow significantly in size.
+This happens because caret must store a record of every row,
+including both the observed values and predictions, for each
+resampling iteration. By visualizing the results, we can
+offer insights into the performance of our model on the
+resampled data.
 
 ```{r}
 #| eval: false
@@ -742,37 +922,52 @@ cat(sprintf("Net credited value: $%.2fM\n",
 
 ## Summary
 
--   Distribution diagnostics: DBH and AGB are significantly right-skewed (p \< 0.001), violating parametric assumptions
--   Heteroscedasticity confirmed: Breusch-Pagan test (p \< 0.001) shows variance increases with tree size
--   Log-transformation impact: Reduced RMSE from 194% (linear) to 0.1% (log-transformed)
+-   Distribution diagnostics: DBH and AGB are significantly
+    right-skewed (p \< 0.001), violating parametric
+    assumptions
+-   Heteroscedasticity confirmed: Breusch-Pagan test (p \<
+    0.001) shows variance increases with tree size
+-   Log-transformation impact: Reduced RMSE from 194%
+    (linear) to 0.1% (log-transformed)
 
 ::: callout-caution
-Carbon credit deduction: `round(ua_factor x 100, 1)%` of project credits
+Carbon credit deduction: `round(ua_factor x 100, 1)%` of
+project credits
 :::
 
 ### Allometric Uncertainty Reduction Best Practices
 
-To achieve commercially viable uncertainty levels (\<10% RMSE) and minimize carbon credit deductions:
+To achieve commercially viable uncertainty levels (\<10%
+RMSE) and minimize carbon credit deductions:
 
-1.  Use log-transformed models: Captures power-law allometric relationship, reducing RMSE by 90-95%
-2.  Cross-validate predictions: Quantifies true out-of-sample error, avoiding overfitting bias
-3.  Species-specific equations: Genus or family-level fallbacks inflate uncertainty by 5-15 percentage points
-4.  Adequate sample size: Minimum 50 trees per species (NASA-CEOS standard)
-5.  Measurement precision: Target ±0.5 cm DBH error through calibrated instruments and trained crews
+1.  Use log-transformed models: Captures power-law
+    allometric relationship, reducing RMSE by 90-95%
+2.  Cross-validate predictions: Quantifies true
+    out-of-sample error, avoiding overfitting bias
+3.  Species-specific equations: Genus or family-level
+    fallbacks inflate uncertainty by 5-15 percentage points
+4.  Adequate sample size: Minimum 50 trees per species
+    (NASA-CEOS standard)
+5.  Measurement precision: Target ±0.5 cm DBH error through
+    calibrated instruments and trained crews
 
 ### Investment Priorities by ROI
 
 | Intervention | Cost | Uncertainty Reduction | Revenue Protected\* |
-|------------------|------------------|------------------|------------------|
+|---------------|---------------|---------------|---------------|
 | Log-transformation | \$0 | 180-190 percentage points | \$900k-\$950k |
 | Improved DBH measurement | \$2-5k | 2-5 percentage points | \$10-25k |
 | Species-specific equations | \$15-30k | 5-10 percentage points | \$25-50k |
 | Cross-validation workflow | \$5-10k | 3-8 percentage points | \$15-40k |
 | Destructive sampling | \$50-100k | 10-20 percentage points | \$50-100k |
 
-\*Assumes 1M tCO₂e project at \$5/tonne; revenue protected = avoided deduction
+\*Assumes 1M tCO₂e project at \$5/tonne; revenue protected =
+avoided deduction
 
-Strategic recommendation: Log-transformation delivers 90% of possible uncertainty reduction at zero marginal cost. Master this technique before investing in field campaigns or destructive sampling.
+Strategic recommendation: Log-transformation delivers 90% of
+possible uncertainty reduction at zero marginal cost. Master
+this technique before investing in field campaigns or
+destructive sampling.
 
 ## Next Steps
 

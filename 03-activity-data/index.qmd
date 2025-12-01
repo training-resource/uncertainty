@@ -1,25 +1,25 @@
 ---
 title: "Activity Data"
+format:
+  docx:
+    reference-doc: ../references/style.docx
+    toc: false
+    highlight-style: pygments
+    df-print: tibble
+
 execute:
   echo: true
-format:
-  html:
-    toc: true
-    toc-location: right
-    toc-depth: 3
-    toc-title: "**On this page**"
-    highlight-style: pygments
-    page-layout: article
+  warning: false
+  message: false
 
-editor_options: 
-  markdown: 
-    wrap: 60
-engine: knitr
-filters:
-  - webr
+knitr:
+  opts_chunk:
+    prefer-html: true
+    dev: "png"
+    dpi: 300
+
 bibliography: ../references/references.bib
 csl: ../references/apa.csl
-citeproc: true
 ---
 
 ## Overview {.unnumbered}
@@ -31,10 +31,9 @@ Activity data (AD) represents the spatial extent and temporal dynamics of land-u
 3.  Stratification: Forest type, management status, ecological zones
 4.  Temporal dynamics: Annual or multi-year change detection
 
-
 ### Environment Setup {.unnumbered}
 
-```{web-r}
+```{r}
 #| warning: false
 #| message: false
 #| echo: true
@@ -62,6 +61,7 @@ easypackages::packages(
   "terra", "testthat", "tidyverse", "tidyterra","tools", 
   "tmap", "tmaptools", "terrainr", 
   "xgboost",
+  "webshot", "webshot2",
   prompt = F)
 
 #mapviewOptions(fgb = FALSE)
@@ -87,26 +87,6 @@ knitr::opts_chunk$set(
   comment = NA, 
   tidy.opts = list(width.cutoff = 60)
   ) 
-```
-
-```{css, echo=FALSE, class.source = 'foldable'}
-div.column {
-    display: inline-block;
-    vertical-align: top;
-    width: 50%;
-}
-
-#TOC::before {
-  content: "";
-  display: block;
-  height:200px;
-  width: 200px;
-  background-image: url('https://winrock.org/wp-content/uploads/2021/12/Winrock-logo-R.png');
-  background-size: contain;
-  background-position: 50% 50%;
-  padding-top: 80px !important;
-  background-repeat: no-repeat;
-}
 ```
 
 ------------------------------------------------------------------------
@@ -157,11 +137,8 @@ Reference data limitations:
 
 The confusion matrix (error matrix) provides the foundation for uncertainty quantification:
 
-```{web-r}
-#| eval: true
-#| label: ad-confusion-matrix-example
-#| code-summary: "Create confusion matrix from validation data"
-
+```{r}
+#| eval: false
 library(caret)
 library(tidyverse)
 
@@ -926,7 +903,7 @@ For 10-20% uncertainty (acceptable Tier 2): - Overall accuracy 85-90% - Validati
 
 For \>20% uncertainty (Tier 1, high deductions): - Overall accuracy \<85% - Inadequate validation - Significant temporal/spatial misalignment
 
-### Next Chapter 
+### Next Chapter
 
 Chapter 2: Allometry Uncertainty will address:
 

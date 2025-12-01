@@ -1,38 +1,36 @@
 ---
+title: "REDD+ Uncertainty Training"
+format:
+  docx:
+    reference-doc: ./references/style.docx
+    toc: false
+    highlight-style: pygments
+    df-print: tibble
+
 execute:
   echo: true
-format:
-  html:
-    toc: true
-    toc-location: right
-    toc-depth: 3
-    toc-title: "**On this page**"
-    toc-expand: true
-    highlight-style: pygments
-    page-layout: article
+  warning: false
+  message: false
 
-editor_options: 
-  markdown: 
-    wrap: 60
-engine: knitr
-filters:
-  - webr
-bibliography: references/references.bib
-csl: references/apa.csl
-citeproc: true
+knitr:
+  opts_chunk:
+    prefer-html: true
+    dev: "png"
+    dpi: 300
+
+bibliography: ./references/references.bib
+csl: ./references/apa.csl
 ---
 
 # Preface {.unnumbered}
 
-------------------------------------------------------------
+------------------------------------------------------------------------
 
 ```{r}
 #| warning: false
 #| message: false
 #| echo: false
 #| comment: NA
-
-
 easypackages::packages(
   "boot", 
   "caret", 
@@ -43,101 +41,44 @@ easypackages::packages(
   "scales", 
   "tidyverse", 
   "viridis",
+  "webshot", "webshot2",
   prompt = F)
 ```
 
-## Overview {.unnumbered}
+This training resource was commissioned by Winrock International under its JTAP portfolio (20065-2025-ICA-03) as a Foundation Module for uncertainty quantification training in jurisdictional REDD+ carbon accounting. The following training curriculum provides methodological guidance for quantifying, reporting, and reducing uncertainty in REDD+ carbon accounting in accordance with ART-TREES Standard (V2.0) requirements and the IPCC 2019 guidelines [@artREDDEnvironmentalExcellence2021; @ipcc2019Refinement20062019a].
 
-This training resource was commissioned by Winrock
-International under its JTAP portfolio (20065-2025-ICA-03)
-as a Foundation Module for uncertainty quantification
-training in jurisdictional REDD+ carbon accounting. The
-following training curriculum provides methodological
-guidance for quantifying, reporting, and reducing
-uncertainty in REDD+ carbon accounting in accordance with
-ART-TREES Standard (V2.0) requirements and the IPCC 2019
-guidelines [@artREDDEnvironmentalExcellence2021;
-@ipcc2019Refinement20062019a]. Rather than viewing
-uncertainty as merely a penalty, this framework treats it as
-a strategic tool for identifying dominant error sources and
-optimizing credit issuance
-[@camaraUncertaintyActiveLearning2024; @simoes2021satellite;
-@duncansonAbovegroundWoodyBiomass2021]. Projects investing
-in targeted uncertainty reduction can achieve improved
-crediting reveneue through minimizing penalty deductions, as
-well as through stronger pricing from enhanced credibility
-and lower verification and monitoring costs
-[@kohler2010towards].
+Rather than viewing estimation uncertainty as a penalty to manage, this framework treats it as a strategic metric for identifying dominant error sources and optimizing credit issuance [@camaraUncertaintyActiveLearning2024; @simoes2021satellite; @duncansonAbovegroundWoodyBiomass2021]. Projects investing in targeted uncertainty reduction can achieve improved crediting revenue through minimizing penalty deductions, as well as through stronger pricing from enhanced credibility and lower verification and monitoring costs [@kohler2010towards].
+
+```         
+ADD DECISION POINTS THROUGHOUT
+
+RATIONALISE LOE to R
+
+(ADD GUYANA WORKING EXAMPLES)
+```
 
 #### Current State of Practice
 
-From a review of current practices, research suggests
-systematic gaps exist in how REDD+ countries quantify and
-report uncertainty. According to study by
-@butler2024uncertainty, while 91% of participating countries
-report activity data uncertainty, only 4-14% report emission
-factor uncertainty and allometric uncertainty. This trend
-does not reflect the relative importance of these specific
-metrics to crediting. For instance, research suggests that
-related design choices in emission factors and modelling
-assumptions can produce emission flux variations ranging
-from 4.2% to 262.2% of reference levels
-[@pelletierREDDEmissionsEstimation2013]. Rather than
-technical limitations alone, this kind of selective
-reporting reveals a worrying misalignment between rigor and
-financial incentives in results-based payment systems.
+Systematic reviews have identified significant gaps in how REDD+ countries quantify and report uncertainty. According to a study by @butler2024uncertainty, while 91% of participating countries report activity data uncertainty, only 4-14% report emission factor uncertainty and allometric uncertainty. This trend does not reflect the relative importance of these specific metrics to crediting. For instance, research suggests that related design choices in emission factors and modelling assumptions can produce emission flux variations ranging from 4.2% to 262.2% of reference levels [@pelletierREDDEmissionsEstimation2013]. Rather than technical limitations alone, this kind of selective reporting reveals a worrying misalignment between rigor and financial incentives in results-based payment systems.
 
 #### The Perverse Incentive
 
-@butler2024uncertainty described this critical policy
-failure of selective uncertainty reporting as a kind of
-perverse incentive: "Because uncertainty factors into the
-payments made, there is a perverse incentive for countries
-to omit or underestimate sources of uncertainty. Including
-more sources of uncertainty makes the confidence intervals
-wider, giving a false impression that the quality of the
-estimates is worse." This creates a troubling paradox where
-comprehensive uncertainty assessment, the hallmark of
-rigorous science, leads to wider confidence intervals and
-consequently lower payments, while incomplete uncertainty
-assessment produces narrower confidence intervals and higher
-payments. Countries are effectively penalized for
-methodological rigor and transparency, incentivizing
-selective reporting that undermines the environmental
-integrity of the entire REDD+ framework.
+@butler2024uncertainty described this critical policy failure of selective uncertainty reporting as a kind of perverse incentive: "Because uncertainty factors into the payments made, there is a perverse incentive for countries to omit or underestimate sources of uncertainty. Including more sources of uncertainty makes the confidence intervals wider, giving a false impression that the quality of the estimates is worse." This creates a troubling paradox where comprehensive uncertainty assessment, the hallmark of rigorous science, leads to wider confidence intervals and consequently lower payments, while incomplete uncertainty assessment produces narrower confidence intervals and higher payments. Countries are effectively penalized for methodological rigor and transparency, incentivizing selective reporting that undermines the environmental integrity of the entire REDD+ framework.
 
-Recognizing this fundamental design flaw, some results-based
-payment programs have implemented mitigation strategies to
-realign incentives. The FCPF Carbon Fund cap uncertainty
-deductions at a maximum threshold to limit incentive to
-under-report. This cap removes the direct penalty for
-comprehensive reporting while maintaining pressure to reduce
-actual uncertainty over time. Additionally, programs such as
-the ART-TREES registry reward demonstrable improvements by
-allowing participants to recover over-deducted credits when
-cumulative uncertainty decreases across multi-year crediting
-periods, creating positive incentives for methodological
-refinement.
+Recognizing this fundamental design flaw, some results-based payment programs have implemented mitigation strategies to realign incentives. The FCPF Carbon Fund cap uncertainty deductions at a maximum threshold to limit incentive to under-report. This cap removes the direct penalty for comprehensive reporting while maintaining pressure to reduce actual uncertainty over time. Additionally, programs such as the ART-TREES registry reward demonstrable improvements by allowing participants to recover over-deducted credits when cumulative uncertainty decreases across multi-year crediting periods, creating positive incentives for methodological refinement.
 
-## Uncertainty Requirements
+## Uncertainty Compliance
 
-#### ART-TREES Requirements
+### ART-TREES Requirements
 
-Section 8 of the ART Standard V2.0 mandates the following
-criteria [@artREDDEnvironmentalExcellence2021, pp. 45]:
+Section 8 of the ART Standard V2.0 mandates the following criteria [@artREDDEnvironmentalExcellence2021, pp. 45]:
 
-1.  Monte Carlo simulations: Minimum 10,000 iterations for
-    uncertainty propagation
-2.  90% confidence intervals: Half-width calculation for
-    adjustment factors
-3.  Conservative bias: Systematic underestimation
-    acceptable, overestimation prohibited
-4.  Whole-chain integration: Combine activity data +
-    emission factor uncertainties
-5.  Crediting period aggregation: Flexibility to sum
-    uncertainty deductions across years
-6.  Allometry Exemption: Allometric modelling uncertainty is
-    excluded as non-mandatory.
+1.  Monte Carlo simulations: Minimum 10,000 iterations for uncertainty propagation
+2.  90% confidence intervals: Half-width calculation for adjustment factors
+3.  Conservative bias: Systematic underestimation acceptable, overestimation prohibited
+4.  Whole-chain integration: Combine activity data + emission factor uncertainties
+5.  Crediting period aggregation: Flexibility to sum uncertainty deductions across years
+6.  Allometry Exemption: Allometric modelling uncertainty is excluded as non-mandatory.
 
 Equation 10: Uncertainty deduction
 
@@ -151,181 +92,77 @@ $$
 UA_t = 0.524417 \times \frac{HW_{90\%}}{1.645006}
 $$
 
-## Uncertainty Guidelines
-
-#### IPCC Guidelines
-
-The IPCC Good Practice Guidance establishes five key
-principles for uncertainty reporting:
-
-1.  Transparency: Document all assumptions, data sources,
-    and methods
-2.  Consistency: Apply methods uniformly across time series
-3.  Comparability: Enable cross-country and cross-sector
-    comparison
-4.  Completeness: Include all relevant sources and sinks
-5.  Accuracy: Minimize bias and reduce uncertainties
-
-#### The Managed Land Proxy
-
-The Managed Land Proxy (MLP) Approach[^index-1] is
-recommended by the IPCC to reduce uncertainty, primarily by
-establishing a clear boundary for reporting anthropogenic
-emissions [@ipcc2006Chapter1Introduction, pp. 1.5;
-@ipccRevisitingUseManaged2010]. This is crucial for managing
-the uncertainty caused by Inter-Annual Variability (IAV),
-the high year-to-year fluctuation in emissions/removals
-[@kurz2018quantifying; @grassi2018reconciling]. When IAV
-related to natural disturbances, such as wildfires or
-windthrow, is high, it makes it difficult to quantitatively
-understand the actual impact and trends of human activities
-[@aragao201821st]. The MLP addresses this uncertainty
-challenge through:
-
--   Partitioning Anthropogenic Fluxes: MLP defines emissions
-    and removals on managed land as the country's
-    first-order approximation of anthropogenic emissions,
-    assuming human-induced effects occurs on managed lands
-    [@ciais2005europe; @book; @pilli2016modelling].
--   Managing Natural Effects: The MLP traditionally relies
-    on the assumption that CO~2~ fluxes from natural effects
-    average out over time and space
-    [@ipccChapter2Generic2019a, pp. 2.68].
-
-The MLP methodology provides guidance to reduce IAV-driven
-uncertainty through disaggregation [@allen2025geological].
-In these terms, dissaggregation involves separation of the
-total MLP estimate between the following components to
-reveal a trend associated with human activity that is
-expected to have lower IAV [@canadell2007contributions;
-@vetter2008analyzing; @ipccRevisitingUseManaged2010;
-@brando2014abrupt; @henttonen2017environment]:
-
-1.  Quantify Total MLP Flux: Estimate total
-    emissions/removals on managed land.
-2.  Identify Natural Disturbance (ND) Fluxes: Identify and
-    estimate CO~2~ emissions and subsequent removals caused
-    by NDs [@genet2018role; @miller2012trends].
-3.  Subtract and Report: Subtract the ND component from the
-    MLP total. The remainder is the estimated emissions
-    associated with human activity, which is expected to
-    have a lower IAV.
-
-The CO~2~ balance principle is crucial for ensuring the
-disaggregation of ND fluxes is consistently treated over
-time.
-
--   Emissions & Removals: CO~2~ emissions from an ND event
-    are expected to be balanced by subsequent removals
-    (regrowth) on the same land.
--   Consistency: It is good practice to disaggregate CO~2~
-    removals to the ND component until the initial ND
-    emissions have been fully balanced. Once balanced,
-    remaining removals are attributed to the anthropogenic
-    component.
-
 ## Uncertainty Drivers
 
-This training curriculum addresses the following sources of
-uncertainty in REDD+ carbon accounting:
+```         
+A note on biostatistical frameworks and the theoretical shifts needed when moving from Normal Distribution (De Moivre) to Log Distribution to Power Laws Distribution of Disturbance Ecology to Insurance Industry to Buffer Pool Theory:
+
+Power Laws within and beyond scales of Log Distributions found in biological oscilliations (Stogratz)
+
+Cascading thresholds of maximally unstable systems of wildfires (Mark Buchannon)
+
+Feedback mechanisms of disturbance ecology (Drossel-Schnil)
+
+Power laws, spatial universality, and self-organization of critical systems
+
+Key Example: USFS 10am Policy
+
+Key Example: Reorganizing Avalanches in Sandpile Simulations
+
+Key Example: Fractal Geometry (Mandelbroit)
+
+If you are in a world of additive random events, but if in world governed by Power Laws, then entirely different strategy of pediction (Verbaschi & Network Node Power Laws of -2). Land on the Mathematical Dispute of Soviet Russia (Markov-Chain) and the Measure of Nuclear Reactivity (Monte Carlo Method). Mention theoretical perspectives of least action: as the "true expense of nature" (Maupetit)
+
+Markov-Chain: Nekrasov's Abuse of Mathematics and Disproving Assumption of Free Will & Independence
+
+Markov-Chain: Multiplication Factor kavg converts markov chain into neutron fissions leading to Monte Carlo method (Ulam's Uncle, 1948 - Chicago Nuclear Reactivism)
+```
+
+This training curriculum addresses the following sources of uncertainty in REDD+ carbon accounting.
 
 ### Chapter 1: Allometry {#sec-overview-ch2}
 
-Allometric models are a critical source of systematic bias.
-Due to their pervasive trends, some have called for a
-concerted global effort to improve allometric equations for
-tropical forests [@vorster2020variability;
-@wayson2015estimating]. Unlike random measurement errors,
-allometric uncertainty is systematic, meaning it cannot be
-reduced by simply measuring more trees. It also
-geographically variable, as equations developed in one
-tropical region often introduce substantial bias when
-applied elsewhere.
+Allometric models are a critical source of systematic bias. Due to their pervasive trends, some have called for a concerted global effort to improve allometric equations for tropical forests [@vorster2020variability; @wayson2015estimating]. Unlike random measurement errors, allometric uncertainty is systematic, meaning it cannot be reduced by simply measuring more trees. It also geographically variable, as equations developed in one tropical region often introduce substantial bias when applied elsewhere.
 
-While the ART-TREES Standard (V2.0) exempts structural
-allometric uncertainty when models are applied consistently
-between baseline and crediting periods, recognizing that
-biases cancel through differencing, this pragmatic provision
-reduces reporting burden but does not eliminate actual
-uncertainty. This is particularly important if forest
-composition shifts over time due to selective logging,
-natural succession, or climate-driven changes. Chapter 1
-provides methods for quantifying allometric uncertainty,
-developing region-specific equations, and determining when
-the consistency exemption applies.
+While the ART-TREES Standard (V2.0) exempts structural allometric uncertainty when models are applied consistently between baseline and crediting periods, recognizing that biases cancel through differencing, this pragmatic provision reduces reporting burden but does not eliminate actual uncertainty. This is particularly important if forest composition shifts over time due to selective logging, natural succession, or climate-driven changes. Chapter 1 provides methods for quantifying allometric uncertainty, developing region-specific equations, and determining when the consistency exemption applies.
 
-Biomass estimation depends on allometric equations relating
-tree diameter to aboveground biomass. Uncertainty sources
-include:
+Biomass estimation depends on allometric equations relating tree diameter to aboveground biomass. Uncertainty sources include:
 
 Model selection:
 
--   Geographic transferability of published equations
-    [@duncanson2017implications; @picard2015a]
--   Species-specific vs. generic models
-    [@martinez2020species; @shang2025allometric]
--   Diameter range extrapolation beyond calibration data
-    [@vorster2020variability]
+-   Geographic transferability of published equations [@duncanson2017implications; @picard2015a]
+-   Species-specific vs. generic models [@martinez2020species; @shang2025allometric]
+-   Diameter range extrapolation beyond calibration data [@vorster2020variability]
 
 Parameter estimation:
 
--   Regression coefficient standard errors
-    [@wayson2015estimating]
--   Residual variance and heteroscedasticity
-    [@parresol1993modeling; @nickless2011method]
--   Sample size limitations in calibration datasets
-    [@roxburgh2015guidelines; @duncanson2015small].
+-   Regression coefficient standard errors [@wayson2015estimating]
+-   Residual variance and heteroscedasticity [@parresol1993modeling; @nickless2011method]
+-   Sample size limitations in calibration datasets [@roxburgh2015guidelines; @duncanson2015small].
 
 Measurement error:
 
 -   DBH measurement precision [@martin2022accuracy]
--   Height measurement bias from clinometer and laser
-    calibrations [@ojoatre2019assessing]
+-   Height measurement bias from clinometer and laser calibrations [@ojoatre2019assessing]
 -   Wood density and debris variance [@yanai2010a]
 
 Bias correction:
 
--   Maximum Likelihood Ratio (MLR) bias correction
-    [@aholoukpe2018allometric]
--   Restricted Maximum Likelihood (REML) bias correction
-    [@zapata2012probability]
--   Baskerville bias correction [@baskerville1972use;
-    @clifford2013a]
--   Species-specific height correction
-    [@st2004retrospective; @andersen2006a]
--   Moisture content correction factors
-    [@roxburgh2015guidelines]
--   Non-linear and intercept-only model prediction intervals
-    [@dutcua2018using; @ploton2020spatial]
--   Censored data and zero-inflation bootstrapping
-    [@white2025small; @mcroberts2016a]
+-   Maximum Likelihood Ratio (MLR) bias correction [@aholoukpe2018allometric]
+-   Restricted Maximum Likelihood (REML) bias correction [@zapata2012probability]
+-   Baskerville bias correction [@baskerville1972use; @clifford2013a]
+-   Species-specific height correction [@st2004retrospective; @andersen2006a]
+-   Moisture content correction factors [@roxburgh2015guidelines]
+-   Non-linear and intercept-only model prediction intervals [@dutcua2018using; @ploton2020spatial]
+-   Censored data and zero-inflation bootstrapping [@white2025small; @mcroberts2016a]
 
 ### Chapter 2: Emission Factor {#sec-overview-ch3}
 
-Emission factors represent a critical but dramatically
-under-reported source of uncertainty in REDD+ accounting.
-@pelletierREDDEmissionsEstimation2013 distinguish between
-"recurring sources" of random and systematic measurement
-errors quantified in each monitoring cycle and "modelling
-sources" of uncertainties embedded in model parameters and
-assumptions such as combustion completeness factors and
-gas-specific emission ratios. Their Panama case study
-demonstrates that "the highest error propagated using Monte
-Carlo simulations was caused by modelling sources of
-uncertainty," including critical assumptions about fuel
-consumption rates, fire intensity classifications, and the
-relationships between modified combustion efficiency and
-trace gas production.
+Emission factors represent a critical but dramatically under-reported source of uncertainty in REDD+ accounting. @pelletierREDDEmissionsEstimation2013 distinguish between "recurring sources" of random and systematic measurement errors quantified in each monitoring cycle and "modelling sources" of uncertainties embedded in model parameters and assumptions such as combustion completeness factors and gas-specific emission ratios. Their Panama case study demonstrates that "the highest error propagated using Monte Carlo simulations was caused by modelling sources of uncertainty," including critical assumptions about fuel consumption rates, fire intensity classifications, and the relationships between modified combustion efficiency and trace gas production.
 
-Chapter 2 addresses both the direct measurement uncertainty
-in emission factors (G~ef~) and the related uncertainty in
-combustion completeness (C~f~), providing field protocols
-for jurisdictional campaigns and guidance on when IPCC Tier
-1 defaults are sufficient versus when Tier 2
-country-specific measurements justify their cost.
+Chapter 2 addresses both the direct measurement uncertainty in emission factors (G~ef~) and the related uncertainty in combustion completeness (C~f~), providing field protocols for jurisdictional campaigns and guidance on when IPCC Tier 1 defaults are sufficient versus when Tier 2 country-specific measurements justify their cost.
 
-Emission factors (G~ef~) convert biomass change to
-greenhouse gas emissions. Uncertainty sources include:
+Emission factors (G~ef~) convert biomass change to greenhouse gas emissions. Uncertainty sources include:
 
 Default variance values:
 
@@ -343,50 +180,19 @@ Gas-specific factors:
 
 -   CH₄: ±30-40% (incomplete combustion variability)
 -   N₂O: ±50-60% (nitrogen content and temperature effects)
--   CO₂: ±5% for organic soils (stoichiometric, low
-    variance)
+-   CO₂: ±5% for organic soils (stoichiometric, low variance)
 
-Key methods: Literature synthesis of emission factor ranges,
-field measurements of combustion products, Fourier Transform
-Infrared Spectroscopy (FTIR) for gas ratios.
+Key methods: Literature synthesis of emission factor ranges, field measurements of combustion products, Fourier Transform Infrared Spectroscopy (FTIR) for gas ratios.
 
-Strategic focus: Emission factors contribute 20-30% of total
-uncertainty but are expensive to reduce through field
-campaigns. Cost-benefit analysis favors using IPCC defaults
-unless jurisdiction-specific factors demonstrate
-substantially lower uncertainty [@kohler2010towards].
+Strategic focus: Emission factors contribute 20-30% of total uncertainty but are expensive to reduce through field campaigns. Cost-benefit analysis favors using IPCC defaults unless jurisdiction-specific factors demonstrate substantially lower uncertainty [@kohler2010towards].
 
 ### Chapter 3: Activity Data {#sec-overview-ch1}
 
-Activity data has historically received the most attention
-in REDD+ uncertainty analysis, with 91% of countries now
-reporting uncertainty in their land-use change estimates
-[@butler2024uncertainty; @chen2015b; @sheng2018uncertainty].
-This focus has made activity data the best-quantified
-component through sustained investment in improved remote
-sensing protocols, validation frameworks, and change
-detection algorithms. However, this apparent success raises
-an important paradox: while activity data uncertainty has
-been systematically reduced and documented, other
-potentially dominant sources, particularly modelling
-assumptions about forest classification, carbon accumulation
-rates, and transition probabilities between land-use
-categories, remain largely under-estimated.
+Activity data has historically received the most attention in REDD+ uncertainty analysis, with 91% of countries now reporting uncertainty in their land-use change estimates [@butler2024uncertainty; @chen2015b; @sheng2018uncertainty]. This focus has made activity data the best-quantified component through sustained investment in improved remote sensing protocols, validation frameworks, and change detection algorithms. However, this apparent success raises an important paradox: while activity data uncertainty has been systematically reduced and documented, other potentially dominant sources, particularly modelling assumptions about forest classification, carbon accumulation rates, and transition probabilities between land-use categories, remain largely under-estimated.
 
-@pelletierREDDEmissionsEstimation2013 identify these
-modelling sources as exhibiting the highest sensitivity in
-their Panama analysis, with assumptions about fallow forest
-classification between intact and degraded forest, and
-temporal dynamics of regrowth producing emission flux
-variations ranging from 4.2% to 262.2% of reference levels.
-Chapter 3 addresses both the well-established methods for
-quantifying map accuracy uncertainty and the emerging need
-to characterize uncertainty in the modelling assumptions
-that link activity data to carbon stock changes.
+@pelletierREDDEmissionsEstimation2013 identify these modelling sources as exhibiting the highest sensitivity in their Panama analysis, with assumptions about fallow forest classification between intact and degraded forest, and temporal dynamics of regrowth producing emission flux variations ranging from 4.2% to 262.2% of reference levels. Chapter 3 addresses both the well-established methods for quantifying map accuracy uncertainty and the emerging need to characterize uncertainty in the modelling assumptions that link activity data to carbon stock changes.
 
-Activity data (AD) represents the spatial extent and
-temporal dynamics of forest change. Uncertainty sources
-include:
+Activity data (AD) represents the spatial extent and temporal dynamics of forest change. Uncertainty sources include:
 
 Land cover classification:
 
@@ -405,39 +211,21 @@ Spatial aggregation:
 -   Edge effects and boundary uncertainty
 -   Projection and coordinate system errors
 -   Pixel area calculation variance
--   Scale dependency: @kohler2010towards demonstrate 20-40%
-    uncertainty at 1-ha scale vs. \>100% at 0.04-ha scale
+-   Scale dependency: @kohler2010towards demonstrate 20-40% uncertainty at 1-ha scale vs. \>100% at 0.04-ha scale
 
-Key methods: Monte Carlo simulation of LULC classification,
-bootstrapping confusion matrices, spatial autocorrelation
-analysis, cross-validation with independent reference data.
+Key methods: Monte Carlo simulation of LULC classification, bootstrapping confusion matrices, spatial autocorrelation analysis, cross-validation with independent reference data.
 
-ART-TREES requirements: Activity data uncertainty typically
-dominates reported uncertainty (40-60% contribution when
-emission factors omitted), but may not dominate actual total
-uncertainty once all sources quantified
-[@butler2024uncertainty].
+ART-TREES requirements: Activity data uncertainty typically dominates reported uncertainty (40-60% contribution when emission factors omitted), but may not dominate actual total uncertainty once all sources quantified [@butler2024uncertainty].
 
-### Chapter 4: Aggregated Simulation {#sec-overview-ch4}
+### Chapter 4: Monte Carlo Aggregation {#sec-overview-ch4}
 
-This chapter Iintegrates previous sources through Monte
-Carlo simulation, the gold standard for REDD+ uncertainty
-quantification validated by 16+ peer-reviewed studies
-(Winrock 2025 literature review). Distinguishes "modelling
-sources" vs. "recurring sources" following
-@pelletier2024bayesian framework.
+This chapter Iintegrates previous sources through Monte Carlo simulation, the gold standard for REDD+ uncertainty quantification validated by 16+ peer-reviewed studies (Winrock 2025 literature review). Distinguishes "modelling sources" vs. "recurring sources" following @pelletier2024bayesian framework.
 
-Total uncertainty combines individual components through
-error propagation, with sensitivity analysis identifying
-highest-impact parameters for targeted reduction. Real-world
-implementation from Guyana TREES program demonstrates
-21-percentage-point uncertainty reduction through
-methodological refinements.
+Total uncertainty combines individual components through error propagation, with sensitivity analysis identifying highest-impact parameters for targeted reduction. Real-world implementation from Guyana TREES program demonstrates 21-percentage-point uncertainty reduction through methodological refinements.
 
 Monte Carlo Best Practices
 
-Recent literature review (Winrock 2025) spanning 2003-2023
-confirms Monte Carlo Approach 2 as convergent standard:
+Recent literature review (Winrock 2025) spanning 2003-2023 confirms Monte Carlo Approach 2 as convergent standard:
 
 -   16 peer-reviewed studies validate effectiveness
 -   Plot to national scale applications demonstrated
@@ -446,16 +234,10 @@ confirms Monte Carlo Approach 2 as convergent standard:
 
 Critical Insights
 
--   Correlations essential: Ignoring interdependencies
-    underestimates uncertainty 15-30% [@yanai2010a;
-    @keller2001a]
--   Distribution selection matters: Beta/log-normal \>
-    truncated normal for bounded parameters [@picard2015a]
--   Bootstrap required: When theoretical distributions
-    unknown [@molto2013a]
--   Sensitivity analysis guides investment: Sobol indices
-    identify high-impact targets [@chen2015b;
-    @holdaway2014a]
+-   Correlations essential: Ignoring interdependencies underestimates uncertainty 15-30% [@yanai2010a; @keller2001a]
+-   Distribution selection matters: Beta/log-normal \> truncated normal for bounded parameters [@picard2015a]
+-   Bootstrap required: When theoretical distributions unknown [@molto2013a]
+-   Sensitivity analysis guides investment: Sobol indices identify high-impact targets [@chen2015b; @holdaway2014a]
 
 IPCC Error Propagation
 
@@ -471,10 +253,4 @@ $$
 \frac{U_E^2}{E^2} = \frac{U_A^2}{A^2} + \frac{U_{M_B}^2}{M_B^2} + \frac{U_{C_f}^2}{C_f^2} + \frac{U_{G_{ef}}^2}{G_{ef}^2} + 2\rho_{A,M_B}\frac{U_A U_{M_B}}{A M_B}
 $$
 
-Key insight: Relative uncertainties combine in quadrature
-for multiplicative models; correlations critical.
-
-[^index-1]: As an useful learning resource, we recommend
-    reviewing the following seminar hosted by IPCC in
-    November, 2024:
-    <https://www.youtube.com/live/1UbHDFMHEEU?si=rw3LjaoQZ8QRFCkv>
+Key insight: Relative uncertainties combine in quadrature for multiplicative models; correlations critical.

@@ -903,3 +903,43 @@ Approaches (IPCC 2006 Vol 4):
 [^index-4]: [@butler2024uncertainty]
 
 [^index-5]: [@kohler2010towards]
+
+
+
+Uncertainty Guidelines
+
+IPCC Guidelines
+
+The IPCC Good Practice Guidance establishes five key principles for uncertainty reporting:
+
+Transparency: Document all assumptions, data sources, and methods
+
+Consistency: Apply methods uniformly across time series
+
+Comparability: Enable cross-country and cross-sector comparison
+
+Completeness: Include all relevant sources and sinks
+
+Accuracy: Minimize bias and reduce uncertainties
+
+The Managed Land Proxy
+
+The Managed Land Proxy (MLP) Approach is recommended by the IPCC to reduce uncertainty, primarily by establishing a clear boundary for reporting anthropogenic emissions [@ipcc2006Chapter1Introduction, pp. 1.5; @ipccRevisitingUseManaged2010]. This is crucial for managing the uncertainty caused by Inter-Annual Variability (IAV), the high year-to-year fluctuation in emissions/removals [@kurz2018quantifying; @grassi2018reconciling]. When IAV related to natural disturbances, such as wildfires or windthrow, is high, it makes it difficult to quantitatively understand the actual impact and trends of human activities [@aragao201821st]. The MLP addresses this uncertainty challenge through:
+
+Partitioning Anthropogenic Fluxes: MLP defines emissions and removals on managed land as the country's first-order approximation of anthropogenic emissions, assuming human-induced effects occurs on managed lands [@ciais2005europe; @book; @pilli2016modelling].
+
+Managing Natural Effects: The MLP traditionally relies on the assumption that CO2 fluxes from natural effects average out over time and space [@ipccChapter2Generic2019a, pp. 2.68].
+
+The MLP methodology provides guidance to reduce IAV-driven uncertainty through disaggregation [@allen2025geological]. In these terms, dissaggregation involves separation of the total MLP estimate between the following components to reveal a trend associated with human activity that is expected to have lower IAV [@canadell2007contributions; @vetter2008analyzing; @ipccRevisitingUseManaged2010; @brando2014abrupt; @henttonen2017environment]:
+
+Quantify Total MLP Flux: Estimate total emissions/removals on managed land.
+
+Identify Natural Disturbance (ND) Fluxes: Identify and estimate CO2 emissions and subsequent removals caused by NDs [@genet2018role; @miller2012trends].
+
+Subtract and Report: Subtract the ND component from the MLP total. The remainder is the estimated emissions associated with human activity, which is expected to have a lower IAV.
+
+The CO2 balance principle is crucial for ensuring the disaggregation of ND fluxes is consistently treated over time.
+
+Emissions & Removals: CO2 emissions from an ND event are expected to be balanced by subsequent removals (regrowth) on the same land.
+
+Consistency: It is good practice to disaggregate CO2 removals to the ND component until the initial ND emissions have been fully balanced. Once balanced, remaining removals are attributed to the anthropogenic component.
