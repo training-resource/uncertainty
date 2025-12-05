@@ -29,6 +29,7 @@ csl: ./references/apa.csl
 ```{r}
 #| warning: false
 #| message: false
+#| error: false
 #| echo: false
 #| comment: NA
 easypackages::packages(
@@ -53,7 +54,7 @@ Rather than viewing estimation uncertainty as a penalty to manage, this framewor
 
 Recent analyses have identified opportunities to strengthen uncertainty reporting across REDD+ programs. According to Butler et al. @butler2024uncertainty, while 91% of participating countries report activity data uncertainty, only 4-14% report emission factor and allometric uncertainty. This pattern presents an opportunity for jurisdictions to enhance methodological completeness and improve credit issuance outcomes. Research demonstrates that comprehensive uncertainty quantification, including emission factors and modeling assumptions contribute to signficant variance across reference levels ranging from 4.2% to 262.2% [@pelletierREDDEmissionsEstimation2013].
 
-#### Crediting Value of Comprehensive Uncertainty Reporting
+#### Value of Comprehensive Uncertainty Reporting
 
 Comprehensive uncertainty reporting serves multiple strategic objectives beyond regulatory compliance. When jurisdictions systematically quantify and report all uncertainty sources, they establish baseline metrics for improvement and unlock pathways to enhanced credit revenue. Butler et al. @butler2024uncertainty note that comprehensive assessment can initially produce wider confidence intervals, but this transparency enables targeted methodological refinements that systematically reduce actual uncertainty over time, a process that directly increases credit issuance and revenue. Recognizing the importance of incentivizing comprehensive reporting, results-based payment programs have implemented supportive mechanisms. The FCPF Carbon Fund uses a capped uncertainty deduction schedule that removes disincentives for comprehensive reporting:
 
@@ -70,8 +71,6 @@ This structure ensures that programs with very high initial uncertainty face the
 Recognizing this fundamental design flaw, some results-based payment programs have implemented mitigation strategies to realign incentives. The FCPF Carbon Fund cap uncertainty deductions at a maximum threshold to limit incentive to under-report. This cap removes the direct penalty for comprehensive reporting while maintaining pressure to reduce actual uncertainty over time. Additionally, programs such as the ART-TREES registry reward demonstrable improvements by allowing participants to recover over-deducted credits when cumulative uncertainty decreases across multi-year crediting periods, creating positive incentives for methodological refinement.
 
 ## Uncertainty Compliance
-
-### ART-TREES Requirements
 
 Section 8 of the ART Standard V2.0 mandates the following criteria [@artREDDEnvironmentalExcellence2021, pp. 45]:
 
