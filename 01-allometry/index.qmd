@@ -24,7 +24,7 @@ bibliography: ../references/references.bib
 csl: ../references/apa.csl
 ---
 
-## Overview {.unnumbered}
+# Overview {.unnumbered}
 
 Allometric equations represent the proportional and scaling relationships between different tree dimensions, such as the relationship between a tree's diameter and its height, biomass, or crown size. When trees are considered at a population scale, their different dimensions, such as height, diameter, crown size, biomass, are statistically related through shared ontogenic development patterns [@gould1966allometry]. These relationships remain consistent for trees growing under similar conditions, whether small saplings or large canopy dominants [@king1996allometry; @archibald2003a; @bohlman2006allometry; @dietze2008capturing].
 
@@ -42,6 +42,7 @@ Although Section 8 exempts structural allometric uncertainty when models are app
 #| message: false
 #| error: false
 #| echo: true
+
 easypackages::packages(
   "ropensci/allodb", "animation", "BIOMASS", "cols4all", "covr", "cowplot", "caret",
   "DescTools", "dataMaid", "dplyr", "FawR", "ForestToolsRS", "forestdata", 
@@ -54,6 +55,7 @@ easypackages::packages(
   "tidyverse", "tidyr", "tune", "useful",
   prompt = F
   )
+
 ```
 
 ```{r}
@@ -69,7 +71,7 @@ set.seed(8787)
 #renv::activate()
 #renv::snapshot()
 #renv::update()s
-renv::restore() # Debugger
+#renv::restore() # Debugger
 #renv::install("readxl", type = "binary")
 
 options(repos = c(CRAN = "https://cloud.r-project.org"),
@@ -122,7 +124,9 @@ import geopandas as gpd, rasterio, folium
 from tabulate import tabulate
 ```
 
-## Allometry Equations {#sec-allometry-relationship}
+# Method {.unnumbered}
+
+## Allometric Equations {#sec-allometry-relationship}
 
 In its most general sense, allometry describes any linear or non-linear correlation between increases in tree dimensions during ontogenic development [@picard2012a]. A more restrictive definition, originating with Huxley @huxley1924constant, refers specifically to proportional relationships between *relative* increases in dimensions:
 
@@ -162,8 +166,6 @@ This chapter adopts the broadest definition of allometry: any correlation betwee
 1.  How uncertainty metrics inform model selection and optimization
 2.  How allometry uncertainty impacts carbon credit deductions
 
-### ART Exemption {.unnumbered}
-
 ## Model Selection {#sec-model-selection}
 
 The choice of allometric equation directly determines uncertainty magnitude and carbon credit deductions. This section demonstrates quantitative differences between three equation categories using the `scbi_stem1` dataset which comprises a subset of the [ForestGEO](https://docs.ropensci.org/allodb/reference/scbi_stem1.html) plot inventory sampled in Front Royal, Virginia. This 25.6-hectare mature secondary forest is dominated by Appalachian mixed hardwood species including tulip poplar (*Liriodendron tulipifera*), oaks (*Quercus spp*.), and hickories (*Carya spp*.), representing typical stand composition of the Blue Ridge and Piedmont regions. We compared equations most typically applied in REDD+ carbon offset reporting:
@@ -172,13 +174,13 @@ The choice of allometric equation directly determines uncertainty magnitude and 
 -   Genus-level equations: Aggregated across multiple species within a genus[@jansen1996opbrengsttabellen; @jenkins2004comprehensive]
 -   Global equations: Generic equations across broad geographic regions [@chave2009towards; @chave2014improved; @west1997general; @brown1997a]
 
-Considering previous section's discussions around global allometric equations and their scales of generality, it follows that species within the same genus share evolutionary history. However, the may still differ in wood density, branch architecture, or bole morphometry. For example, while the following species may be characterized in tandem by commonly used allometry, they also exhibit biologically significant differences. Therefore, generic equations even at their most local generalizations introduce systematic bias.
+Considering previous section's discussions around global allometric equations and their scales of generality, it follows that species within the same genus share evolutionary history. However, the may still differ in wood density, branch architecture, or bole morphometry. For example, while species may be genetically related, they may also exhibit biologically significant distinctions, as follows:
 
 -   *Acer rubrum* (red maple): Lower wood density (0.49 g/cm³), faster growth
 -   *Acer saccharum* (sugar maple): Higher wood density (0.63 g/cm³), denser wood
 -   *Acer negundo* (box elder): Intermediate density (0.42 g/cm³), different crown architecture
 
-### Import Data (R) {.unnumbered}
+#### Import Data {.unnumbered}
 
 ```{r}
 #| comment: NA
@@ -186,19 +188,16 @@ Considering previous section's discussions around global allometric equations an
 #| warning: false
 #| error: false
 #| echo: true
-# import allometry from allodb
+
+# import allometry "data" from allodb.pkg
 library("allodb")
 data(scbi_stem1)
 
-head(scbi_stem1) |>
+head(scbi_stem1, n=10) |>
 	flextable::flextable() |> 
-	flextable::fontsize(size=7,part="all") |> 
-	flextable::width(width=1) |> 
-	flextable::fit_to_width(max_width = 6.5) |>
-	flextable::colformat_double(big.mark = ",", digits = 1, na_str = "N/A")
-```
+	flextable::autofit()
 
-### ~~Import Data (Python)~~ {.unnumbered}
+```
 
 ```{python}
 #| comment: NA
@@ -211,32 +210,34 @@ head(scbi_stem1) |>
 demo_data_py = pd.read_csv("./data/scbi_stem1.csv")
 ```
 
-In the following chunks, we filter the `scbi_stem1` to a subset of *Quercus* observations. This was selected to facilitate scaled comparisons as this was the largest species subsample recorded. Outliers and missing entries were removed and a log-transformed predictor was derived (`log_dbh`). Results produce a sample of 71 from a total of 2,287 stem measurements, as shown in the following descriptive statistics:
+#### Tidy Data {.unnumbered}
+
+In the code cells, we filter the `scbi_stem1` to a subset of *Quercus* observations. This was selected to facilitate scaled comparisons as this was the largest species subsample recorded. Outliers and missing entries were removed and a log-transformed predictor was derived (`log_dbh`). Results produce a sample of 71 from a total of 2,287 stem measurements, as shown in the following descriptive statistics:
 
 -   `dbh`: Diameter at breast height (cm)
 -   `genus`: Taxonomic genus identification
 -   `species`: Species epithet
 -   `Family`: Taxonomic family classification
 
-### Tidy Data (R) {.unnumbered}
-
 ```{r}
 #| comment: NA
 #| message: false
 #| warning: false
 #| error: false
-#| eval: false
+#| eval: true
 #| echo: true
 
 # tidy raw data
 scbi_quercus = scbi_stem1 |>
   dplyr::filter(!is.na(dbh)) |>
   dplyr::filter(dbh >= 5, dbh <= 100)|>
-	dplyr::filter(genus == "Quercus") |>
-	dplyr::mutate(log_dbh = log(dbh))
+	dplyr::filter(genus == "Quercus") 
 
-# check distribution 
-psych::describe(scbi_acer)
+scbi_quercus_rubra = scbi_stem1 |>
+  dplyr::filter(!is.na(dbh)) |>
+  dplyr::filter(dbh >= 5, dbh <= 100)|>
+	dplyr::filter(species == "rubra") 
+
 ```
 
 ```{r}
@@ -247,21 +248,8 @@ psych::describe(scbi_acer)
 #| echo: false
 #| eval: true
 
-# tidy raw data
-scbi_quercus = scbi_stem1 |>
-  dplyr::filter(!is.na(dbh)) |>
-  dplyr::filter(dbh >= 5, dbh <= 100)|>
-	dplyr::filter(genus == "Quercus") |>
-	dplyr::mutate(log_dbh = log(dbh))
-
-scbi_quercus_rubra = scbi_stem1 |>
-  dplyr::filter(!is.na(dbh)) |>
-  dplyr::filter(dbh >= 5, dbh <= 100)|>
-	dplyr::filter(species == "rubra") |>
-	dplyr::mutate(log_dbh = log(dbh))
-
 # check distribution 
-psych::describe(scbi_quercus) |> 
+psych::describe(scbi_quercus) |> dplyr::select(!c(trimmed,trimmed, mad, range)) |> 
 	tibble::rownames_to_column(var = "Variable") |>  
   dplyr::mutate(
     Variable = case_when(
@@ -274,22 +262,17 @@ psych::describe(scbi_quercus) |>
     TRUE ~ Variable)) |>
   dplyr::select(-vars) |>  # Remove the vars column
   flextable::flextable() |> 
-  flextable::fontsize(size = 7, part = "all") |> 
-  flextable::set_caption("Descriptive statistics for allometric variables (n=460)") |>
   flextable::colformat_double(big.mark = ",", digits = 1) |>
-  flextable::fit_to_width(max_width = 7) |>
-  flextable::autofit()
+	flextable::autofit()
 ```
 
 <br>
 
 ::: callout-tip
-At this early stage in the workflow, it helps to quickly check the range and spread of DBH values. These values offers early indicators of the statistical operations and validations needed ahead.
+At this early stage in the workflow, it helps to quickly check the range and spread of DBH values. These values offer early indicators of the statistical operations and validations needed ahead.
 :::
 
 <br>
-
-### ~~Tidy Data (Python)~~ {.unnumbered}
 
 ```{python}
 #| comment: NA
@@ -345,17 +328,10 @@ Following best practices in allometric model selection, equations are queried fi
 data(equations)
 data("equations_metadata")
 
-# Genus-specific equations for Quercus (using new_equations)
 eq_quercus_genus = allodb::new_equations(subset_taxa = "Quercus")
-
-# Species-specific equations for Quercus (using new_equations)
 eq_quercus_species = allodb::new_equations(subset_taxa = "Quercus rubra")
-
-
-# Filter variables for reviewing equations
 show_cols <- c("ref_id", "equation_taxa", "allometry_specificity", "equation_allometry")
 
-# tabulate
 flextable::flextable(eq_quercus_genus[, show_cols]) |> 
   flextable::autofit()
 ```
@@ -419,7 +395,7 @@ In the filtered subset of the `allodb` dataset above, we find species-specific a
 Species-specific equations are automatically fitted when using default `allodb` functions. These tools are useful resources, including a number of other allometric packages specific to different biomes like `silviculture`, `forestdata`, `ForestBiomass`, and the recommended option `rFVS`
 :::
 
-### Species-Specific Allometric Equations
+### Species-Specific Biomass Estimation
 
 ```{r}
 #| comment: NA
@@ -434,63 +410,72 @@ scbi_quercus$agb_species <- allodb::get_biomass(
   genus 	= scbi_quercus$genus,
   species = scbi_quercus$species,
   coords	= c(-78.2, 38.9)
-)
+  )
 ```
 
-### Genus-Specific Allometric Equations
+### Genus-Specific Biomass Estimation
 
 ```{r}
-#| context: setup
+#| comment: NA
 #| message: false
 #| error: false
 #| echo: true
 #| eval: true
-#| comment: NA
 
 # genus-specific estimates
 scbi_quercus$agb_genus <- allodb::get_biomass(
-    dbh = scbi_quercus$dbh,
-    genus = scbi_quercus$genus,
+    dbh 		= scbi_quercus$dbh,
+    genus 	= "Quercus",
     species = scbi_quercus$species,
-    coords = c(-78.2, 38.9),
+    coords	= c(-78.2, 38.9),
     new_eqtable = eq_quercus_genus
   )
 ```
 
-### Global Allometric Equations
+### Global Biomass Estimation
 
-BIOMASS package requires some additional data developments which draws inputs from the Global Wood Density database.
+The following functions from the `BIOMASS` package [@BIOMASS] require some additional wrangling, specifically to extract values from the Global Wood Density database [@vieilledent2018new] and convert from units provided [@rejou2017biomass].
+
+::: callout-tip
+It is recommended to check if selected equations require any unit conversions or scaling limiters. For example, if using the most common allometry from Chave et al (2014), we need to convert from milligrams to kilograms, as follows.
+:::
 
 ```{r}
+#| comment: NA
 #| message: false
 #| error: false
-#| echo: true
+#| echo: false
 #| eval: true
-#| comment: NA
 
-# tropical and dryland scaled estimates
+# derive generic estimates using standard equations
 wood_densities <- BIOMASS::getWoodDensity(
-  genus = scbi_quercus$genus,
-  species = scbi_quercus$species,
-  stand = scbi_quercus$Plot)
-
+  genus 		= scbi_quercus$genus,
+  species 	= scbi_quercus$species,
+  stand 		= scbi_quercus$Plot)
 scbi_quercus$WD <- wood_densities$meanWD
 
-# derive regional estimates using specific equations 
 # Chave et al 2014
 scbi_quercus$agb_chave2014 <- BIOMASS::computeAGB(
-  D = scbi_quercus$dbh,
-  WD = scbi_quercus$WD,
+  D 		= scbi_quercus$dbh,
+  WD		= scbi_quercus$WD,
   coord = c(-78.2, 38.9))
+scbi_quercus$agb_chave2014 = scbi_quercus$agb_chave2014 * 1000
 
-# Chave et al 2005
-scbi_quercus$agb_chave2005 <- scbi_quercus$WD * exp(
-	-1.499 + 2.148 * log(scbi_quercus$dbh) + 0.207 * 
-		(log(scbi_quercus$dbh))^2 - 0.0281 * (log(scbi_quercus$dbh))^3)
+# Chave et al 2005 (MANUAL Fit)
+scbi_quercus$agb_chave2005 <- scbi_quercus$WD * 
+  exp(-1.499 + 2.148*log(scbi_quercus$dbh) + 
+      0.207*(log(scbi_quercus$dbh))^2 - 
+      0.0281*(log(scbi_quercus$dbh))^3)
 
-# Brown et al 1997
+# Brown et al 1997 (MANUAL Fit)
 scbi_quercus$agb_brown1997 <- exp(2.134 + 2.53 * log(scbi_quercus$dbh))
+scbi_quercus$agb_brown1997 = scbi_quercus$agb_brown1997 / 100 
+
+flextable::flextable(scbi_quercus) |>
+	flextable::autofit()
 ```
+
+*Table 1D: Aboveground biomass estimates derived from five allometry equations of varying scales*
 
 ```{r}
 #| comment: NA
@@ -499,19 +484,19 @@ scbi_quercus$agb_brown1997 <- exp(2.134 + 2.53 * log(scbi_quercus$dbh))
 #| echo: false
 #| eval: false
 
+#write.csv2(scbi_quercus, "./data/scbi_quercus.csv")
 # Check tree number of sample remaining across all equaitons
-scbi_quercus_complete <- scbi_quercus |> 
-	dplyr::filter(
-	!is.na(agb_species), !is.na(agb_genus), !is.na(agb_chave2014), 
-	!is.na(agb_chave2005), !is.na(agb_brown1997)) |>
-  dplyr::mutate(
-  	log_agb_species = log(agb_species),
-  	log_agb_genus = log(agb_genus),
-  	log_agb_chave2014 = log(agb_chave2014),
-  	log_agb_brown1997 = log(agb_brown1997),
-  	log_agb_chave2005 = log(agb_chave2005))
+scbi_quercus <- readr::read_delim("data/scbi_quercus.csv", 
+    delim = ";", escape_double = FALSE, trim_ws = T) |>
+	dplyr::select(!c(...1, treeID, stemID,  Family)) |> 
+	dplyr::mutate(dbh = as.numeric(dbh)) |>
+	dplyr::mutate(WD = as.numeric(WD)) |>
+	dplyr::mutate(agb_species = as.numeric(agb_species)) |>
+	dplyr::mutate(agb_genus = as.numeric(agb_genus)) |>
+	dplyr::mutate(agb_chave2014 = as.numeric(agb_chave2014)) |>
+	dplyr::mutate(agb_chave2005 = as.numeric(agb_chave2005)) |>
+	dplyr::mutate(agb_brown1997 = as.numeric(agb_brown1997)) 
 
-cat(sprintf("Complete cases: %d trees\n", nrow(scbi_quercus_complete)))
 ```
 
 ### Normality Testing
@@ -527,6 +512,12 @@ Accurate probability density functions (PDFs) are essential for uncertainty mode
 Both variables show non-normal distribution with a significant right-skew, violating parametric assumptions and justifying log-transformation in subsequent modeling. Technically, this kind of skew often represents a dataset of many small trees and few large dominants. Statistically, this high positive skewness is confirmed by Shapiro-Wilk test results (p \< 0.001) indicating a distribution likely to inflate uncertainty estimates if left untreated.
 
 ```{r}
+#| comment: NA
+#| message: false
+#| error: false
+#| echo: true
+#| eval: true
+
 # Calculate skewness and kurtosis for DBH
 dbh_skew		= moments::skewness(scbi_quercus$dbh)
 dbh_kurt		= moments::kurtosis(scbi_quercus$dbh)
@@ -575,19 +566,13 @@ normality_decision <- data.frame(Variable = c(
   Kurtosis = sprintf("%.2f", c(dbh_kurt, agb_species_kurt, agb_genus_kurt, 
 		agb_chave2014_kurt, agb_brown1997_kurt, agb_chave2005_kurt)),
   `Shapiro-Wilk p` = c(
-  	ifelse(dbh_shapiro$p.value < 0.001, "< 0.001", 
-  				 sprintf("%.3f", dbh_shapiro$p.value)),
-  	ifelse(agb_species_shapiro$p.value < 0.001, "< 0.001", 
-  				 sprintf("%.3f", agb_species_shapiro$p.value)),
-    ifelse(agb_genus_shapiro$p.value < 0.001, "< 0.001", 
-    			 sprintf("%.3f", agb_genus_shapiro$p.value)),
-    ifelse(agb_chave2014_shapiro$p.value < 0.001, "< 0.001", 
-    			 sprintf("%.3f", agb_chave2014_shapiro$p.value)),
-    ifelse(agb_brown1997_shapiro$p.value < 0.001, "< 0.001", 
-    			 sprintf("%.3f", agb_brown1997_shapiro$p.value)),
-    ifelse(agb_chave2005_shapiro$p.value < 0.001, "< 0.001", 
-    			 sprintf("%.3f", agb_chave2005_shapiro$p.value))),
-  Decision = rep("Log-transform needed: YES", 6))
+  	ifelse(dbh_shapiro$p.value < 0.001, "< 0.001", sprintf("%.3f", dbh_shapiro$p.value)),
+  	ifelse(agb_species_shapiro$p.value < 0.001, "< 0.001", sprintf("%.3f", agb_species_shapiro$p.value)),
+    ifelse(agb_genus_shapiro$p.value < 0.001, "< 0.001", sprintf("%.3f", agb_genus_shapiro$p.value)),
+    ifelse(agb_chave2014_shapiro$p.value < 0.001, "< 0.001",  sprintf("%.3f", agb_chave2014_shapiro$p.value)),
+    ifelse(agb_brown1997_shapiro$p.value < 0.001, "< 0.001", sprintf("%.3f", agb_brown1997_shapiro$p.value)),
+    ifelse(agb_chave2005_shapiro$p.value < 0.001, "< 0.001", sprintf("%.3f", agb_chave2005_shapiro$p.value))),
+	Decision = rep("Log(x) needed?: YES", 6))
 ```
 
 ```{r}
@@ -618,15 +603,14 @@ normality_decision |>
 #| echo: false
 #| eval: true
 
-# Derive results dataframe for tabulating - MATCH THE COLUMN NAMES
+# Derive dataframe for tabulating performance results
 stats_df <- data.frame(
   Equation = c("Species", "Genus", "Chave2014", "Brown1997", "Chave2005"),  # Changed!
   skew = c(agb_species_skew, agb_genus_skew, agb_chave2014_skew, agb_brown1997_skew, agb_chave2005_skew),
   kurt = c(agb_species_kurt, agb_genus_kurt, agb_chave2014_kurt, agb_brown1997_kurt, agb_chave2005_kurt),
-  shapiro_p = c(agb_species_shapiro$p.value, agb_genus_shapiro$p.value, agb_chave2014_shapiro$p.value, 
-                agb_brown1997_shapiro$p.value, agb_chave2005_shapiro$p.value)
-) |>
-  dplyr::mutate(label = sprintf("Skew: %.2f\nKurt: %.2f\nShapiro-p < 0.001", skew, kurt))
+  shapiro_p = c(agb_species_shapiro$p.value, agb_genus_shapiro$p.value, 
+  	agb_chave2014_shapiro$p.value, agb_brown1997_shapiro$p.value, agb_chave2005_shapiro$p.value)) |>
+  dplyr::mutate(label = sprintf("Skew: %.2f\nKurt: %.2f\nShapiro-p: %.5f", skew, kurt, shapiro_p))
 
 # Prepare data for faceted histogram
 agb_comparison <- data.frame(
@@ -634,22 +618,20 @@ agb_comparison <- data.frame(
   Genus = scbi_quercus$agb_genus,
   Chave2014 = scbi_quercus$agb_chave2014,
   Brown1997 = scbi_quercus$agb_brown1997,
-  Chave2005 = scbi_quercus$agb_chave2005
-) |>
+  Chave2005 = scbi_quercus$agb_chave2005) |>
   pivot_longer(everything(), names_to = "Equation", values_to = "AGB")
 
 # Create faceted histogram
 ggplot(agb_comparison, aes(x = AGB)) +
   geom_histogram(aes(y = ..density..), bins = 20, fill = "blue", color = "white", alpha = 0.7) +
   geom_density(color = "red", linewidth = 1, linetype = "dashed") +
-  geom_label(data = stats_df, aes(x = Inf, y = Inf, label = label),
-             hjust = 1.05, vjust = 1.05, size = 2.3, lineheight = 0.85,
-             label.size = 0.2, alpha = 0.85) +
+  geom_label(data = stats_df, aes(x = Inf, y = Inf, label = label), hjust = 1.05, 
+  	vjust = 1.05, size = 2.3, lineheight = 0.85, label.size = 0.2, alpha = 0.85) +
   facet_wrap(~Equation, ncol = 3, scales = "free") +
   labs(title = "AGB Distribution by Equation Type", x = "AGB (kg)", y = "Density") +
-  theme_minimal() +
-  theme(plot.title = element_text(face = "bold", size = 14),
-        strip.text = element_text(face = "bold", size = 10))
+	theme(plot.title=element_text(face="bold",size=14), strip.text=element_text(face = "bold", size = 10)) +
+	theme_minimal()
+
 ```
 
 ```{r}
@@ -664,13 +646,12 @@ dbh_wilcox	= stats::wilcox.test(scbi_quercus$dbh)
 
 # Derive decision table
 normality_decision <- data.frame(
-  Variable = c("DBH (cm)", "AGB (kg)"), n = c(nrow(scbi_quercus), nrow(scbi_quercus)),
-  `Mean ± SD` = c(sprintf("%.1f ± %.1f", mean(scbi_quercus$dbh), sd(scbi_quercus$dbh)),
-  Skewness = sprintf("%.2f", dbh_skew),
-  Kurtosis = sprintf("%.2f", dbh_kurt),
-  `Shapiro-Wilk p` = c(
-  	ifelse(shapiro_dbh$p.value < 0.001, "< 0.001", sprintf("%.3f", shapiro_dbh$p.value)),
-    Decision = c("Log-transform: YES", "Log-transform: YES"))
+	Variable = c("DBH (cm)", "AGB (kg)"), 
+	n = c(nrow(scbi_quercus), nrow(scbi_quercus)), 
+	`Mean ± SD` = c(sprintf("%.1f ± %.1f", mean(scbi_quercus$dbh), sd(scbi_quercus$dbh))), 
+	Skewness = sprintf("%.2f", dbh_skew), Kurtosis = sprintf("%.2f", dbh_kurt),
+	`Shapiro-Wilk p` = c(ifelse(dbh_shapiro$p.value < 0.001, "< 0.001", sprintf("%.3f", 
+		dbh_shapiro$p.value)), Decision = c("Log-transform: YES", "Log-transform: YES")))
 
 normality_decision |>
   flextable::flextable() |>
@@ -732,7 +713,9 @@ Required corrections:
 2.  Weighted regression for alternative, more aggressive treatment
 3.  Robust standard errors to supplement log-transformation
 
-## Log-Transformation Rationale {#sec-log-rationale}
+## Model Optimization
+
+### Log-Transformation {#sec-log-rationale}
 
 Linear regression on allometric data produces 73% relative RMSE, resulting in substantial carbon credit deductions. Log-transformation reduces RMSE to 0.1%, achieving a 51 percentage point uncertainty reduction. Allometric relationships tend to follow the power law:
 
@@ -754,13 +737,13 @@ where
 #| eval: true
 #| echo: true
 # Derive performance metrics #
-lin_species		= lm(agb_species ~ dbh, data = scbi_quercus, family=)
-lin_genus			= lm(agb_genus ~ dbh, data = scbi_quercus)
-lin_chave2014	= lm(agb_chave2014 ~ dbh, data = scbi_quercus)
-lin_brown1997	= lm(agb_brown1997 ~ dbh, data = scbi_quercus)
-lin_chave2005	= lm(agb_chave2005 ~ dbh, data = scbi_quercus)
-log_species		= lm(log(agb_species) ~ log(dbh), data = scbi_quercus)
-log_genus 		= lm(log(agb_genus) ~ log(dbh), data = scbi_quercus)
+lin_species		= lm(agb_species ~ dbh, data = scbi_quercus)
+lin_genus			= lm(agb_genus ~ dbh, data = scbi_quercus) 
+lin_chave2014	= lm(agb_chave2014 ~ dbh, data = scbi_quercus) 
+lin_brown1997	= lm(agb_brown1997 ~ dbh, data = scbi_quercus) 
+lin_chave2005	= lm(agb_chave2005 ~ dbh, data = scbi_quercus) 
+log_species		= lm(log(agb_species) ~ log(dbh), data = scbi_quercus) 
+log_genus 		= lm(log(agb_genus) ~ log(dbh), data = scbi_quercus) 
 log_chave2014 = lm(log(agb_chave2014) ~ log(dbh), data = scbi_quercus)
 log_brown1997 = lm(log(agb_brown1997) ~ log(dbh), data = scbi_quercus)
 log_chave2005	= lm(log(agb_chave2005) ~ log(dbh), data = scbi_quercus)
@@ -773,51 +756,51 @@ lin_chave2014_resid = predict(lin_chave2014, scbi_quercus, type="response")
 lin_brown1997_resid = predict(lin_brown1997, scbi_quercus, type="response")
 lin_chave2005_resid = predict(lin_chave2005, scbi_quercus, type="response")
 log_species_resid		= exp(predict(log_species, scbi_quercus))
-log_genus_resid			= exp(predict(log_genus, scbi_quercus))
-log_chave2014_resid	= exp(predict(log_chave2014, scbi_quercus))
-log_brown1997_resid	= exp(predict(log_brown1997, scbi_quercus))
-log_chave2005_resid	= exp(predict(log_chave2005, scbi_quercus))
+log_genus_resid			= exp(predict(log_genus, scbi_quercus)) 
+log_chave2014_resid	= exp(predict(log_chave2014, scbi_quercus)) 
+log_brown1997_resid	= exp(predict(log_brown1997, scbi_quercus)) 
+log_chave2005_resid	= exp(predict(log_chave2005, scbi_quercus)) 
 
-lin_species_mae			= ModelMetrics::mae(scbi_quercus$agb_species, lin_species_resid)
-lin_species_rmse		= ModelMetrics::rmse(scbi_quercus$agb_species, lin_species_resid)
-lin_species_rmse_rel= (lin_species_rmse / mean(scbi_quercus$agb_species, na.rm = T)) * 100
-log_species_mae 		= ModelMetrics::mae(scbi_quercus$agb_species, log_species_resid)
-log_species_rmse		= ModelMetrics::rmse(scbi_quercus$agb_species, log_species_resid)
-log_species_rmse_rel= (log_species_rmse / mean(scbi_quercus$agb_species, na.rm = T)) * 100  
+lin_species_mae			= ModelMetrics::mae(scbi_quercus$agb_species, lin_species_resid) |> round(2)
+lin_species_rmse		= ModelMetrics::rmse(scbi_quercus$agb_species, lin_species_resid) |> round(2)
+lin_species_rmse_rel= round(lin_species_rmse / mean(scbi_quercus$agb_species, na.rm = T) * 100,2)
+log_species_mae 		= ModelMetrics::mae(scbi_quercus$agb_species, log_species_resid) |> round(2)
+log_species_rmse		= ModelMetrics::rmse(scbi_quercus$agb_species, log_species_resid) |> round(2)
+log_species_rmse_rel= round(log_species_rmse / mean(scbi_quercus$agb_species, na.rm = T) * 100,2)
 # ******** CRITICAL back-transformation = log_species_rmse_rel
 
 # Genus-level
-lin_genus_mae 			= ModelMetrics::mae(scbi_quercus$agb_genus, lin_genus_resid)
-lin_genus_rmse 			= ModelMetrics::rmse(scbi_quercus$agb_genus, lin_genus_resid)
-lin_genus_rmse_rel	= (lin_genus_rmse / mean(scbi_quercus$agb_genus, na.rm=T)) * 100
-log_genus_mae 			= ModelMetrics::mae(scbi_quercus$agb_genus, log_genus_resid)
-log_genus_rmse			= ModelMetrics::rmse(scbi_quercus$agb_genus, log_genus_resid)
-log_genus_rmse_rel	= (log_genus_rmse / mean(scbi_quercus$agb_genus, na.rm=T)) * 100
+lin_genus_mae 			= ModelMetrics::mae(scbi_quercus$agb_genus, lin_genus_resid) |> round(2)
+lin_genus_rmse 			= ModelMetrics::rmse(scbi_quercus$agb_genus, lin_genus_resid) |> round(2)
+lin_genus_rmse_rel	= round(lin_genus_rmse / mean(scbi_quercus$agb_genus, na.rm=T) * 100,2)
+log_genus_mae 			= ModelMetrics::mae(scbi_quercus$agb_genus, log_genus_resid) |> round(2)
+log_genus_rmse			= ModelMetrics::rmse(scbi_quercus$agb_genus, log_genus_resid) |> round(2)
+log_genus_rmse_rel	= round(log_genus_rmse / mean(scbi_quercus$agb_genus, na.rm=T) * 100, 2)
 # ******** CRITICAL back-transformation = log_genus_rmse_rel ***********
 
 # Chave 2014
-lin_chave2014_mae			= ModelMetrics::mae(scbi_quercus$agb_chave2014, lin_chave2014_resid)
-lin_chave2014_rmse		= ModelMetrics::rmse(scbi_quercus$agb_chave2014, lin_chave2014_resid)
-lin_chave2014_rmse_rel= (lin_chave2014_rmse /mean(scbi_quercus$agb_chave2014,na.rm=T)) * 100
-log_chave2014_mae			= ModelMetrics::mae(scbi_quercus$agb_chave2014, log_chave2014_resid)
-log_chave2014_rmse		= ModelMetrics::rmse(scbi_quercus$agb_chave2014, log_chave2014_resid)
-log_chave2014_rmse_rel= (log_chave2014_rmse / mean(scbi_quercus$agb_chave2014, na.rm=T)) * 100
+lin_chave2014_mae			= ModelMetrics::mae(scbi_quercus$agb_chave2014, lin_chave2014_resid) |> round(2)
+lin_chave2014_rmse		= ModelMetrics::rmse(scbi_quercus$agb_chave2014, lin_chave2014_resid) |> round(2)
+lin_chave2014_rmse_rel= round(lin_chave2014_rmse /mean(scbi_quercus$agb_chave2014,na.rm=T) * 100, 2)
+log_chave2014_mae			= ModelMetrics::mae(scbi_quercus$agb_chave2014, log_chave2014_resid) |> round(2)
+log_chave2014_rmse		= ModelMetrics::rmse(scbi_quercus$agb_chave2014, log_chave2014_resid) |> round(2)
+log_chave2014_rmse_rel= round(log_chave2014_rmse / mean(scbi_quercus$agb_chave2014, na.rm=T) * 100, 2)
 
 # Brown 1997
-lin_brown1997_mae			= ModelMetrics::mae(scbi_quercus$agb_brown1997, lin_brown1997_resid)
-lin_brown1997_rmse 		= ModelMetrics::rmse(scbi_quercus$agb_brown1997, lin_brown1997_resid)
-lin_brown1997_rmse_rel= (lin_brown1997_rmse / mean(scbi_quercus$agb_brown1997, na.rm=T)) * 100
-log_brown1997_mae 		= ModelMetrics::mae(scbi_quercus$agb_brown1997, log_brown1997_resid)
-log_brown1997_rmse		= ModelMetrics::rmse(scbi_quercus$agb_brown1997, log_brown1997_resid)
-log_brown1997_rmse_rel= (log_brown1997_rmse / mean(scbi_quercus$agb_brown1997, na.rm=T)) * 100
+lin_brown1997_mae			= ModelMetrics::mae(scbi_quercus$agb_brown1997, lin_brown1997_resid) |> round(2)
+lin_brown1997_rmse 		= ModelMetrics::rmse(scbi_quercus$agb_brown1997, lin_brown1997_resid) |> round(2)
+lin_brown1997_rmse_rel= round(lin_brown1997_rmse / mean(scbi_quercus$agb_brown1997, na.rm=T) * 100, 2)
+log_brown1997_mae 		= sprintf("%.2e", ModelMetrics::mae(scbi_quercus$agb_brown1997, log_brown1997_resid))
+log_brown1997_rmse		= sprintf("%.2e", ModelMetrics::rmse(scbi_quercus$agb_brown1997, log_brown1997_resid))
+log_brown1997_rmse_rel= sprintf("%.2e", (as.numeric(log_brown1997_rmse) / mean(scbi_quercus$agb_brown1997, na.rm=T) *100))
 
 # Chave 2005
-linear_chave2005_mae			= ModelMetrics::mae(scbi_quercus$agb_chave2005, lin_chave2005_resid)
-linear_chave2005_rmse			= ModelMetrics::rmse(scbi_quercus$agb_chave2005, lin_chave2005_resid)
-linear_chave2005_rmse_rel = (linear_chave2005_rmse / mean(scbi_quercus$agb_chave2005, na.rm = R)) * 100
-log_chave2005_mae 			= ModelMetrics::mae(scbi_quercus$agb_chave2005, log_chave2005_resid)
-log_chave2005_rmse			= ModelMetrics::rmse(scbi_quercus$agb_chave2005, log_chave2005_resid)
-log_chave2005_rmse_rel	= (log_chave2005_rmse / mean(scbi_quercus$agb_chave2005, na.rm=T)) * 100
+linear_chave2005_mae			= ModelMetrics::mae(scbi_quercus$agb_chave2005, lin_chave2005_resid) |> round(2)
+linear_chave2005_rmse			= ModelMetrics::rmse(scbi_quercus$agb_chave2005, lin_chave2005_resid) |> round(2)
+linear_chave2005_rmse_rel = (linear_chave2005_rmse / mean(scbi_quercus$agb_chave2005, na.rm=T) * 100)|> round(2)
+log_chave2005_mae 				= ModelMetrics::mae(scbi_quercus$agb_chave2005, log_chave2005_resid) |> round(2)
+log_chave2005_rmse				= ModelMetrics::rmse(scbi_quercus$agb_chave2005, log_chave2005_resid) |> round(2)
+log_chave2005_rmse_rel		= (log_chave2005_rmse / mean(scbi_quercus$agb_chave2005, na.rm=T) * 100) |> round(2)
 
 # Build data frame directly
 transformation_comparison <- data.frame(
@@ -831,10 +814,15 @@ transformation_comparison <- data.frame(
   stringsAsFactors = F)
 
 # Calculate reduction
-transformation_comparison$Reduction =
-	transformation_comparison$RMSE_Lin_rel - transformation_comparison$RMSE_Log_rel
-transformation_comparison |> flextable::flextable() |> flextable::autofit()
+transformation_comparison$Reduction = transformation_comparison$RMSE_Lin_rel - 
+	as.numeric(transformation_comparison$RMSE_Log_rel) |> round(2)
+transformation_comparison |> 
+	flextable::flextable() |> 
+	flextable::autofit()
+
 ```
+
+s
 
 ::: callout-note
 It is important to back-transform the log-scale of RMSE, which converts log-scale error to proportional error on original scale. This enables direct comparison with linear model uncertainty while preserving variance structure stabilized by log-transformation, which is achieved in chunk above using `exp(RMSE_log) - 1`
@@ -844,7 +832,7 @@ It is important to back-transform the log-scale of RMSE, which converts log-scal
 
 Results shown in two previous tables provides the necessary justification for designing the cross-validation workflow in the next section, where we implement log-transformed models and quantify the uncertainty reduction according to different bias corrections and hyper-parameter tuning.
 
-### Age / Diameter Classes {.unnumbered}
+#### Age-Classes {.unnumbered}
 
 Stratification by size class or age cohort involves a critical component in forest biomass modeling. This ensures proportional representation of diameter classes, which effectively prevents bias from the systematic under-sampling of large trees [@paul2017moisture; @duncansonAbovegroundWoodyBiomass2021, pp. 100].
 
@@ -859,8 +847,7 @@ age_class = scbi_quercus |> dplyr::filter(
 	!is.na(dbh), !is.na(agb_genus)) |>
   dplyr::mutate(dbh_class = cut(dbh, 
   	breaks = c(0, 10, 20, 30, 40, 50, 100),
-  	labels = c("0-10", "10-20", "20-30", "30-40", "40-50", ">50"))
-  	)
+  	labels = c("0-10", "10-20", "20-30", "30-40", "40-50", ">50")))
 
 # Check raw distribution across size classes
 age_class_distribution = age_class |>
@@ -870,7 +857,8 @@ age_class_distribution = age_class |>
     total_biomass_pct = sum(agb_genus) / sum(age_class$agb_genus) * 100,
     .groups = 'drop')
 
-# Check 80:20% validation & MAINTAIN proportional representation
+# Check 80:20% to maintain proportional representation
+set.seed(123) 
 train_idx <- age_class |>
   dplyr::mutate(row_id = row_number()) |> 
 	dplyr::group_by(dbh_class) |>
@@ -879,11 +867,19 @@ train_idx <- age_class |>
 
 calibration_data <- age_class[train_idx, ]
 validation_data <- age_class[-train_idx, ]
-split_verification <- data.frame(
-  DBH_Class = names(table(calibration_data$dbh_class)),
-  Calibration_n = as.numeric(table(calibration_data$dbh_class)),
-  Validation_n = as.numeric(table(validation_data$dbh_class))
-  )
+cal_props <- calibration_data |>
+  dplyr::count(dbh_class) |>
+  dplyr::mutate(cal_pct = round((n / sum(n)) * 100, 1)) |>
+  dplyr::rename(cal_n = n)
+val_props <- validation_data |>
+  dplyr::count(dbh_class) |>
+  dplyr::mutate(val_pct = round((n / sum(n)) * 100, 1)) |>
+  dplyr::rename(val_n = n)
+split_verification <- cal_props |>
+  dplyr::left_join(val_props, by = "dbh_class") |>
+  dplyr::mutate(Total_n = cal_n + val_n, Difference_pct = abs(cal_pct - val_pct)) |>
+  dplyr::select(dbh_class, cal_n, cal_pct, val_n, val_pct, Total_n, Difference_pct)
+
 ```
 
 ```{r}
@@ -893,35 +889,28 @@ split_verification <- data.frame(
 #| echo: false
 #| eval: true
 
-age_class_distribution |>
-  flextable::flextable() |>
-  flextable::set_caption(
-  	sprintf("Quercus spp. (n=%d, DBH Range: %.1f-%.1f cm) Size Class Distribution", 
-    nrow(age_class), min(age_class$dbh), max(age_class$dbh))) |>
-  flextable::set_header_labels(
-    dbh_class = "DBH Class",
-    n = "Count",
-    mean_dbh = "Mean DBH",
-    mean_agb = "Mean AGB",
-    total_biomass_pct = "Total Biomass (%)") |>
-  flextable::align(j = 1, align = "left", part = "all") |>
-  flextable::align(j = 2:5, align = "right", part = "all") |>
-  flextable::fontsize(size = 9, part = "all") |>
-  flextable::autofit()
-
-
-# Verify size structure is preserved
 split_verification |>
   flextable::flextable() |>
-  flextable::set_caption("Calibration and Validation Set Distribution") |>
+  flextable::set_caption("Calibration and Validation Set Distribution - Proportionality Check") |>
   flextable::set_header_labels(
-    DBH_Class = "DBH Class (cm)",
-    Calibration_n = "Calibration Set (n)",
-    Validation_n = "Validation Set (n)") |>
+    dbh_class = "DBH Class (cm)",
+    cal_n = "Calibration (n)",
+    cal_pct = "Cal. % of Total",
+    val_n = "Validation (n)",
+    val_pct = "Val. % of Total",
+    Total_n = "Total (n)",
+    Difference_pct = "Δ (%)"
+  ) |>
   flextable::align(j = 1, align = "left", part = "all") |>
-  flextable::align(j = 2:3, align = "center", part = "all") |>
+  flextable::align(j = 2:7, align = "center", part = "all") |>
+  flextable::colformat_double(j = c("cal_pct", "val_pct", "Difference_pct"), digits = 1) |>
   flextable::fontsize(size = 9, part = "all") |>
-  flextable::autofit()
+  flextable::autofit() |>
+  flextable::add_footer_lines(
+    "Stratified sampling ensures DBH class proportions remain similar between datasets. 'Cal. % of Total' and 'Val. % of Total' show each class as % of its respective dataset. Δ shows absolute difference - values <2% indicate good proportionality preservation."
+  ) |>
+  flextable::fontsize(size = 8, part = "footer") |>
+  flextable::italic(part = "footer")
 ```
 
 ## Monte Carlo Cross-Validation
@@ -937,8 +926,9 @@ The `LGOCV` acronym used in the `caret` package functions below stands for "leav
 #| warning: false
 #| message: false
 #| error: false
-#| echo: false
-#| eval: true
+#| cache: true  
+#| echo: true
+#| eval: false
 
 monte_carlo_100 <- caret::trainControl(
   method = "LGOCV",
@@ -947,7 +937,8 @@ monte_carlo_100 <- caret::trainControl(
   savePredictions = "final"
 )
 
-# Linear model fitted with un-transformed covariates
+# --------------------------------------------------------------------------------- #
+# Species-Specific Model: Linear model tuned at species level with un-transformed covs
 lin_species_mc <- caret::train(
   agb_species ~ dbh,
   data = scbi_quercus,
@@ -956,7 +947,7 @@ lin_species_mc <- caret::train(
   trControl = monte_carlo_100
   )
 
-# Logarithmic model fitted with log-transformed covariates
+# Species-Specific Model: Logarithmic model tuned at species level withg log-transformed covs
 log_species_mc <- caret::train(
   log(agb_species) ~ log(dbh),
   data = scbi_quercus,
@@ -965,7 +956,8 @@ log_species_mc <- caret::train(
   trControl = monte_carlo_100
   )
 
-# Genus-level models
+# --------------------------------------------------------------------------------- #
+# Genus-Specific Model: LINEAR  model tuned at genus level with un-transformed covs
 lin_genus_mc <- caret::train(
   agb_genus ~ dbh,
   data = scbi_quercus,
@@ -974,6 +966,7 @@ lin_genus_mc <- caret::train(
   trControl = monte_carlo_100
   )
 
+# Genus-Specific Model: LOG model tuned at genus level with un-transformed covs
 log_genus_mc <- caret::train(
   log(agb_genus) ~ log(dbh),
   data = scbi_quercus,
@@ -982,7 +975,8 @@ log_genus_mc <- caret::train(
   trControl = monte_carlo_100
 )
 
-# Chave 2014 models
+# --------------------------------------------------------------------------------- #
+# Chave 2014 models: Generic scaled 
 lin_chave2014_mc <- caret::train(
   agb_chave2014 ~ dbh,
   data = scbi_quercus,
@@ -999,6 +993,7 @@ log_chave2014_mc <- caret::train(
   trControl = monte_carlo_100
 )
 
+# --------------------------------------------------------------------------------- #
 # Brown 1997 models
 lin_brown1997_mc <- caret::train(
   agb_brown1997 ~ dbh,
@@ -1006,7 +1001,7 @@ lin_brown1997_mc <- caret::train(
   method = "lm",
   na.action = na.omit,
   trControl = monte_carlo_100
-)
+  )
 
 log_brown1997_mc <- caret::train(
   log(agb_brown1997) ~ log(dbh),
@@ -1014,8 +1009,9 @@ log_brown1997_mc <- caret::train(
   method = "lm",
   na.action = na.omit,
   trControl = monte_carlo_100
-)
+  )
 
+# --------------------------------------------------------------------------------- #
 # Chave 2005 models
 lin_chave2005_mc <- caret::train(
   agb_chave2005 ~ dbh,
@@ -1023,7 +1019,7 @@ lin_chave2005_mc <- caret::train(
   method = "lm",
   na.action = na.omit,
   trControl = monte_carlo_100
-)
+  )
 
 log_chave2005_mc <- caret::train(
   log(agb_chave2005) ~ log(dbh),
@@ -1031,122 +1027,135 @@ log_chave2005_mc <- caret::train(
   method = "lm",
   na.action = na.omit,
   trControl = monte_carlo_100
-)
-
-# Print model summaries
-cat("\n=== Species-specific Models ===\n")
-print(lin_species_mc)
-print(log_species_mc)
-
-cat("\n=== Genus-level Models ===\n")
-print(lin_genus_mc)
-print(log_genus_mc)
-
-cat("\n=== Chave 2014 Models ===\n")
-print(lin_chave2014_mc)
-print(log_chave2014_mc)
-
-cat("\n=== Brown 1997 Models ===\n")
-print(lin_brown1997_mc)
-print(log_brown1997_mc)
-
-cat("\n=== Chave 2005 Models ===\n")
-print(lin_chave2005_mc)
-print(log_chave2005_mc)
-
-# Extract performance metrics from Monte Carlo cross-validation
-extract_metrics <- function(model, equation_name, model_type) {
-  pred <- model$pred
-  rmse_raw <- sqrt(mean((pred$obs - pred$pred)^2))
-  r2 <- cor(pred$obs, pred$pred)^2
-  mae <- mean(abs(pred$obs - pred$pred))
-  
-  return(data.frame(
-    Equation = equation_name,
-    Model_Type = model_type,
-    RMSE = rmse_raw,
-    MAE = mae,
-    R2 = r2
-  ))
-}
-
-# Compile all results
-mc_results <- rbind(
-  extract_metrics(lin_species_mc, "Species-specific", "Linear"),
-  extract_metrics(log_species_mc, "Species-specific", "Log"),
-  extract_metrics(lin_genus_mc, "Genus-level", "Linear"),
-  extract_metrics(log_genus_mc, "Genus-level", "Log"),
-  extract_metrics(lin_chave2014_mc, "Chave 2014", "Linear"),
-  extract_metrics(log_chave2014_mc, "Chave 2014", "Log"),
-  extract_metrics(lin_brown1997_mc, "Brown 1997", "Linear"),
-  extract_metrics(log_brown1997_mc, "Brown 1997", "Log"),
-  extract_metrics(lin_chave2005_mc, "Chave 2005", "Linear"),
-  extract_metrics(log_chave2005_mc, "Chave 2005", "Log")
-  ) |> flextable::flextable() |> flextable::autofit()
-
-
-```
-
-### Visualize Residuals
-
-To enable access to these predictions, we need to instruct `caret` to retain the resampled predictions by setting `savePredictions = "final"` in our `trainControl()` function. It’s important to be aware that if you’re working with a large dataset or numerous resampling iterations, the resulting `train()` object may grow significantly in size. This happens because caret must store a record of every row, including both the observed values and predictions, for each resampling iteration. By visualizing the results, we can offer insights into the performance of our model on the resampled data.
-
-```{r}
-#| eval: true
-#| layout-ncol: 2
-# Extract cross-validated predictions
-cv_predictions <- lm_monte_carlo$pred
-
-# Calculate metrics
-rmse_cv <- sqrt(mean((cv_predictions$pred - cv_predictions$obs)^2))
-mae_cv <- mean(abs(cv_predictions$pred - cv_predictions$obs))
-r2_cv <- cor(cv_predictions$pred, cv_predictions$obs)^2
-cv_metrics_df <- data.frame(
-  Metric = c("RMSE", "MAE", "R²"),
-  Value = c(rmse_cv, mae_cv, r2_cv),
-  Unit = c("kg", "kg", ""))
-
-# Compute residuals to visualize trends
-cv_predictions$residuals <- cv_predictions$obs - cv_predictions$pred
-cv_plot <- ggplot(cv_predictions, aes(x = pred, y = obs)) +
-  geom_point(alpha=0.4, shape = 19, color = "#1f78b4") + 
-  geom_abline(slope=1, intercept = 0, color = 'darkgrey', linetype="dashed",linewidth=0.8) +
-  geom_smooth(method = "lm", color = "#e31a1c", linewidth = 1) + 
-  coord_fixed(ratio = 1) + annotate(
-  	"text", x = max(cv_predictions$pred, na.rm=T) * 0.1,  
-  	y=max(cv_predictions$obs, na.rm = T) * 0.95,
-  	label = sprintf("RMSE: %.2f kg\nMAE: %.2f kg\nR²: %.4f", rmse_cv, mae_cv, r2_cv),
-  	hjust = 0, vjust = 1, size = 3.5, color = "black") + 
-	labs(title = "Observed vs. Cross-Validated Predictions of AGB", subtitle = "Accuracy Assessment", x = "Predicted AGB (kg)", y = "Observed AGB (kg)") +
-  theme_minimal() + theme(plot.title = element_text(face = "bold"),legend.position = "none")
-
-# Add a Residual Plot for audit ready diagnostics
-residual_plot <- ggplot(cv_predictions, aes(x = pred, y = residuals)) +
-  geom_point(alpha = 0.4, shape = 19, color = "#33a02c") +
-  geom_hline(yintercept = 0, color = 'darkgrey', linetype = "dashed", linewidth = 0.8) +
-  geom_smooth(method = "loess", color = "red", se = FALSE, linewidth = 0.8) +
-  labs(title = "Residuals vs. Predicted Values (CV)",
-    x = "Predicted AGB (kg)", y = "Residuals (Observed - Predicted)") +
-  theme_minimal() + theme(plot.title = element_text(size = 10, face = "italic"))
-
-cv_plot
-residual_plot
-```
-
-```{r}
-#| echo: false
-
-cv_metrics_df |>
-  flextable::flextable()|>
-  flextable::align(j = 1, align = "left", part = "all") |>
-  flextable::align(j = 2, align = "right", part = "all") |>
-  flextable::fontsize(size = 9, part = "all") |>
-  flextable::autofit()
+  )
+# --------------------------------------------------------------------------------- 
 ```
 
 <br>
 
-## Uncertainty Quantification
+# Result {.unnumbered}
+
+## Uncertainty Reductions
+
+```{r}
+#| warning: false
+#| message: false
+#| error: false
+#| echo: false
+#| eval: false
+
+# ---------------------------------------------------------------------- #
+# Model performance metrics
+evaluate_model <- function(model, equation_name, model_type, agb_mean) {
+	pred <- model$pred
+	residuals <- pred$obs - pred$pred
+	shapiro_test <- shapiro.test(residuals)
+  shapiro_p <- shapiro_test$p.value
+  mae <- mean(abs(residuals))
+  rmse <- sqrt(mean(residuals^2))
+
+  if (model_type == "Log") {rel_rmse <- (exp(rmse) - 1) * 100} else 
+  	{rel_rmse <- (rmse / agb_mean) * 100}
+  r2 <- cor(pred$obs, pred$pred)^2
+
+  # ----------------- ART-TREESS Half-Width CI & UAc ----------------- #    
+  hw_90_pct <- rel_rmse / 100
+  ua_factor <- 0.524417 * (hw_90_pct / 1.645006)
+  credit_deduction <- ua_factor * 100
+  # ----------------- ART-TREESS Half-Width CI & UAc ----------------- #    
+  
+  return(data.frame(
+    Equation = equation_name,
+    Model_Type = model_type,
+    n = nrow(pred),
+    Shapiro_p = round(shapiro_p, 4),
+    MAE = round(mae, 2),
+    RMSE = round(rmse, 3),
+    Rel_RMSE_pct = round(rel_rmse, 1),
+    R2 = round(r2, 4),
+    Credit_Deduction_pct = round(credit_deduction, 1)
+  ))
+}
+
+
+# Calculate mean AGB for each equation type
+mean_agb_species <- mean(scbi_quercus$agb_species, na.rm = TRUE)
+mean_agb_genus <- mean(scbi_quercus$agb_genus, na.rm = TRUE)
+mean_agb_chave2014 <- mean(scbi_quercus$agb_chave2014, na.rm = TRUE)
+mean_agb_brown1997 <- mean(scbi_quercus$agb_brown1997, na.rm = TRUE)
+mean_agb_chave2005 <- mean(scbi_quercus$agb_chave2005, na.rm = TRUE)
+
+# Evaluate all models
+mc_performance <- rbind(
+  evaluate_model(lin_species_mc, "Species-specific", "Linear", mean_agb_species),
+  evaluate_model(log_species_mc, "Species-specific", "Log", mean_agb_species),
+  evaluate_model(lin_genus_mc, "Genus-level", "Linear", mean_agb_genus),
+  evaluate_model(log_genus_mc, "Genus-level", "Log", mean_agb_genus),
+  evaluate_model(lin_chave2014_mc, "Chave 2014", "Linear", mean_agb_chave2014),
+  evaluate_model(log_chave2014_mc, "Chave 2014", "Log", mean_agb_chave2014),
+  evaluate_model(lin_brown1997_mc, "Brown 1997", "Linear", mean_agb_brown1997),
+  evaluate_model(log_brown1997_mc, "Brown 1997", "Log", mean_agb_brown1997),
+  evaluate_model(lin_chave2005_mc, "Chave 2005", "Linear", mean_agb_chave2005),
+  evaluate_model(log_chave2005_mc, "Chave 2005", "Log", mean_agb_chave2005)
+)
+# Display performance table
+mc_performance |>
+  flextable::flextable() |>
+  flextable::set_caption("Monte Carlo Cross-Validation Performance Comparison") |>
+  flextable::set_header_labels(
+    Equation = "Equation Type",
+    Model_Type = "Transformation",
+    n = "n",
+    Shapiro_p = "Shapiro p-value",
+    MAE = "MAE (kg)",
+    RMSE = "RMSE",
+    Rel_RMSE_pct = "Rel. RMSE (%)",
+    R2 = "R²",
+    Credit_Deduction_pct = "Credit Deduction (%)"
+  ) |>
+  flextable::align(j = 1:2, align = "left", part = "all") |>
+  flextable::align(j = 3:9, align = "right", part = "all") |>
+  flextable::fontsize(size = 8, part = "all") |>
+  flextable::autofit() |>
+  flextable::add_footer_lines(
+    "Monte Carlo LGOCV with 100 iterations (80/20 split). Shapiro p-value tests normality of residuals. Credit deduction calculated per ART-TREES methodology. Red highlighting indicates values exceeding 10% threshold."
+  ) |>
+  flextable::fontsize(size = 7, part = "footer") |>
+  flextable::italic(part = "footer")
+```
+
+```{r}
+#| eval: false
+
+# Enhanced table showing proportionality preservation
+split_verification |>
+  flextable::flextable() |>
+  flextable::set_caption("Calibration and Validation Set Distribution - Proportionality Check") |>
+  flextable::set_header_labels(
+    dbh_class = "DBH Class (cm)",
+    cal_n = "Calibration (n)",
+    cal_pct = "Cal. % of Total",
+    val_n = "Validation (n)",
+    val_pct = "Val. % of Total",
+    Total_n = "Total (n)",
+    Difference_pct = "Δ (%)"
+  ) |>
+  flextable::align(j = 1, align = "left", part = "all") |>
+  flextable::align(j = 2:7, align = "center", part = "all") |>
+  flextable::colformat_double(j = c("cal_pct", "val_pct", "Difference_pct"), digits = 1) |>
+  flextable::fontsize(size = 9, part = "all") |>
+  flextable::bold(j = c("cal_pct", "val_pct"), part = "body") |>
+  flextable::bg(j = "cal_pct", bg = "#e8f4f8", part = "body") |>
+  flextable::bg(j = "val_pct", bg = "#fff4e6", part = "body") |>
+  flextable::bg(i = ~ Difference_pct > 2, j = "Difference_pct", bg = "#ffcccc") |>
+  flextable::autofit() |>
+  flextable::add_footer_lines(
+    "Stratified sampling ensures DBH class proportions remain similar between datasets. 'Cal. % of Total' and 'Val. % of Total' show each class as % of its respective dataset. Δ shows absolute difference - values <2% indicate good proportionality preservation."
+  ) |>
+  flextable::fontsize(size = 8, part = "footer") |>
+  flextable::italic(part = "footer")
+
+```
 
 <br>
 
@@ -1220,7 +1229,7 @@ cat(sprintf("Net credited value: $%.2fM\n",
             (total_value - deduction_value) / 1e6))
 ```
 
-## Summary
+# Summary {.unnumbered}
 
 -   Distribution diagnostics: DBH and AGB are significantly right-skewed (p \< 0.001), violating parametric assumptions
 -   Heteroscedasticity confirmed: Breusch-Pagan test (p \< 0.001) shows variance increases with tree size
@@ -1230,7 +1239,7 @@ cat(sprintf("Net credited value: $%.2fM\n",
 Carbon credit deduction: `round(ua_factor x 100, 1)%` of project credits
 :::
 
-### Allometric Uncertainty Reduction Best Practices
+## Allometry Best Practices
 
 To achieve commercially viable uncertainty levels (\<10% RMSE) and minimize carbon credit deductions:
 
@@ -1240,7 +1249,7 @@ To achieve commercially viable uncertainty levels (\<10% RMSE) and minimize carb
 4.  Adequate sample size: Minimum 50 trees per species (NASA-CEOS standard)
 5.  Measurement precision: Target ±0.5 cm DBH error through calibrated instruments and trained crews
 
-### Investment Priorities by ROI
+## Investment Priorities by ROI
 
 | Intervention | Cost | Uncertainty Reduction | Revenue Protected\* |
 |------------------|------------------|------------------|------------------|

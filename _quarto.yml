@@ -23,7 +23,8 @@ book:
   appendices:
     - references/index.qmd
     - references/glossary.qmd
-
+    - references/appendix-i.qmd
+    
 bibliography: references/references.bib
 csl: references/apa.csl
 citeproc: true  
