@@ -4,11 +4,13 @@ format:
   docx:
     reference-doc: ../references/style.docx
     toc: false
+    number-sections: false
     highlight-style: pygments
     df-print: default
     latex_engine: xelatex
-
+    
 execute:
+  eval: true
   echo: true
   warning: false
   message: false
@@ -24,11 +26,11 @@ bibliography: ../references/references.bib
 csl: ../references/apa.csl
 ---
 
-# Overview {.unnumbered}
+## Overview {.unnumbered}
 
-Allometric equations represent the proportional and scaling relationships between different tree dimensions, such as the relationship between a tree's diameter and its height, biomass, or crown size. When trees are considered at a population scale, their different dimensions, such as height, diameter, crown size, biomass, are statistically related through shared ontogenic development patterns [@gould1966allometry]. These relationships remain consistent for trees growing under similar conditions, whether small saplings or large canopy dominants [@king1996allometry; @archibald2003a; @bohlman2006allometry; @dietze2008capturing].
+Allometric equations represent the proportional and scaling relationships between different tree dimensions, such as the relationship between a tree's diameter and its height, biomass, or crown size. When trees are considered at a population scale, their different dimensions are statistically related through shared ontogenic development patterns [@gould1966allometry]. These relationships remain consistent across tree sizes, from saplings to canopy dominants, when growing under similar conditions [@king1996allometry; @archibald2003a; @bohlman2006allometry; @dietze2008capturing].
 
-This biological principle forms the foundation of allometric equations: mathematical formulas that quantify these dimensional relationships to predict biomass from measurable variables (diameter at breast height). In REDD+ carbon accounting, allometric equations translate field measurements of tree diameter into biomass estimates, making them foundational to emission reduction quantification.
+This biological principle underpins REDD+ carbon accounting: allometric equations translate field measurements of diameter at breast height (DBH) into biomass estimates, forming the foundation of emission reduction quantification.
 
 ::: callout-note
 Although Section 8 exempts structural allometric uncertainty when models are applied consistently, the choice of which model to apply directly impacts reported uncertainty. Allometry variance is absolute and compounds more dramatically so that model selection determines the magnitude of random error that cannot be exempted downstream. In practical terms, selecting a model with 20% RMSE versus 8% RMSE determines whether your project faces a 6% or 2% carbon credit deduction, representing a difference worth \$200k in a 1M tCO~2~^-e^ project at \$5/tonne.
@@ -124,13 +126,11 @@ import geopandas as gpd, rasterio, folium
 from tabulate import tabulate
 ```
 
-# Method {.unnumbered}
+## 1.1 Allometric Equations {#sec-allometry-relationship}
 
-## Allometric Equations {#sec-allometry-relationship}
+In its broadest sense, allometry describes any linear or non-linear correlation between increases in tree dimensions during ontogenic development [@picard2012a]. A more restrictive definition, originating with @huxley1924constant, refers specifically to proportional relationships between relative increases in dimensions:
 
-In its most general sense, allometry describes any linear or non-linear correlation between increases in tree dimensions during ontogenic development [@picard2012a]. A more restrictive definition, originating with Huxley @huxley1924constant, refers specifically to proportional relationships between *relative* increases in dimensions:
-
-Allometric equations predict aboveground biomass from diameter measurements using species or biome-specific parameters and estimation. Therefore, uncertainty compounds from three main sources: model selection, parameter estimation, and field measurements. As shown below, log-transformation adds additional complexity through back-transformation required in majority biomass estimates:
+Allometric equations predict aboveground biomass from diameter measurements using species- or biome-specific parameters. Uncertainty compounds from three sources: model selection, parameter estimation, and field measurements. Log-transformation adds complexity through required back-transformation:
 
 $$
 \frac{\mathrm{d}B}{B} = a\frac{\mathrm{d}D}{D}
@@ -155,32 +155,72 @@ Where:
 -   `α`, `β`: Modelling exponents/parameters
 -   `ε`: Random error term
 
-This power-law form reflects the self-similarity principle, in that trees maintain consistent proportional relationships as they grow from seedlings to mature individuals [@gould1971geometric]. The exponent β represents the allometry coefficient (proportionality between relative increases), while α indicates the proportionality between cumulative variables.
+This power-law form reflects the self-similarity principle observed in tree growth: as trees develop from seedlings to mature individuals, they maintain consistent proportional relationships between their dimensions [@gould1971geometric]. In this framework, the exponent `β` serves as the allometric coefficient, quantifying how one dimension changes relative to another during growth. For example, if β = 2.5, a 10% increase in diameter corresponds to a 25% increase in biomass. The parameter `α` is a scaling constant accounting for wood density, architectural form, and other species-specific characteristics.
 
-West et al. @west1997general; @west1999general and Enquist et al. @enquist1998allometric; @enquist1999allometric developed an allometric scaling theory based on the "pipe model" [@shinozaki1964quantitative] and physical principles governing tree growth. Applying hypotheses about bio-mechanical constraints, tree stability, and hydraulic resistance in water-conducting networks, this theory predicts a universal power relationship of `β` between tree biomass and diameter (i.e. \~2.67).
+@west1997general and @enquist1999allometric developed an allometric scaling theory based on the "pipe model" [@shinozaki1964quantitative] and physical growth principles. Their framework predicts a universal exponent of `β` ≈ 2.67 based on biomechanical constraints, tree stability, and hydraulic resistance. While this theoretical exponent has been debated regarding its universality [@zianis2004simplifying; @muller2006testing], it provides a physically grounded benchmark for evaluating empirical equations.
 
-While this theoretical exponent has been debated, particularly regarding its generality across species and environments [@zianis2004simplifying; @muller2006testing], it provides a physically grounded expectation against which empirical equations can be evaluated. Alternative exponents can arise from different bio-mechanical and hydraulic assumptions [@enquist2002universal].
+In this chapter, we compare allometry species-specific allometry with biome-generic equations that are more commonly applied in REDD+ programs to demonstrate how uncertainty metrics can inform model selection and impact carbon credit deductions. We adopt the broadest definition of allometry as any correlation between tree dimensions, whether in linear, log-log, power-law, or other functional forms, to examine the following questions:
 
-This chapter adopts the broadest definition of allometry: any correlation between tree dimensions, whether linear, log-log, power-law, or other functional forms. We compare candidate allometry from species-specific, genus-level, and global-level equations most commonly applied in REDD+ programs for estimating aboveground biomass to demonstrate:
+1.  How should uncertainty metrics inform model selection and optimization?
+2.  How does allometry uncertainty impacts carbon credit deductions
 
-1.  How uncertainty metrics inform model selection and optimization
-2.  How allometry uncertainty impacts carbon credit deductions
+## 1.2 Model Selection {#sec-model-selection}
 
-## Model Selection {#sec-model-selection}
+The choice of allometric equation directly determines uncertainty magnitude and carbon credit deductions. This section demonstrates quantitative differences between equation categories using the `scbi_stem1` dataset from the [ForestGEO](https://docs.ropensci.org/allodb/reference/scbi_stem1.html) plot inventory in Front Royal, Virginia. This 25.6-hectare mature secondary forest is dominated by Appalachian mixed hardwood species including tulip poplar (*Liriodendron tulipifera*), oaks (*Quercus spp.*), and hickories (*Carya spp.*), representing typical stand composition of the Blue Ridge and Piedmont regions.
 
-The choice of allometric equation directly determines uncertainty magnitude and carbon credit deductions. This section demonstrates quantitative differences between three equation categories using the `scbi_stem1` dataset which comprises a subset of the [ForestGEO](https://docs.ropensci.org/allodb/reference/scbi_stem1.html) plot inventory sampled in Front Royal, Virginia. This 25.6-hectare mature secondary forest is dominated by Appalachian mixed hardwood species including tulip poplar (*Liriodendron tulipifera*), oaks (*Quercus spp*.), and hickories (*Carya spp*.), representing typical stand composition of the Blue Ridge and Piedmont regions. We compared equations most typically applied in REDD+ carbon offset reporting:
+### Types of Allometry
 
--   Species-specific equations: Developed from destructive sampling of target species [@gonzalez2022allodb]
--   Genus-level equations: Aggregated across multiple species within a genus[@jansen1996opbrengsttabellen; @jenkins2004comprehensive]
--   Global equations: Generic equations across broad geographic regions [@chave2009towards; @chave2014improved; @west1997general; @brown1997a]
+The study of allometric relationships in the scaling of morphological features relate to three biological phenomena:
 
-Considering previous section's discussions around global allometric equations and their scales of generality, it follows that species within the same genus share evolutionary history. However, the may still differ in wood density, branch architecture, or bole morphometry. For example, while species may be genetically related, they may also exhibit biologically significant distinctions, as follows:
+-   Ontogenic allometry: Size-related changes within an individual organism's growth trajectory. This is the primary focus of tree biomass estimation, where DBH-biomass relationships capture how trees allocate resources as they mature [@chave2005a; @brown1997a]
+-   Static allometry: Size variation among individuals of the same age or developmental stage, reflecting genetic or environmental differences within a population [@niklas1994plant]
+-   Evolutionary allometry: Phylogenetic variation in size-scaling relationships across species or lineages, representing adaptive divergence in morphological strategies [@russo2007growth]
 
--   *Acer rubrum* (red maple): Lower wood density (0.49 g/cm³), faster growth
--   *Acer saccharum* (sugar maple): Higher wood density (0.63 g/cm³), denser wood
--   *Acer negundo* (box elder): Intermediate density (0.42 g/cm³), different crown architecture
+For REDD+ carbon accounting, we focus exclusively on ontogenic allometry to target the predictable relationship between accessible tree dimensions and total aboveground biomass as trees grow from seedling to maturity.
 
-#### Import Data {.unnumbered}
+::: callout-important
+Species within a genus share evolutionary history but may differ in wood density, branch architecture, or bole form due to adaptation to local conditions. For example:
+
+-   *Acer rubrum* (red maple): Lower density (0.49 g/cm³), faster growth
+-   *Acer saccharum* (sugar maple): Higher density (0.63 g/cm³), denser wood
+-   *Acer negundo* (box elder): Intermediate density (0.42 g/cm³), different architecture
+:::
+
+### Types of Equations
+
+Allometric equations are classified by taxonomic scope and environmental specificity, representing a trade-off between precision and generalization:
+
+1.  Species-Specific Equations: Developed from destructive sampling of target species, providing highest accuracy but limited geographic applicability [@gonzalez2022allodb]. These equations capture species-specific morphometric traits, such as branching architecture and wood density, which influence biomass allocation.
+
+2.  Genus-Specific Equations: Aggregated across multiple species within a genus, offering broader applicability with moderate accuracy [@jansen1996opbrengsttabellen; @jenkins2004comprehensive]. Assumes shared evolutionary heritage produces similar allometric scaling within genera.
+
+3.  Biome-Generic Equations: Most commonly used in REDD+ report, pan-tropical, generic equations fitted across broader geographic regions and biomes, maximizing applicability but potentially introducing bias [@chave2009towards; @chave2014improved; @west1997general; @brown1997a]. Often incorporate wood density (WD) or environmental stress factors to capture regional variation.
+
+4.  Environmentally Conditioned Equations: Gold-standard allometric models that incorporate biophysical variables reflecting site-specific growing conditions, critical for REDD+ programs in specialized ecosystems [@rahman2021biomass; @komiyamaAllometryBiomassProductivity2008; @komiyama2005common]. These equations explicitly model environmental drivers of growth variation:
+
+    -   Salinity gradients: Mangrove allometry where salt stress affects growth rate, wood density, and architectural form
+    -   Soil fertility: Nutrient availability influencing wood density and height-diameter relationships
+    -   Climate: Temperature and precipitation gradients captured through environmental stress factors
+    -   Geomorphology: Tidal inundation frequency, elevation, or hydrological regime
+
+::: callout-tip
+In specialized growing environments, such as mangroves, the choice of allometry weighs heavily on emissions accuracy. For example, @rocha2018reducing found generic allometries to produce significantly wider error margins in biomass estimations than species-specific equations (-18% & +14%) across Brazilian mangrove forests. To compensate, generic equations incorporate proxies of environmental stress, such as wood density, height-diameter ratios or "stunting", and species composition.
+
+However, while inclusion of tree height significantly reduces bias in AGB estimates [@rutishauser2013generic; @chave2014improved], the accurate measurement of tree height in closed-canopy forests is especially challenging[@king2011allometry]. In addition, due to resulting variance in height data with plots and at different spatial scales, height-diameter (H-D) models tend to exhibit high uncertainty [@feldpausch2011height; @valbuena2016sensitivity]. LiDAR and RADAR technologies can improve height measurement accuracy but are not always available for REDD+ project areas.
+:::
+
+In practice, the choice of equation category involves balancing precision, cost, and data availability:
+
+| Category | Precision | Data Requirements | Geographic Applicability | Recommended Use |
+|---------------|---------------|---------------|---------------|---------------|
+| Species-specific | Highest (±10-15%) | Species ID, local calibration | Narrow (same region/climate) | High-value carbon projects, limited species diversity |
+| Genus-specific | Moderate (±15-20%) | Genus ID | Moderate (similar forest types) | Mixed-species temperate forests |
+| Pan | Lower (±20-30%) | DBH, WD, sometimes H | Broad (tropical/temperate zones) | Data-limited contexts, preliminary assessments |
+| Environmentally-conditioned | Highest\* (±12-18%) | DBH, WD, H, environmental variables | Moderate (similar environmental conditions) | Specialized ecosystems (mangroves, peatlands), jurisdictional REDD+ |
+
+: \**When environmental variables are properly measured and equation applied within calibration range*
+
+#### Data Preparation {.unnumbered}
 
 ```{r}
 #| comment: NA
@@ -189,14 +229,17 @@ Considering previous section's discussions around global allometric equations an
 #| error: false
 #| echo: true
 
-# import allometry "data" from allodb.pkg
+# import dataset from allodb.pkg
 library("allodb")
 data(scbi_stem1)
 
-head(scbi_stem1, n=10) |>
-	flextable::flextable() |> 
-	flextable::autofit()
+#scbi_stem1 |> dplyr::group_by(Family) |>
+#	dplyr::summarise(`Tree Families sampled` = n()) |>
+#	flextable::flextable()|> flextable::autofit()
 
+scbi_stem1 |> dplyr::group_by(Family, genus, species) |>
+	dplyr::summarise(`Total trees sampled` = n()) |>
+	flextable::flextable()|> flextable::autofit()
 ```
 
 ```{python}
@@ -210,9 +253,7 @@ head(scbi_stem1, n=10) |>
 demo_data_py = pd.read_csv("./data/scbi_stem1.csv")
 ```
 
-#### Tidy Data {.unnumbered}
-
-In the code cells, we filter the `scbi_stem1` to a subset of *Quercus* observations. This was selected to facilitate scaled comparisons as this was the largest species subsample recorded. Outliers and missing entries were removed and a log-transformed predictor was derived (`log_dbh`). Results produce a sample of 71 from a total of 2,287 stem measurements, as shown in the following descriptive statistics:
+We filter `scbi_stem1` to *Quercus* observations, which is the largest genus subsample available, removing outliers and missing entries to retain trees with DBH 5-100 cm. This produces a new sample of 71 stems from the dataset's total measurements of 2,287 trees.
 
 -   `dbh`: Diameter at breast height (cm)
 -   `genus`: Taxonomic genus identification
@@ -227,15 +268,15 @@ In the code cells, we filter the `scbi_stem1` to a subset of *Quercus* observati
 #| eval: true
 #| echo: true
 
-# tidy raw data
+# Genus-specific subsample of dataset
 scbi_quercus = scbi_stem1 |>
   dplyr::filter(!is.na(dbh)) |>
-  dplyr::filter(dbh >= 5, dbh <= 100)|>
 	dplyr::filter(genus == "Quercus") 
 
+# Species-specific subsample of dataset
 scbi_quercus_rubra = scbi_stem1 |>
   dplyr::filter(!is.na(dbh)) |>
-  dplyr::filter(dbh >= 5, dbh <= 100)|>
+	dplyr::filter(genus == "Quercus") |>
 	dplyr::filter(species == "rubra") 
 
 ```
@@ -249,27 +290,34 @@ scbi_quercus_rubra = scbi_stem1 |>
 #| eval: true
 
 # check distribution 
-psych::describe(scbi_quercus) |> dplyr::select(!c(trimmed,trimmed, mad, range)) |> 
+scbi_quercus_tbl = scbi_quercus |> dplyr::select(!c(treeID, stemID))
+
+psych::describe(scbi_quercus_tbl) |> 
+	dplyr::select(!c(trimmed,trimmed, mad, range)) |> 
 	tibble::rownames_to_column(var = "Variable") |>  
-  dplyr::mutate(
+  dplyr::select(!vars) |>    
+	dplyr::mutate(
     Variable = case_when(
-    Variable == "treeID" ~ "Tree ID",
-    Variable == "stemID" ~ "Stem ID",
     Variable == "dbh" ~ "DBH (cm)",
     Variable == "genus" ~ "Genus",
     Variable == "species" ~ "Species",
     Variable == "Family" ~ "Family",
     TRUE ~ Variable)) |>
-  dplyr::select(-vars) |>  # Remove the vars column
   flextable::flextable() |> 
   flextable::colformat_double(big.mark = ",", digits = 1) |>
 	flextable::autofit()
+
+
+# 'head()' limits no.# of rows returned
+#head(scbi_quercus, n=10) |>
+#	flextable::flextable() |> 
+#	flextable::autofit()
 ```
 
 <br>
 
 ::: callout-tip
-At this early stage in the workflow, it helps to quickly check the range and spread of DBH values. These values offer early indicators of the statistical operations and validations needed ahead.
+At this early stage in the workflow, it helps to quickly scan the range and spread of DBH values. These values offer early indicators of the statistical operations and validations needed ahead. For example, notice the DBH range from 5.4-83.5 cm, which will inform equation selection criteria directly below.
 :::
 
 <br>
@@ -311,12 +359,14 @@ print(tabulate(desc_stats,
 		showindex=False))
 ```
 
-Following best practices in allometric model selection, equations are queried first for dominant taxa using the `new_equations()` function with taxonomic filters in the `allodb` library. We also widen our thresholds to extract genus-level generic equations. We import globally scaled equations using the `BIOMASS` library in the subsequent section:
+### Equation Selection
 
-1.  Geographic proximity: Prioritize equations from eastern North America to minimize climatic and edaphic differences
-2.  DBH range: Ensure equation applicability spans 80% of measured diameter distribution for each species to avoid extrapolation bias
-3.  Taxonomic specificity: Select species-level equations where available; genus or family-level equations when species-specific data absent
-4.  Sample size: Minimum n=50 trees for species-specific equations; n\>150 for genus-level equations
+Following best practices from forest inventory methodology [@duncansonAbovegroundWoodyBiomass2021], equation selection may proceed through the four sequential criteria in order of their priority below:
+
+1.  Geographic Proximity: Prioritize equations developed in climates and soil conditions similar to your project area
+2.  Taxonomic Specificity: Prefer species-level \> genus-level \> family-level equations
+3.  DBH Range Coverage: Ensure equation applicability spans ≥80% of measured diameter distribution
+4.  Sample Size Adequacy: Minimum n=50 trees for species-specific; n\>150 for genus-level equations[^index-2]
 
 ```{r}
 #| message: false
@@ -328,15 +378,11 @@ Following best practices in allometric model selection, equations are queried fi
 data(equations)
 data("equations_metadata")
 
-eq_quercus_genus = allodb::new_equations(subset_taxa = "Quercus")
-eq_quercus_species = allodb::new_equations(subset_taxa = "Quercus rubra")
-show_cols <- c("ref_id", "equation_taxa", "allometry_specificity", "equation_allometry")
-
-flextable::flextable(eq_quercus_genus[, show_cols]) |> 
-  flextable::autofit()
+# display all equation criteria
+dplyr::glimpse(equations)
 ```
 
-Table 1a: Representative allometric equations for *Acer* species in the Eastern United States
+*Table X: List of variables in the `equations` dataset available to use as selection criteria in allometry development using `allodb` package.*
 
 <br>
 
@@ -347,6 +393,12 @@ Table 1a: Representative allometric equations for *Acer* species in the Eastern 
 #| echo: false
 #| eval: false
 #| comment: NA
+# -------------------------------------------------------- #
+
+#  Added filtering and variable display for HTML renders   #
+
+# -------------------------------------------------------- #
+
 
 eq_tab_acer = read.csv("./data/eq_tab_acer.csv")
 
@@ -389,13 +441,188 @@ eq_tab_acer_clean = eq_tab_acer |> dplyr::mutate(
 
 ```
 
-In the filtered subset of the `allodb` dataset above, we find species-specific and genus-specific equations meeting our criteria. With these equations and known coordinates identified, we compute aboveground biomass (`agb`) volume for observed trees below.
+::: callout-tip
+## Database Navigation Note
 
-::: callout-note
-Species-specific equations are automatically fitted when using default `allodb` functions. These tools are useful resources, including a number of other allometric packages specific to different biomes like `silviculture`, `forestdata`, `ForestBiomass`, and the recommended option `rFVS`
+In the following code chunk, we filter equations geographically with the `allodb` latitude and longitude variables. This is done using `dplyr` functions instead of the suggested filter `new_equation()` due to inconsistencies found in the `geographic_area` field.
+
+In subsequent cells, we import pan-tropical equations and fit them with values from by Global Wood Density database using the `computeAGB()` and`getWoodDensity()` functions from the `BIOMASS` package.
 :::
 
-### Species-Specific Biomass Estimation
+#### Step 1: Geographic Selection
+
+```{r}
+#| comment: NA
+#| message: false
+#| warning: false
+#| error: false
+#| echo: true
+#| eval: true
+
+# Simple North America filter
+eq_region <- equations |>
+  dplyr::mutate(lat = as.numeric(lat), long = as.numeric(long)) |>
+  dplyr::filter(!is.na(lat), !is.na(long), lat >= 24, lat <= 72, long >= -168, long <= -52)
+
+# tabulate
+show_cols   = c("ref_id", "equation_taxa", "allometry_specificity", "equation_allometry")
+head(eq_region[, show_cols]) |> flextable::flextable() |> flextable::autofit() # top six rows only
+#flextable::flextable(eq_region[, show_cols]) |> flextable::autofit() # complete list for Appendix
+cat(sprintf("Equations valid to region: %d\n", nrow(eq_region)))
+```
+
+#### Step 2: Taxonomic Selection
+
+```{r}
+#| comment: NA
+#| message: false
+#| warning: false
+#| error: false
+#| echo: true
+#| eval: true
+
+# species-specific equations for all Quercus subspecies of North America 
+eq_region_species <- eq_region |>
+	dplyr::filter(allometry_specificity == "Species") |>
+	dplyr::filter(grepl("^Quercus", equation_taxa, ignore.case = TRUE) | # Starts with "Quercus"
+    	(allometry_specificity %in% c("Genus", "Family") & 
+    	 	grepl("Quercus", equation_taxa, ignore.case = TRUE))
+    	)
+
+# genus-specific equations for Quercus populations of North America 
+eq_region_genus = eq_region |> 
+	dplyr::filter(allometry_specificity == "Genus") |>
+	dplyr::filter(grepl("^Quercus", equation_taxa, ignore.case = TRUE) |  # Starts with "Quercus"
+			(allometry_specificity %in% c("Genus", "Family") & 
+     	grepl("Quercus", equation_taxa, ignore.case = TRUE))
+			)
+
+# tabulate
+flextable::flextable(eq_region_species[, show_cols]) |> flextable::autofit()
+#flextable::flextable(eq_region_genus[, show_cols]) |> flextable::autofit()
+cat(sprintf("Genus-specific equations valid to region: %d\n", nrow(eq_region_genus)))
+cat(sprintf("Species-specific equations valid to region: %d\n", nrow(eq_region_species)))
+```
+
+#### Step 3: DBH Range Selection
+
+```{r}
+#| comment: NA
+#| message: false
+#| warning: false
+#| error: false
+#| echo: true
+#| eval: true
+
+# filter genus-specific equations by DBH range of field data
+field_dbh_min <- min(scbi_quercus$dbh, na.rm = T) # 1.04 cm
+field_dbh_max <- max(scbi_quercus$dbh, na.rm = T) # 83.5 cm
+
+eq_region_genus_dbh <- eq_region_genus |>
+  dplyr::mutate(
+  	dbh_min_cm = as.numeric(dbh_min_cm), 
+  	dbh_max_cm = as.numeric(dbh_max_cm)) |>
+  dplyr::filter(!is.na(dbh_min_cm), !is.na(dbh_max_cm),
+    dbh_min_cm <= field_dbh_min * 15, # extrapolation allowed for saplings
+    dbh_max_cm >= field_dbh_max)
+
+eq_region_species_dbh <- eq_region_species |>
+  dplyr::mutate(
+  	dbh_min_cm = as.numeric(dbh_min_cm), 
+  	dbh_max_cm = as.numeric(dbh_max_cm)) |>
+  dplyr::filter(!is.na(dbh_min_cm), !is.na(dbh_max_cm),
+    dbh_max_cm >= field_dbh_max * 0.6) # extrapolation allowed for crown trees 
+
+
+flextable::flextable(eq_region_genus_dbh[, show_cols]) |> flextable::autofit()
+flextable::flextable(eq_region_species_dbh[, show_cols]) |> flextable::autofit()
+cat(sprintf("Genus-specific equations valid for region, Quercus, & DBH range: %d\n", nrow(eq_region_genus_dbh)))
+cat(sprintf("Specific-specific equations valid for region, Quercus, & DBH range: %d\n", nrow(eq_region_species_dbh)))
+
+```
+
+#### Step 4: Sample Size Selection
+
+The required sample size for allometric equation development depends on desired precision and diameter distribution. @roxburgh2015guidelines demonstrated through Monte Carlo resampling that biomass predictions with a standard deviation within 5% of mean requires sample sizes of between 17 and 166, depending on the algorithm employed. Most importantly, stratified sampling across age class or dbh size is critical to improving precision.
+
+```{r}
+#| comment: NA
+#| message: false
+#| warning: false
+#| error: false
+#| echo: true
+#| eval: true
+
+eq_region_genus_dbh_sample <- eq_region_genus_dbh |>
+  dplyr::filter(sample_size >= 50)  # Minimum for genus-specific equations
+
+eq_region_species_dbh_sample <- eq_region_species_dbh |>
+  dplyr::filter(sample_size >= 50)  # Minimum for species-specific equations
+
+# Display selected equations & tally valid equations remaining
+flextable::flextable(eq_region_genus_dbh_sample[, show_cols]) |> flextable::autofit()
+flextable::flextable(eq_region_species_dbh_sample[, show_cols]) |> flextable::autofit()
+cat(sprintf("Genus-specific equations meeting all criteria: %d\n", nrow(eq_region_genus_dbh_sample)))
+cat(sprintf("Species-specific equations meeting all criteria: %d\n", nrow(eq_region_species_dbh_sample)))
+```
+
+```{r}
+#| eval: true
+#| echo: false
+
+# Document selection rationale for REDD+ MRV reporting
+equation_metadata <- data.frame(
+  Criterion = c("Geography", "Taxonomy", "DBH Range", "Sample Size"),
+  Threshold = c(
+    "North America (24-72°N, -168 to -52°W)",
+    "Species > Genus > Family",
+    "≥80% field data coverage",
+    "n≥50 (Roxburgh et al. 2015: CV~7.5%)"
+  ),
+  Selected_Value = c(
+    sprintf("%d equations in region", nrow(eq_region)),
+    sprintf("%d genus-level, %d species-specific", nrow(eq_region_genus), nrow(eq_region_species)),
+    sprintf("%.1f-%.1f cm (field), 11-93 cm (equation)", field_dbh_min, field_dbh_max),
+    sprintf("n=%d (Stovall 2018)", 66)
+  ),
+  Justification = c(
+    "Climate similarity to Front Royal, VA (Cfa)",
+    "Species-specific preferred; genus fallback acceptable",
+    "Minor extrapolation for saplings (<5% biomass)",
+    "Exceeds threshold for CV=7.5% precision"
+  )
+)
+
+equation_metadata |>
+  flextable::flextable() |>
+  flextable::set_caption("Equation Selection Documentation for REDD+ MRV") |>
+  flextable::autofit()
+```
+
+*Table X: Equation Selection Documentation for REDD+ MRV*
+
+::: callout-tip
+## Allometry Selection Best Practices
+
+1.  Transparency: Document all criteria and thresholds
+2.  Reproducibility: Code-based workflow enables auditing
+3.  Bias Reduction: Geographic and taxonomic filtering minimizes systematic errors
+4.  Uncertainty Quantification: Multiple equations enable sensitivity analysis (Section 1.5)
+
+For REDD+ MRV reporting under ART-TREES/VCS, include selection rationale demonstrating: - Compliance with equation selection requirements - Justification for any extrapolation beyond equation DBH ranges - Geographic/climatic appropriateness - Sample size adequacy for target precision
+:::
+
+<br>
+
+## Biomass Estimations
+
+Having identified candidate allometry equations, we can apply these to calculate aboveground biomass estimates using three approaches: species-specific, genus-level, and pan-tropical (`BIOMASS`).
+
+::: callout-tip
+## Calling Generic Models
+
+Species-specific equations are automatically fitted when using default `allodb::get_biomass()` function. The `BIOMASS` package provides globally-applicable equations that require wood density extraction from the Global Wood Density Database. These tools are useful resources, including a number of other allometric packages specific to different biomes like `silviculture`, `forestdata`, `ForestBiomass`, and the recommended option `rFVS.`
+:::
 
 ```{r}
 #| comment: NA
@@ -404,40 +631,32 @@ Species-specific equations are automatically fitted when using default `allodb` 
 #| echo: true
 #| eval: true
 
-# species-specific estimates 
+# species-specific biomass estimates 
 scbi_quercus$agb_species <- allodb::get_biomass(
   dbh 		= scbi_quercus$dbh,
   genus 	= scbi_quercus$genus,
   species = scbi_quercus$species,
   coords	= c(-78.2, 38.9)
   )
-```
 
-### Genus-Specific Biomass Estimation
-
-```{r}
-#| comment: NA
-#| message: false
-#| error: false
-#| echo: true
-#| eval: true
-
-# genus-specific estimates
+# genus-specific biomass estimates
 scbi_quercus$agb_genus <- allodb::get_biomass(
     dbh 		= scbi_quercus$dbh,
-    genus 	= "Quercus",
+    genus 	= scbi_quercus$genus,
     species = scbi_quercus$species,
     coords	= c(-78.2, 38.9),
-    new_eqtable = eq_quercus_genus
+    new_eqtable = eq_region_genus_dbh_sample
   )
 ```
 
-### Global Biomass Estimation
+### Pan-Tropical Models
 
-The following functions from the `BIOMASS` package [@BIOMASS] require some additional wrangling, specifically to extract values from the Global Wood Density database [@vieilledent2018new] and convert from units provided [@rejou2017biomass].
+The following functions from the `BIOMASS` package [@BIOMASS] require some additional wrangling, specifically to extract values from the Global Wood Density database [@vieilledent2018new] and convert units [@rejou2017biomass].
 
 ::: callout-tip
-It is recommended to check if selected equations require any unit conversions or scaling limiters. For example, if using the most common allometry from Chave et al (2014), we need to convert from milligrams to kilograms, as follows.
+## Unit Conversions
+
+Always verify if equations require unit conversions or scaling limiters. For example, the most commonly used allometry equation from Chave et al (2014) requires conversion from milligrams to kilograms, as shown below (`* 1000`).
 :::
 
 ```{r}
@@ -475,7 +694,7 @@ flextable::flextable(scbi_quercus) |>
 	flextable::autofit()
 ```
 
-*Table 1D: Aboveground biomass estimates derived from five allometry equations of varying scales*
+Table 1D: Aboveground biomass estimates derived from five allometry equations of varying scales
 
 ```{r}
 #| comment: NA
@@ -486,16 +705,16 @@ flextable::flextable(scbi_quercus) |>
 
 #write.csv2(scbi_quercus, "./data/scbi_quercus.csv")
 # Check tree number of sample remaining across all equaitons
-scbi_quercus <- readr::read_delim("data/scbi_quercus.csv", 
-    delim = ";", escape_double = FALSE, trim_ws = T) |>
-	dplyr::select(!c(...1, treeID, stemID,  Family)) |> 
-	dplyr::mutate(dbh = as.numeric(dbh)) |>
-	dplyr::mutate(WD = as.numeric(WD)) |>
-	dplyr::mutate(agb_species = as.numeric(agb_species)) |>
-	dplyr::mutate(agb_genus = as.numeric(agb_genus)) |>
-	dplyr::mutate(agb_chave2014 = as.numeric(agb_chave2014)) |>
-	dplyr::mutate(agb_chave2005 = as.numeric(agb_chave2005)) |>
-	dplyr::mutate(agb_brown1997 = as.numeric(agb_brown1997)) 
+#scbi_quercus <- readr::read_delim("data/scbi_quercus.csv", 
+#    delim = ";", escape_double = FALSE, trim_ws = T) |>
+#	dplyr::select(!c(...1, treeID, stemID,  Family)) |> 
+#	dplyr::mutate(dbh = as.numeric(dbh)) |>
+#	dplyr::mutate(WD = as.numeric(WD)) |>
+#	dplyr::mutate(agb_species = as.numeric(agb_species)) |>
+#	dplyr::mutate(agb_genus = as.numeric(agb_genus)) |>
+#	dplyr::mutate(agb_chave2014 = as.numeric(agb_chave2014)) |>
+#	dplyr::mutate(agb_chave2005 = as.numeric(agb_chave2005)) |>
+#	dplyr::mutate(agb_brown1997 = as.numeric(agb_brown1997)) 
 
 ```
 
@@ -713,7 +932,7 @@ Required corrections:
 2.  Weighted regression for alternative, more aggressive treatment
 3.  Robust standard errors to supplement log-transformation
 
-## Model Optimization
+## 1.3 Model Optimization
 
 ### Log-Transformation {#sec-log-rationale}
 
@@ -913,7 +1132,7 @@ split_verification |>
   flextable::italic(part = "footer")
 ```
 
-## Monte Carlo Cross-Validation
+## 1.4 Monte Carlo Cross-Validation
 
 This section introduces the design of the Monte Carlo simulation regime, including:
 
@@ -1033,9 +1252,7 @@ log_chave2005_mc <- caret::train(
 
 <br>
 
-# Result {.unnumbered}
-
-## Uncertainty Reductions
+## 1.5 Uncertainty Reductions
 
 ```{r}
 #| warning: false
@@ -1229,7 +1446,7 @@ cat(sprintf("Net credited value: $%.2fM\n",
             (total_value - deduction_value) / 1e6))
 ```
 
-# Summary {.unnumbered}
+## 1.6 Chapter Summary {.unnumbered}
 
 -   Distribution diagnostics: DBH and AGB are significantly right-skewed (p \< 0.001), violating parametric assumptions
 -   Heteroscedasticity confirmed: Breusch-Pagan test (p \< 0.001) shows variance increases with tree size
@@ -1239,7 +1456,7 @@ cat(sprintf("Net credited value: $%.2fM\n",
 Carbon credit deduction: `round(ua_factor x 100, 1)%` of project credits
 :::
 
-## Allometry Best Practices
+### Allometry Best Practices
 
 To achieve commercially viable uncertainty levels (\<10% RMSE) and minimize carbon credit deductions:
 
@@ -1249,7 +1466,7 @@ To achieve commercially viable uncertainty levels (\<10% RMSE) and minimize carb
 4.  Adequate sample size: Minimum 50 trees per species (NASA-CEOS standard)
 5.  Measurement precision: Target ±0.5 cm DBH error through calibrated instruments and trained crews
 
-## Investment Priorities by ROI
+### Investment Priorities
 
 | Intervention | Cost | Uncertainty Reduction | Revenue Protected\* |
 |------------------|------------------|------------------|------------------|
@@ -1263,7 +1480,7 @@ To achieve commercially viable uncertainty levels (\<10% RMSE) and minimize carb
 
 Strategic recommendation: Log-transformation delivers 90% of possible uncertainty reduction at zero marginal cost. Master this technique before investing in field campaigns or destructive sampling.
 
-## Next Steps
+### Next Steps
 
 Chapter 3: Emission Factors will address:
 
@@ -1273,3 +1490,5 @@ Chapter 3: Emission Factors will address:
 -   Field measurement protocols (FTIR, eddy covariance)
 
 [^index-1]: Removal of `python` workflow was requested during first review (November 24, 2025). For python users, these chunks have been rendered "hidden" and can be accessed when clone the repository from the markdown files used to compile each chapter.
+
+[^index-2]: Follow-up: Allometry Sample Size Guidelines [@roxburgh2015guidelines] = [Link](https://esajournals.onlinelibrary.wiley.com/doi/full/10.1890/ES14-00251.1#sa2).

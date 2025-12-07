@@ -40,11 +40,11 @@ sidebar:
 
 format:
   html:
-    toc: true
+    toc: false
     toc-location: right
     toc-depth: 3
     toc-title: "**On this page**"
-    number-sections: true
+    number-sections: false
     embed-resources: false
     theme: 
       - styles.scss
