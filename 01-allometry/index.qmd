@@ -33,7 +33,7 @@ Allometric equations represent the proportional and scaling relationships betwee
 This biological principle underpins REDD+ carbon accounting: allometric equations translate field measurements of diameter at breast height (DBH) into biomass estimates, forming the foundation of emission reduction quantification.
 
 ::: callout-tip
-## Allometry Investment
+## Allometry Investment Rationale
 
 Although Section 8 exempts structural allometric uncertainty when models are applied consistently, the choice of which model to apply directly impacts reported uncertainty. Allometry variance is absolute and compounds more dramatically so that model selection determines the magnitude of random error that cannot be exempted downstream. In practical terms, selecting a model with 20% RMSE versus 8% RMSE determines whether your project faces a 6% or 2% carbon credit deduction, representing a difference worth \$200k in a 1M tCO~2~^-e^ project at \$5/tonne.
 :::
@@ -97,7 +97,7 @@ knitr::opts_chunk$set(
 #  "/Users/seamus/Library/Python/3.9/bin/python3")
 ```
 
-### ~~Environment Setup (Python)~~[^index-1] {.unnumbered}
+### ~~Environment Setup (Python)~~[^1] {.unnumbered}
 
 ```{python}
 #| comment: NA
@@ -350,7 +350,7 @@ Following best practices from forest inventory methodology [@duncansonAbovegroun
 1.  Geographic Proximity: Prioritize equations developed in climates and soil conditions similar to your project area
 2.  Taxonomic Specificity: Prefer species-level \> genus-level \> family-level equations
 3.  DBH Range Coverage: Ensure equation applicability spans ≥80% of measured diameter distribution
-4.  Sample Size Adequacy: Minimum n=50 trees for species-specific; n\>150 for genus-level equations[^index-2]
+4.  Sample Size Adequacy: Minimum n=50 trees for species-specific; n\>150 for genus-level equations[^2]
 
 ```{r}
 #| message: false
@@ -1518,7 +1518,7 @@ To achieve commercially viable uncertainty levels (\<20% RMSE) and minimize carb
 ### Investment Priorities
 
 | Intervention | Cost | Uncertainty Reduction | Revenue Protected\* |
-|--------------------|------------------|------------------|------------------|
+|-------------------|------------------|------------------|------------------|
 | Log-transformation | \$0 | 50-55 pp | \$250-275k |
 | Species-specific equations | \$15-30k | 3-4 pp | \$10-15k |
 | Cross-validation workflow | \$5-10k | 2-3 pp | \$8-12k |
@@ -1548,6 +1548,6 @@ Chapter 2: Emission Factors will address:
 -   Gas-specific emission ratios (CO₂, CH₄, N₂O)
 -   Field measurement protocols (FTIR, eddy covariance)
 
-[^index-1]: Removal of `python` workflow was requested during first review (November 24, 2025). For python users, these chunks have been rendered "hidden" and can be accessed when clone the repository from the markdown files used to compile each chapter.
+[^1]: Removal of `python` workflow was requested during first review (November 24, 2025). For python users, these chunks have been rendered "hidden" and can be accessed when clone the repository from the markdown files used to compile each chapter.
 
-[^index-2]: Follow-up: Allometry Sample Size Guidelines [@roxburgh2015guidelines] = [Link](https://esajournals.onlinelibrary.wiley.com/doi/full/10.1890/ES14-00251.1#sa2).
+[^2]: Follow-up: Allometry Sample Size Guidelines [@roxburgh2015guidelines] = [Link](https://esajournals.onlinelibrary.wiley.com/doi/full/10.1890/ES14-00251.1#sa2).
