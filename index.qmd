@@ -4,9 +4,9 @@ subtitle: "Training Curriculum & Toolkit for Jurisdictional Carbon Offset Progra
 
 
 format:
-  docx:
+  html:
     reference-doc: ./references/style.docx
-    toc: false
+    toc: true
     highlight-style: pygments
     df-print: tibble
     number-sections: false
@@ -60,7 +60,7 @@ Recent analyses have identified opportunities to strengthen uncertainty reportin
 
 Comprehensive uncertainty reporting serves multiple strategic objectives beyond regulatory compliance. When jurisdictions systematically quantify and report all uncertainty sources, they establish baseline metrics for improvement and unlock pathways to enhanced credit revenue. @butler2024uncertainty note that comprehensive assessment can initially produce wider confidence intervals, but this transparency enables targeted methodological refinements that systematically reduce actual uncertainty over time, a process that directly increases credit issuance and revenue. Recognizing the importance of incentivizing comprehensive reporting, results-based payment programs have implemented supportive mechanisms. The FCPF Carbon Fund uses a capped uncertainty deduction schedule that removes disincentives for comprehensive reporting:
 
-FCPF Uncertainty Deduction `Conservativeness Factors`:[^1]
+FCPF Uncertainty Deduction `Conservativeness Factors`:[^index-1]
 
 -   No deduction if uncertainty is ≤15%
 -   4% deduction if uncertainty is 15–30%
@@ -74,9 +74,9 @@ This structure ensures that programs with very high initial uncertainty face the
 
 Forest carbon inventory fundamentally relies on making inferences about true population estimates from limited samples of observed data. But a forest is complex, and our measuring tools and samples are never perfect. For example, when we measure 50 field plots across a million-hectare jurisdiction, we expect that our sample mean will vary from the true mean. Uncertainty is simply how much doubt we have that our measured average is close to the true average.
 
-Fundamentally, this difference between our sampled average and the assumed true population average[^2] is what informs the metrics of statistical uncertainty. For instance, this dispersion in estimates is computed using:
+Fundamentally, this difference between our sampled average and the assumed true population average[^index-2] is what informs the metrics of statistical uncertainty. For instance, this dispersion in estimates is computed using:
 
--   Standard deviation (`DescTools::SD()`):[^3] Measures the spread of observed points around the sample mean, a property of our field sample itself describing how spread out our observations are from one another and their mean.
+-   Standard deviation (`DescTools::SD()`):[^index-3] Measures the spread of observed points around the sample mean, a property of our field sample itself describing how spread out our observations are from one another and their mean.
 -   Standard error (`DescTools::MeanSE()`): Measures how much the sample mean is expected to deviate from the true population estimates that are assumed to follow the universal law of large numbers when at critical mass. In effect, this property characterizes our subsample's precision according to that assumed truth. Expressed as $\text{se} = \frac{\sigma}{\sqrt{n}}$, this also implies standard errors will ultimately decrease the more we increase our sample size.
 
 The distinction is critical: standard deviation quantifies data variability, while standard error quantifies estimation precision. The 90% confidence interval uses a z-value of 1.645, meaning we can be 90% confident the true mean lies within ±1.645 standard errors of our sample mean.
@@ -89,25 +89,25 @@ The Uncertainty Adjustment Factor (UAF) applies a conservative deduction to carb
 
 Monte Carlo simulation traces its roots to the Markov Chain, developed by Andrey Markov in the early 1900s [@sheynin1989aa]. At the time, Markov publicly feuded with Pavel Nekrasov, who claimed statistical laws required independent events, arguing this supported divine free will. To disprove this, Markov analyzed the first 20,000 letters of a poem by Pushkin finding 8,638 vowels and 11,362 consonants. He demonstrated that the probability of the next letter depends on the current letter, vowels tend to follow consonants and vice versa, yet aggregated over thousands of letter sequences, the system still converged to a stable distribution (43% vowels, 57% consonants). This proved statistical predictability holds even with strong causal dependence.
 
-The technique remained theoretical until 1948, when Nicholas Metropolis, John von Neumann, and Stanislaw Ulam at Los Alamos developed the Monte Carlo method and named it after Ulam's uncle's love for Monte Carlo casinos [@metropolis1949monte]. Metropolis rewired the ENIAC computer to perform the first Monte Carlo simulations of nuclear core criticality. They discovered that rather than generating random configurations and weighting by the Boltzmann factors, they sampled configurations with probability and weighted globally dramatically reducing computational cost.
+The technique remained theoretical until 1948, when Nicholas Metropolis, John von Neumann, and Stanislaw Ulam at Los Alamos developed the Monte Carlo method and named it after Ulam's uncle's love for the roulette casions of Monte Carlo [@metropolis1949monte]. Metropolis rewired the ENIAC computer to perform the first Monte Carlo simulations of nuclear core criticality. They discovered that rather than generating random configurations and weighting by the Boltzmann factors, they sampled configurations with probability and weighted globally dramatically reducing computational cost.
 
-A key to its success in nuclear science related to its distinction of one-sided and two-sided error distributions that enabled the design of false-biased simulation algorithms. Specifically, the study of nuclear reactivity required false-bias metrics to more definitively estimate critical levels of neuron activity for achieving a nuclear chain reaction. It is worth noting how the Monte Carlo method emerged from the statistics of critical systems where different rules of dependency are assumed. Critical systems are characterized by self-organizing populations that exist dynamically between steady-state thresholds and unpredictable tipping points, such as in patterns of mega-fires, the spread of beetle outbreaks, or in disease epidemics [@sornette2006critical] where assumption of causal dependence prevails. These approaches also play an increasing role in the spatial and temporal modelling of plant ecology and remote sensing of forest ecosystems.
+A key to its success in nuclear science related to its distinction of one-sided and two-sided error distributions that enabled the design of false-biased simulation algorithms. Specifically, the study of nuclear reactivity required false-bias metrics to more definitively estimate critical levels of neuron activity for achieving a nuclear chain reaction. It is worth noting how the Monte Carlo method emerged from the statistics of critical systems where different rules of dependency are assumed. Critical systems are characterized by self-organizing populations that exist dynamically between steady-state thresholds and unpredictable tipping points, such as in patterns of mega-fires, the spread of beetle outbreaks, or in disease epidemics [@sornette2006critical] where assumption of causal dependence prevails. These approaches also play an increasing role in the spatial and temporal modelling of plant ecology and remote sensing of forest ecosystems [@schrodt2025advancing].
 
 Operationally, the Monte Carlo method involves three core mathematical principles:
 
--   Pseudo-random Number Generation
--   Markov-Rule of Memory-less Dependence
--   Law of Large Numbers & Convergence
+1.  Pseudo-random Number Generation
+2.  Markov-Rule of Memory-less Dependence
+3.  Law of Large Numbers & Convergence
 
-1.  Pseudo-random Number Generation: Monte Carlo simulations use pseudo-random number generators (`PRNG`'s) producing deterministic sequences that appear random. The mathematical foundation mirrors prime number distributions, simulating local unpredictability combined with global statistical regularity. There are four different kinds of randomization algorithms that meet Monte Carlo simulation requirements. Randomization compliance can be verified using primality tests published as coded scripts [@solovay1977fast; @baillie1980lucas; @murray2003schreier].
+Pseudo-random Number Generation: Monte Carlo simulations use pseudo-random number generators (`PRNG`'s) producing deterministic sequences that appear random. The mathematical foundation mirrors prime number distributions, simulating local unpredictability combined with global statistical regularity. There are four different kinds of randomization algorithms that meet Monte Carlo simulation requirements. Randomization compliance can be verified using primality tests published as coded scripts [@solovay1977fast; @baillie1980lucas; @murray2003schreier].
 
-2.  Markov Property Memory-less Dependence): The system "remembers" only the immediate previous state. For example, this limits temporal bounds of resampling so that each year's carbon stock projection requires only the current year's state, not 30 years of history, dramatically reducing computational complexity.
+Markov Property Memory-less Dependence: The system "remembers" only the immediate previous state. For example, this limits temporal bounds of resampling so that each year's carbon stock projection requires only the current year's state, not 30 years of history, dramatically reducing computational complexity.
 
-    $$
-    P(X_{t+1} | X_t, X_{t-1}, ...) = P(X_{t+1} | X_t)
-    $$
+$$
+P(X_{t+1} | X_t, X_{t-1}, ...) = P(X_{t+1} | X_t)
+$$
 
-3.  Law of Large Numbers: As iterations increase, sample statistics converge to population parameters. Standard error decreases by $\sqrt{m}$ when samples increase by factor $m$. This informs ART requirement for minimum 10,000 iterations.
+Law of Large Numbers: As iterations increase, sample statistics converge to population parameters. Standard error decreases by $\sqrt{m}$ when samples increase by factor $m$. This informs ART requirement for minimum 10,000 iterations.
 
 <br>
 
@@ -162,8 +162,8 @@ Appendix I provides supplementary reading on the theoretical foundations of bios
 
 <b>
 
-[^1]: https://www.forestcarbonpartnership.org/sites/default/files/documents/fcpf_buffer_guidelines_v4.2_clean_cf28.pdf
+[^index-1]: https://www.forestcarbonpartnership.org/sites/default/files/documents/fcpf_buffer_guidelines_v4.2_clean_cf28.pdf
 
-[^2]: The fundamentals of parametric statistics are all based on the calculation of mean estimates of large populations. Key to this, however, is the empirical assumption that true populations, when large enough numbers are sampled, all begin to converge around a specific shape in distribution that follows the dimensions of a bell-curve.
+[^index-2]: The fundamentals of parametric statistics are all based on the calculation of mean estimates of large populations. Key to this, however, is the empirical assumption that true populations, when large enough numbers are sampled, all begin to converge around a specific shape in distribution that follows the dimensions of a bell-curve.
 
-[^3]: The `package::function()` notation (e.g., `DescTools::SD()`) explicitly identifies which package each function belongs to, helping users verify package installations and resolve naming conflicts.
+[^index-3]: The `package::function()` notation (e.g., `DescTools::SD()`) explicitly identifies which package each function belongs to, helping users verify package installations and resolve naming conflicts.

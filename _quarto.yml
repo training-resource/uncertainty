@@ -50,7 +50,7 @@ sidebar:
 
 format:
   html:
-    toc: false
+    toc: true
     toc-location: right
     toc-depth: 3
     toc-title: "**On this page**"

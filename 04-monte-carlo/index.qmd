@@ -1,0 +1,92 @@
+---
+title: "Monte Carlo Simulations"
+format:
+  html:
+    reference-doc: ../references/style.docx
+    toc: true
+    number-sections: false
+    highlight-style: pygments
+    df-print: default
+    latex_engine: xelatex
+    
+execute:
+  eval: true
+  echo: true
+  warning: false
+  message: false
+  comment: NA
+
+knitr:
+  opts_chunk:
+    prefer-html: true
+    dev: "png"
+    dpi: 300
+
+bibliography: ../references/references.bib
+csl: ../references/apa.csl
+---
+
+## Overview {.unnumbered}
+
+  - Comment/Suggestion (JN, 12/04): Add section on probability density funciton
+  
+  
+### Environment Setup (R) {.unnumbered}
+
+```{r}
+#| comment: NA
+#| warning: false
+#| message: false
+#| error: false
+#| echo: true
+
+easypackages::packages(
+  "ropensci/allodb", "animation", "BIOMASS", "cols4all", "covr", "cowplot", "caret",
+  "DescTools", "dataMaid", "dplyr", "FawR", "ForestToolsRS", "forestdata", 
+  "flextable", "ggplot2", "giscoR", "ggfortify", "htmltools", "janitor", "jsonlite", 
+  "lattice", "leaflet.providers", "leaflet", "lmtest", "lwgeom", 
+  "kableExtra", "kernlab", "knitr", "mapedit", "mapview", "maptiles", "Mlmetrics", 
+  "ModelMetrics", "moments", "olsrr", "openxlsx", "plotly", "psych", "randomForest", 
+  "raster","RColorBrewer", "rmarkdown", "renv", "reticulate", "s2", "sf", "scales", 
+  "sits","spdep", "stars", "stringr", "terra", "tmap", "tmaptools", "tidymodels", 
+  "tidyverse", "tidyr", "tune", "useful",
+  prompt = F
+  )
+
+```
+
+```{r}
+#| warning: false
+#| message: false
+#| error: false
+#| echo: false
+#| comment: NA
+
+sf::sf_use_s2(use_s2 = FALSE)
+set.seed(8787)
+#renv::init()
+#renv::activate()
+#renv::snapshot()
+#renv::update()s
+#renv::restore() # Debugger
+#renv::install("readxl", type = "binary")
+
+options(repos = c(CRAN = "https://cloud.r-project.org"),
+	htmltools.dir.version = FALSE, 
+  htmltools.preserve.raw = FALSE,
+  scipen = 999
+	)
+
+knitr::opts_chunk$set(
+  echo = TRUE, 
+  message = FALSE, 
+  warning = FALSE,
+  error = FALSE, 
+  comment = NA, 
+  tidy.opts = list(width.cutoff = 60)
+  ) 
+
+#reticulate::use_python(required = T, 
+#  "/Users/seamus/Library/Python/3.9/bin/python3")
+```
+

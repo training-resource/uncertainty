@@ -1,9 +1,9 @@
 ---
 title: "Allometry"
 format:
-  docx:
+  html:
     reference-doc: ../references/style.docx
-    toc: false
+    toc: true
     number-sections: false
     highlight-style: pygments
     df-print: default
@@ -32,11 +32,15 @@ Allometric equations represent the proportional and scaling relationships betwee
 
 This biological principle underpins REDD+ carbon accounting: allometric equations translate field measurements of diameter at breast height (DBH) into biomass estimates, forming the foundation of emission reduction quantification.
 
+<br>
+
 ::: callout-tip
-## Allometry Investment Rationale
+## Allometry Investment
 
 Although Section 8 exempts structural allometric uncertainty when models are applied consistently, the choice of which model to apply directly impacts reported uncertainty. Allometry variance is absolute and compounds more dramatically so that model selection determines the magnitude of random error that cannot be exempted downstream. In practical terms, selecting a model with 20% RMSE versus 8% RMSE determines whether your project faces a 6% or 2% carbon credit deduction, representing a difference worth \$200k in a 1M tCO~2~^-e^ project at \$5/tonne.
 :::
+
+<br>
 
 ### Environment Setup (R) {.unnumbered}
 
@@ -97,7 +101,7 @@ knitr::opts_chunk$set(
 #  "/Users/seamus/Library/Python/3.9/bin/python3")
 ```
 
-### ~~Environment Setup (Python)~~[^1] {.unnumbered}
+### ~~Environment Setup (Python)~~[^index-1] {.unnumbered}
 
 ```{python}
 #| comment: NA
@@ -189,6 +193,8 @@ Allometric equations are classified by taxonomic scope and environmental specifi
     -   Climate: Temperature and precipitation gradients captured through environmental stress factors
     -   Geomorphology: Tidal inundation frequency, elevation, or hydrological regime
 
+<br>
+
 ::: callout-tip
 ## Mangroves Tree Height
 
@@ -196,6 +202,8 @@ In specialized growing environments, such as mangrove habitats, the choice of al
 
 However, while inclusion of tree height significantly reduces bias in AGB estimates [@rutishauser2013generic; @chave2014improved], the accurate measurement of tree height in closed-canopy forests is especially challenging[@king2011allometry]. Field data with high levels of tree height variance can limit these destructively sampled allometry models. This represents investment opportunity from reducing uncertainty through improved survey technology, such as LiDAR and RADAR [@feldpausch2011height; @valbuena2016sensitivity].
 :::
+
+<br>
 
 #### Data Preparation {.unnumbered}
 
@@ -216,7 +224,8 @@ data(scbi_stem1)
 
 scbi_stem1 |> dplyr::group_by(Family, genus, species) |>
 	dplyr::summarise(`Total Trees (n)` = n()) |>
-	flextable::flextable()|> flextable::autofit()
+	flextable::flextable()|> flextable::autofit() |>
+	flextable::fontsize(size = 9, part = "all")
 ```
 
 ```{python}
@@ -231,7 +240,7 @@ demo_data_py = pd.read_csv("./data/scbi_stem1.csv")
 ```
 
 ::: callout-tip
-## Complete Species Allometry Dataset
+## Compiling Species Allometries
 
 Scope permitting, this training would examine a full allometry worflow. Effectively, this which would require repeating the same process below for all genus in our field dataset, incorporating equations per species cumulatively. We provide brief demonstration of how to add each new equations using `alldob` operations.
 :::
@@ -350,7 +359,7 @@ Following best practices from forest inventory methodology [@duncansonAbovegroun
 1.  Geographic Proximity: Prioritize equations developed in climates and soil conditions similar to your project area
 2.  Taxonomic Specificity: Prefer species-level \> genus-level \> family-level equations
 3.  DBH Range Coverage: Ensure equation applicability spans ≥80% of measured diameter distribution
-4.  Sample Size Adequacy: Minimum n=50 trees for species-specific; n\>150 for genus-level equations[^2]
+4.  Sample Size Adequacy: Minimum n=50 trees for species-specific; n\>150 for genus-level equations[^index-2]
 
 ```{r}
 #| message: false
@@ -425,12 +434,16 @@ eq_tab_acer_clean = eq_tab_acer |> dplyr::mutate(
 
 ```
 
+<br>
+
 ::: callout-tip
 ## Navigating Databases
 
 -   It is recommend using latitude and longitude variables over the field called `geographic_area` when filtering `allodb` database due to entry inconsistencies. This is done below using `dplyr` SQL. However, once the specific allometric equation is identified, we must re-select it using the `allodb` native function called `new_equations()` and the equation's ID# [@allodb].
 -   In subsequent cells, we import pan-tropical equations and fit them with values from by Global Wood Density database using the `computeAGB()` and`getWoodDensity()` functions from the `BIOMASS` package [@BIOMASS-2].
 :::
+
+<br>
 
 #### Step 1: Geographic Selection
 
@@ -523,6 +536,8 @@ flextable::flextable(eq_region_species_dbh[, show_cols]) |> flextable::autofit()
 cat(sprintf("Genus-specific equations valid for region, Quercus, & DBH range: %d\n", nrow(eq_region_genus_dbh)))
 cat(sprintf("Specific-specific equations valid for region, Quercus, & DBH range: %d\n", nrow(eq_region_species_dbh)))
 
+
+view(equations)
 ```
 
 #### Step 4: Sample Size Selection
@@ -561,7 +576,7 @@ equation_metadata <- data.frame(
     "North America (24-72°N, -168 to -52°W)",
     "Species > Genus > Family",
     "≥80% field data coverage",
-    "n≥50 (Roxburgh et al. 2015)"
+    "≥50 (Roxburgh et al. 2015)"
   ),
   Selected_Value = c(
     sprintf("%d equations in region", nrow(eq_region)),
@@ -585,11 +600,109 @@ equation_metadata |>
 
 *Table X: Equation Selection Documentation for REDD+ MRV*
 
-*Description of the allometric studies used to develop each equation and any shared attributes with our field data here....*
+|  |  |
+|--------------------------|---------------------------------------------|
+| Attribute | Detail |
+| Equation Taxa/ID | *Quercus* spp. (Genus-level) |
+| Biomass Method | Non-destructive estimation using Terrestrial Laser Scanning (TLS) or Terrestrial LiDAR to model tree volume, which was then converted to biomass using published wood density values. |
+| Geographic Location | Front Royal, Virginia, USA (Smithsonian Conservation Biology Institute, SCBI) at 38.89 N, -78.15W. |
+| Empirical Data | The models were developed using 258 non-destructive volume/biomass estimates across 10 dominant hardwood species in this Temperate Mixed Deciduous Forest. The specific equation is a site-specific genus model. |
+| Rationale for Selection | This equation is the most geographically and ecologically similar candidate. It was developed at the exact same site (SCBI in Virginia) where your sample data is likely sourced (based on `allodb.Rmd`content). Despite being a genus-level equation for Quercus (not species-specific), the high degree of climate similarity (Cfa/Temperate Forest) and geographic proximity ensures maximum weight will be assigned by the `allodb` weighting framework, making it the highest priority candidate for Quercus trees at this site. |
+| Citation | Stovall, A. E., Anderson-Teixeira, K. J., & Shugart, H. H. (2018). Terrestrial LiDAR-derived non-destructive woody biomass estimates for 10 hardwood species in Virginia. *Data in brief*, *19*, 1560-1569 |
+
+|  |  |
+|-------------------|-----------------------------------------------------|
+| Attribute | Detail |
+| Equation Taxa/ID | Quercus rubra (Species-level) |
+| Biomass Method | Destructive Harvesting (Dimensional Analysis). The traditional method involving felling, weighing, and drying tree components to directly measure biomass. |
+| Geographic Location | West Virginia, USA (specifically, Monongahela National Forest). |
+| Empirical Data | This is a species-specific equation developed explicitly for Northern Red Oak (Quercus rubra). The sample size is typically smaller than meta-analyses but provides high-resolution, direct measurements. |
+| Rationale for Selection | This equation provides high taxonomic specificity (a perfect species match for Quercus rubra). Although its location (West Virginia) is not as proximate as the Stovall (2018) study, it is still within the same Appalachian/Eastern US Temperate Forest region. It serves as a crucial check and source of high-quality empirical data derived from the gold-standard destructive method. `allodb` balances its lower geographic proximity with its higher taxonomic specificity and robust methodology, making it the strongest secondary candidate. |
+| Citation | Clark, A. (1985). *Weight, volume, and physical properties of major hardwood species in the Gulf and Atlantic Coastal Plains* (Vol. 250). US Department of Agriculture, Forest Service, Southeastern Forest Experiment Station |
+
+|               |                  |
+|---------------|------------------|
+| **Attribute** | **Detail**       |
+|               | Chave et al 2014 |
+|               |                  |
+|               |                  |
+|               |                  |
+|               |                  |
+
+|               |                  |
+|---------------|------------------|
+| **Attribute** | **Detail**       |
+|               | Brown et al 1996 |
+|               |                  |
+|               |                  |
+|               |                  |
+|               |                  |
 
 <br>
 
-#### Step 5: Combining species equations
+#### Step 5: Combining Species Equations
+
+The following demonstrates functions for consolidating new filtered allometry equations into one combined database prepared for use in final inventory biomass estimations. For this important task, we recommend the specific functions below from the `allodb` library that are ensure a weighted approach is applied to synthesizing and candidate equations:
+
+The `weight_allom()` function is responsible for assigning a weight to each candidate equation based on three criteria, determining its influence on the final result:
+
+-   Sample size: Equations derived from varying destructive sampling campaigns (n \> 100) receive higher weights.
+-   Taxonomic specificity: Species-specific equations are weighted more heavily than genus-level, which in turn outweigh family-level equations.
+-   Climate similarity: Equations developed from geographically proximate locations with similar temperature and precipitation regimes receive priority.
+
+The `resample_agb()` function implements a Monte Carlo resampling procedure to synthesize a robust, synthetic dataset from the weighted equations:
+
+-   Each candidate equation is resampled within its original DBH range.
+-   The number of resampled values for each equation is proportional to its assigned weight.
+-   A default of 10,000 iterations (or 1e4 in the demo) ensures a robust representation of the uncertainty distribution. This process generates a synthetic dataset that reflects the collective information from all weighted equations, spanning the full DBH range observed in the target forest.
+
+The `est_params()` function then uses the synthetic resampled data to fit the following nonlinear power-law model:
+
+$$
+AGB = \alpha \ * \ DBH^b  \ + \ \epsilon 
+$$
+
+This process yields the location-specific parameters:
+
+-   ⍺ (scaling coefficient): Incorporates local wood density and architectural characteristics.
+-   𝒃 (allometric exponent): Typically ranges from 2.3 to 2.7, reflecting biomechanical constraints.
+-   σ (residual standard deviation): Quantifies the prediction uncertainty for the calibrated equation.
+
+The resulting equation is location-specific, informed by broader taxonomic and geographic patterns encoded in the weighted source equations.
+
+\
+
+```{r}
+#| comment: NA
+#| message: false
+#| warning: false
+#| error: false
+#| eval: false
+
+# This table includes filtered default Acer equations AND custom new equations.
+eq_tab_combined <- new_equations(
+  subset_taxa = "Quercus",
+  new_taxa = c("Quercus ilex", "Castanea sativa"),
+  new_allometry = c("0.12*dbh^2.5", "0.15*dbh^2.7"),
+  new_coords = c(4, 44),
+  new_min_dbh = c(5, 10),
+  new_max_dbh = c(35, 68),
+  new_sample_size = c(143, 62)
+)
+
+# The get_biomass() function internally performs the weighting, resampling,
+# and calibration based on the equations in eq_tab_combined.
+agb_custom_estimate <- get_biomass(
+  dbh = 50,
+genus = "Quercus",
+  species = "rubrum",
+  coords = c(-78.2, 38.9),
+  new_eqtable = eq_tab_combined # Use the consolidated custom table
+)
+
+# Print the resulting AGB estimate
+print(paste("Estimated AGB using the combined custom table:", agb_custom_estimate, "kg"))
+```
 
 <b></b>
 
@@ -1475,6 +1588,8 @@ cat(sprintf("  Net credited value: $%s\n",
             format(round(total_value - deduction_value), big.mark = ",")))
 ```
 
+<br>
+
 ::: callout-important
 ## Financial Impact
 
@@ -1490,6 +1605,8 @@ Over a 30-year REDD+ project crediting period with 100,000 tCO₂e/year:
 -   Additional cost: \~\$15-30k for species-specific equation development
 -   Return on investment: 12-24x
 :::
+
+<br>
 
 ## 1.6 Chapter Summary {.unnumbered}
 
@@ -1548,6 +1665,6 @@ Chapter 2: Emission Factors will address:
 -   Gas-specific emission ratios (CO₂, CH₄, N₂O)
 -   Field measurement protocols (FTIR, eddy covariance)
 
-[^1]: Removal of `python` workflow was requested during first review (November 24, 2025). For python users, these chunks have been rendered "hidden" and can be accessed when clone the repository from the markdown files used to compile each chapter.
+[^index-1]: Removal of `python` workflow was requested during first review (November 24, 2025). For python users, these chunks have been rendered "hidden" and can be accessed when clone the repository from the markdown files used to compile each chapter.
 
-[^2]: Follow-up: Allometry Sample Size Guidelines [@roxburgh2015guidelines] = [Link](https://esajournals.onlinelibrary.wiley.com/doi/full/10.1890/ES14-00251.1#sa2).
+[^index-2]: Follow-up: Allometry Sample Size Guidelines [@roxburgh2015guidelines] = [Link](https://esajournals.onlinelibrary.wiley.com/doi/full/10.1890/ES14-00251.1#sa2).
