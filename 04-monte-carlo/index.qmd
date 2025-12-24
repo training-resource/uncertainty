@@ -2,9 +2,7 @@
 title: "Monte Carlo Simulations"
 format:
   docx:
-    #reference-doc: ../references/style.docx
-    toc: false
-    number-sections: false
+    reference-doc: ../references/style.docx
     highlight-style: github
     latex_engine: xelatex
     

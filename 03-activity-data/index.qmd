@@ -2,10 +2,8 @@
 title: "Activity Data"
 format:
   docx:
-    #reference-doc: ../references/style.docx
-    toc: false
+    reference-doc: ../references/style.docx
     highlight-style: github
-    number-sections: false
 
 execute:
   echo: true

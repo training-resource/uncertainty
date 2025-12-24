@@ -1,11 +1,7 @@
 ---
-title: "REDD+ Uncertainty Training"
-subtitle: "Training Curriculum for Jurisdictional Carbon Offset Programs under ART-TREES Standard (V2.0)" 
-
 format:
   docx:
     reference-doc: ./references/style.docx
-    toc: false
     highlight-style: github
 
 execute:
@@ -23,7 +19,7 @@ bibliography: ./references/references.bib
 csl: ./references/apa.csl
 ---
 
-# Preface
+# Preface {.unnumbered}
 
 This training resource was commissioned by Winrock International under its JTAP portfolio (20065-2025-ICA-03) as a Foundation Module for uncertainty quantification training in jurisdictional REDD+ carbon accounting. The following training curriculum provides methodological guidance for quantifying, reporting, and reducing uncertainty in REDD+ carbon accounting in accordance with ART-TREES Standard (V2.0) requirements and the IPCC 2019 guidelines [@artREDDEnvironmentalExcellence2021; @ipcc2019Refinement20062019a].
 
@@ -82,7 +78,7 @@ $$
 UA_t = 0.524417 \times \frac{HW_{90\%}}{1.645006}
 $$
 
-## An Uncertainty Primer {.unnumbered}
+## Primer on Statistical Uncertainty {.unnumbered}
 
 Forest carbon inventory fundamentally relies on making inferences about true population estimates from limited samples of observed data. But a forest is complex, and our measuring tools and samples are never perfect. For example, when we measure 50 field plots across a million-hectare jurisdiction, we expect that our sample mean will vary from the true mean. Uncertainty is simply how much doubt we have that our measured average is close to the true average.
 
@@ -99,7 +95,7 @@ $\sqrt{\frac{1}{n} \sum_{i=1}^{n} (\text{ref}_i - x_i)^2}$
 
 The Uncertainty Adjustment Factor (UAF) applies a conservative deduction to carbon credits based on this prediction error. Higher RMSE necessitates larger deductions. Understanding this error-to-deduction pathway reveals why model quality directly affects credit revenue: a 50% reduction in allometric uncertainty can translate to a 10-15% increase in creditable carbon.
 
-## A Monte Carlo Primer {.unnumbered}
+## Primer on Monte Carlo Method {.unnumbered}
 
 Monte Carlo simulation traces its roots to the Markov Chain, developed by Andrey Markov in the early 1900s [@sheynin1989aa]. At the time, Markov publicly feuded with Pavel Nekrasov, who claimed statistical laws required independent events, arguing this supported divine free will. To disprove this, Markov analyzed the first 20,000 letters of a poem by Pushkin finding 8,638 vowels and 11,362 consonants. He demonstrated that the probability of the next letter depends on the current letter, vowels tend to follow consonants and vice versa, yet aggregated over thousands of letter sequences, the system still converged to a stable distribution (43% vowels, 57% consonants). This proved statistical predictability holds even with strong causal dependence.
 

@@ -23,42 +23,55 @@ book:
   repo-url: https://github.com/training-resource/uncertainty
   repo-branch: main
   repo-actions: [edit, issue]
-
+  
   chapters:
     - index.qmd
     - 01-allometry/index.qmd
     - 02-emission-factors/index.qmd
     - 03-activity-data/index.qmd
     - 04-monte-carlo/index.qmd
-
+  
   appendices:
     - references/index.qmd
     - AA-Appendix/glossary-terms.qmd
     - AA-Appendix/additional-reading.qmd
+  
+  sidebar:
+    title: ""
+    search: true
+    style: "docked"
+    collapse-level: 4
+    contents:
+      - text: "Preface"
+        href: index.qmd
+      - text: "1. Allometry"
+        href: 01-allometry/index.qmd
+      - text: "2. Emission Factors"
+        href: 02-emission-factors/index.qmd
+      - text: "3. Activity Data"
+        href: 03-activity-data/index.qmd
+      - text: "4. Monte Carlo"
+        href: 04-monte-carlo/index.qmd
 
 bibliography: references/references.bib
 csl: references/apa.csl
 citeproc: true  
 
-sidebar:
-    title: ""
-    search: true
-    style: "docked"
-    collapse-level: 4
+number-sections: false
 
 format:
   docx:
-    reference-doc: ./references/style.docx
     toc: true
     number-sections: false
     highlight-style: github
-
+    reference-doc: ./references/style.docx
+  
   html:
     toc: true
+    number-sections: false
     toc-title: "**On this page**"
     toc-location: right
     toc-depth: 3
-    number-sections: true
     theme: 
       - styles.scss
       - default
@@ -72,4 +85,4 @@ engine: knitr
 knitr:
   opts_chunk: 
     collapse: true
-    comment: "#" 
+    comment: "#"
