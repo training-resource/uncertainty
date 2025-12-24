@@ -1,11 +1,11 @@
 ---
 title: "Allometry"
 format:
-  html:
-    reference-doc: ../references/style.docx
-    toc: true
+  docx:
+    #reference-doc: ../references/style.docx
+    toc: false
     number-sections: false
-    highlight-style: pygments
+    highlight-style: github
     df-print: default
     latex_engine: xelatex
     
@@ -50,17 +50,18 @@ Although Section 8 exempts structural allometric uncertainty when models are app
 #| message: false
 #| error: false
 #| echo: true
-
 easypackages::packages(
-  "ropensci/allodb", "animation", "BIOMASS", "cols4all", "covr", "cowplot", "caret",
+	"animation", "BIOMASS", "cols4all", "covr", "cowplot", "caret",
   "DescTools", "dataMaid", "dplyr", "FawR", "ForestToolsRS", "forestdata", 
-  "flextable", "ggplot2", "giscoR", "ggfortify", "htmltools", "janitor", "jsonlite", 
-  "lattice", "leaflet.providers", "leaflet", "lmtest", "lwgeom", 
-  "kableExtra", "kernlab", "knitr", "mapedit", "mapview", "maptiles", "Mlmetrics", 
-  "ModelMetrics", "moments", "olsrr", "openxlsx", "plotly", "psych", "randomForest", 
-  "raster","RColorBrewer", "rmarkdown", "renv", "reticulate", "s2", "sf", "scales", 
-  "sits","spdep", "stars", "stringr", "terra", "tmap", "tmaptools", "tidymodels", 
-  "tidyverse", "tidyr", "tune", "useful",
+  "flextable", "ggplot2", "giscoR", "ggfortify", "htmltools", 
+	"janitor", "jsonlite", "lattice", "leaflet.providers", "leaflet", 
+	"lmtest", "lwgeom", "kableExtra", "kernlab", "knitr", "mapedit", 
+	"mapview", "maptiles", "Mlmetrics", "ModelMetrics", "moments", 
+	"olsrr", "openxlsx", "plotly", "psych", "randomForest", 
+  "raster","RColorBrewer", "rmarkdown", "renv", "reticulate", 
+	"s2", "sf", "scales", "sits","spdep", "stars", "stringr", 
+	"terra", "tmap", "tmaptools", "tidymodels", "tidyverse", "tidyr", "tune",
+	"useful",
   prompt = F
   )
 
@@ -99,9 +100,17 @@ knitr::opts_chunk$set(
 
 #reticulate::use_python(required = T, 
 #  "/Users/seamus/Library/Python/3.9/bin/python3")
+
+# For very first environment setup, you may need to install the following 
+# packages directly from their github repos, because these new dependencies 
+# havent yet made it onto CRAN library 
+#install.packages(c("pak", "easypackages"))
+#library("pak")
+#library("easypackages")
+#pak::pak(c("Cidree/forestdata", "andrew-plowright/ForestTools", "ytarazona/ForesToolboxRS", "ropensci/allodb"))
 ```
 
-### ~~Environment Setup (Python)~~[^index-1] {.unnumbered}
+### ~~Environment Setup (Python)~~[^index-11] {.unnumbered}
 
 ```{python}
 #| comment: NA
@@ -359,7 +368,7 @@ Following best practices from forest inventory methodology [@duncansonAbovegroun
 1.  Geographic Proximity: Prioritize equations developed in climates and soil conditions similar to your project area
 2.  Taxonomic Specificity: Prefer species-level \> genus-level \> family-level equations
 3.  DBH Range Coverage: Ensure equation applicability spans ≥80% of measured diameter distribution
-4.  Sample Size Adequacy: Minimum n=50 trees for species-specific; n\>150 for genus-level equations[^index-2]
+4.  Sample Size Adequacy: Minimum n=50 trees for species-specific; n\>150 for genus-level equations[^index-12]
 
 ```{r}
 #| message: false
@@ -601,7 +610,7 @@ equation_metadata |>
 *Table X: Equation Selection Documentation for REDD+ MRV*
 
 |  |  |
-|---------------------------|---------------------------------------------|
+|------------------------------------|------------------------------------|
 | Attribute | Detail |
 | Equation Taxa/ID | *Quercus* spp. (Genus-level) |
 | Biomass Method | Non-destructive estimation using Terrestrial Laser Scanning (TLS) or Terrestrial LiDAR to model tree volume, which was then converted to biomass using published wood density values. |
@@ -611,7 +620,7 @@ equation_metadata |>
 | Citation | Stovall, A. E., Anderson-Teixeira, K. J., & Shugart, H. H. (2018). Terrestrial LiDAR-derived non-destructive woody biomass estimates for 10 hardwood species in Virginia. *Data in brief*, *19*, 1560-1569 |
 
 |  |  |
-|--------------------|----------------------------------------------------|
+|------------------------------------|------------------------------------|
 | Attribute | Detail |
 | Equation Taxa/ID | Quercus rubra (Species-level) |
 | Biomass Method | Destructive Harvesting (Dimensional Analysis). The traditional method involving felling, weighing, and drying tree components to directly measure biomass. |
@@ -1635,7 +1644,7 @@ To achieve commercially viable uncertainty levels (\<20% RMSE) and minimize carb
 ### Investment Priorities
 
 | Intervention | Cost | Uncertainty Reduction | Revenue Protected\* |
-|-------------------|------------------|------------------|------------------|
+|----|----|----|----|
 | Log-transformation | \$0 | 50-55 pp | \$250-275k |
 | Species-specific equations | \$15-30k | 3-4 pp | \$10-15k |
 | Cross-validation workflow | \$5-10k | 2-3 pp | \$8-12k |
@@ -1665,6 +1674,6 @@ Chapter 2: Emission Factors will address:
 -   Gas-specific emission ratios (CO₂, CH₄, N₂O)
 -   Field measurement protocols (FTIR, eddy covariance)
 
-[^index-1]: Removal of `python` workflow was requested during first review (November 24, 2025). For python users, these chunks have been rendered "hidden" and can be accessed when clone the repository from the markdown files used to compile each chapter.
+[^index-11]: Removal of `python` workflow was requested during first review (November 24, 2025). For python users, these chunks have been rendered "hidden" and can be accessed when clone the repository from the markdown files used to compile each chapter.
 
-[^index-2]: Follow-up: Allometry Sample Size Guidelines [@roxburgh2015guidelines] = [Link](https://esajournals.onlinelibrary.wiley.com/doi/full/10.1890/ES14-00251.1#sa2).
+[^index-12]: Follow-up: Allometry Sample Size Guidelines [@roxburgh2015guidelines] = [Link](https://esajournals.onlinelibrary.wiley.com/doi/full/10.1890/ES14-00251.1#sa2).

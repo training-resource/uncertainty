@@ -1,4 +1,10 @@
-allodb
+base
+methods
+datasets
+utils
+grDevices
+graphics
+stats
 animation
 BIOMASS
 cols4all
@@ -7,7 +13,10 @@ cowplot
 ggplot2
 lattice
 caret
+DescTools
+dataMaid
 dplyr
+forestdata
 flextable
 giscoR
 ggfortify
@@ -22,6 +31,7 @@ lwgeom
 kableExtra
 kernlab
 knitr
+mapedit
 mapview
 maptiles
 ModelMetrics
@@ -47,6 +57,8 @@ abind
 stars
 stringr
 terra
+tmap
+tmaptools
 tidymodels
 broom
 dials
@@ -56,14 +68,16 @@ parsnip
 purrr
 recipes
 rsample
-tibble
+tailor
 tidyr
 tune
 workflows
 workflowsets
 yardstick
 tidyverse
+tibble
 readr
 forcats
 lubridate
 useful
+allodb

@@ -2,7 +2,7 @@ project:
   type: book
 
 book:
-  title: "Statistical Uncertainty in Forest Carbon Accounting"
+  title: "Uncertainty Metrics for Forest Carbon Reporting"
   author: 
     - name: Winrock International
       url: https://winrock.org/program-areas/environment-and-climate/ecosystem-services/
@@ -29,12 +29,13 @@ book:
     - 01-allometry/index.qmd
     - 02-emission-factors/index.qmd
     - 03-activity-data/index.qmd
+    - 04-monte-carlo/index.qmd
 
   appendices:
     - references/index.qmd
-    - references/glossary.qmd
-    - references/appendix-i.qmd
-    
+    - AA-Appendix/glossary-terms.qmd
+    - AA-Appendix/additional-reading.qmd
+
 bibliography: references/references.bib
 csl: references/apa.csl
 citeproc: true  
@@ -43,19 +44,21 @@ filters:
   - quarto
 
 sidebar:
-    title: "REDD+ Uncertainty"
+    title: "Uncertainty Stats"
     search: true
     style: "docked"
     collapse-level: 4
 
 format:
-  html:
-    toc: true
+  docx:
+    #reference-doc: ./references/style.docx
+    toc: false
     toc-location: right
     toc-depth: 3
     toc-title: "**On this page**"
     number-sections: false
     embed-resources: false
+    highlight-style: github
     theme: 
       - styles.scss
       - default

@@ -1,12 +1,11 @@
 ---
 title: "Monte Carlo Simulations"
 format:
-  html:
-    reference-doc: ../references/style.docx
-    toc: true
+  docx:
+    #reference-doc: ../references/style.docx
+    toc: false
     number-sections: false
-    highlight-style: pygments
-    df-print: default
+    highlight-style: github
     latex_engine: xelatex
     
 execute:

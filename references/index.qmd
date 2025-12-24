@@ -2,22 +2,3 @@
 
 ::: {#refs}
 :::
-
-##### *IPCC Guidelines:*
-
--   IPCC. (2006). 2006 IPCC Guidelines for National Greenhouse Gas Inventories, Volume 4: Agriculture, Forestry and Other Land Use. Intergovernmental Panel on Climate Change.
--   IPCC. (2019). 2019 Refinement to the 2006 IPCC Guidelines for National Greenhouse Gas Inventories. Intergovernmental Panel on Climate Change.
-
-##### *Emission Factor Studies:*
-
--   Andreae, M.O. (2019). Emission of trace gases and aerosols from biomass burning – an updated assessment. Atmospheric Chemistry and Physics, 19, 8523-8546. doi:10.5194/acp-19-8523-2019
--   van Leeuwen, T.T., & van der Werf, G.R. (2011). Spatial and temporal variability in the ratio of trace gases emitted from biomass burning. Atmospheric Chemistry and Physics, 11, 3611-3629.
-
-##### *Combustion Factor Methods:*
-
--   Brown, J.K. (1974). Handbook for inventorying downed woody material. USDA Forest Service General Technical Report INT-16.
--   Seiler, W., & Crutzen, P.J. (1980). Estimates of gross and net fluxes of carbon between the biosphere and the atmosphere from biomass burning. Climatic Change, 2(3), 207-247.
-
-##### *Field Measurement Protocols:*
-
--   Yokelson, R.J., et al. (2013). Coupling field and laboratory measurements to estimate the emission factors of identified and unidentified trace gases for prescribed fires. Atmospheric Chemistry and Physics, 13, 89-116.

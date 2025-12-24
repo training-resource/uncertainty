@@ -2,14 +2,13 @@
 title: "Statistical Uncertainty in Forest Carbon Accounting"
 subtitle: "Training Curriculum & Toolkit for Jurisdictional Carbon Offset Programs" 
 
-
 format:
-  html:
-    reference-doc: ./references/style.docx
-    toc: true
-    highlight-style: pygments
-    df-print: tibble
+  docx:
+    #reference-doc: ./references/style.docx
+    toc: false
+    highlight-style: github
     number-sections: false
+
 execute:
   echo: true
   warning: false
@@ -36,17 +35,8 @@ csl: ./references/apa.csl
 #| echo: false
 #| comment: NA
 easypackages::packages(
-  "boot", 
-  "caret", 
-  "DescTools",
-  "ggplot2",
-  "knitr", "kableExtra",
-  "MASS", 
-  "pandoc",
-  "scales", 
-  "tidyverse", 
-  "viridis",
-  "webshot", "webshot2",
+  "boot", "caret", "DescTools", "ggplot2", "knitr", "kableExtra",
+  "MASS", "pandoc", "scales", "tidyverse", "viridis", "webshot", "webshot2",
   prompt = F)
 ```
 
@@ -54,7 +44,7 @@ This training resource was commissioned by Winrock International under its JTAP 
 
 Rather than viewing estimation uncertainty as a penalty to manage, this framework treats it as a strategic metric for identifying dominant error sources and optimizing credit issuance [@camaraUncertaintyActiveLearning2024; @simoes2021satellite; @duncansonAbovegroundWoodyBiomass2021]. Projects investing in targeted uncertainty reduction can achieve improved crediting revenue through minimizing penalty deductions, as well as through stronger pricing from enhanced credibility and lower verification and monitoring costs [@kohler2010towards].
 
-## Uncertainty Potential
+## Potential of Uncertainty Reporting
 
 Recent analyses have identified opportunities to strengthen uncertainty reporting across REDD+ programs. According to @butler2024uncertainty, while 91% of participating countries report activity data uncertainty, only 4-14% report emission factor and allometric uncertainty. This pattern presents an opportunity for jurisdictions to enhance methodological completeness and improve credit issuance outcomes. Research demonstrates that comprehensive uncertainty quantification, including emission factors and modeling assumptions contribute to significant variance across reference levels ranging from 4.2% to 262.2% [@pelletierREDDEmissionsEstimation2013].
 
@@ -70,7 +60,30 @@ FCPF Uncertainty Deduction `Conservativeness Factors`:[^index-1]
 
 This structure ensures that programs with very high initial uncertainty face the same maximum 15% deduction, removing the penalty for reporting comprehensive uncertainty while maintaining incentives to improve. The ART-TREES Standard goes further by allowing participants to recover over-deducted credits when cumulative uncertainty decreases across multi-year crediting periods (Section 8, V2.0). These provisions reward demonstrable improvements and create positive incentives for methodological investment.
 
-### Uncertainty Primer
+## Requirements for Uncertainty Reporting
+
+Section 8 of the ART Standard V2.0 mandates the following criteria [@artREDDEnvironmentalExcellence2021, pp. 45]:
+
+1.  Monte Carlo simulations: Minimum 10,000 iterations for uncertainty propagation
+2.  90% confidence intervals: Half-width calculation for adjustment factors
+3.  Conservative bias: Systematic underestimation acceptable, overestimation prohibited
+4.  Whole-chain integration: Combine activity data + emission factor uncertainties
+5.  Crediting period aggregation: Flexibility to sum uncertainty deductions across years
+6.  Allometry Exemption: Allometric modelling uncertainty is excluded as non-mandatory.
+
+Equation 10: Uncertainty deduction
+
+$$
+UNC_t = (GHGER_t + GHGREMV_t) \times UA_t
+$$
+
+Equation 11: Uncertainty adjustment factor
+
+$$
+UA_t = 0.524417 \times \frac{HW_{90\%}}{1.645006}
+$$
+
+## Primer on Statistical Uncertainty
 
 Forest carbon inventory fundamentally relies on making inferences about true population estimates from limited samples of observed data. But a forest is complex, and our measuring tools and samples are never perfect. For example, when we measure 50 field plots across a million-hectare jurisdiction, we expect that our sample mean will vary from the true mean. Uncertainty is simply how much doubt we have that our measured average is close to the true average.
 
@@ -81,11 +94,13 @@ Fundamentally, this difference between our sampled average and the assumed true 
 
 The distinction is critical: standard deviation quantifies data variability, while standard error quantifies estimation precision. The 90% confidence interval uses a z-value of 1.645, meaning we can be 90% confident the true mean lies within ±1.645 standard errors of our sample mean.
 
--   Root Mean Squared Error (RMSE) quantifies prediction error, the average magnitude by which model predictions deviate from observed values. A biomass equation with RMSE = 20 Mg/ha means predictions typically deviate ±20 Mg/ha from true values.
+-   Root Mean Squared Error (`DescTools::RMSE()`) quantifies prediction error, the average magnitude by which model predictions deviate from observed values. A biomass equation with RMSE = 20 Mg/ha means predictions typically deviate ±20 Mg/ha from true values.
+
+$\sqrt{\frac{1}{n} \sum_{i=1}^{n} (\text{ref}_i - x_i)^2}$
 
 The Uncertainty Adjustment Factor (UAF) applies a conservative deduction to carbon credits based on this prediction error. Higher RMSE necessitates larger deductions. Understanding this error-to-deduction pathway reveals why model quality directly affects credit revenue: a 50% reduction in allometric uncertainty can translate to a 10-15% increase in creditable carbon.
 
-### Monte Carlo Primer
+## Primer on Monte Carlo Methods
 
 Monte Carlo simulation traces its roots to the Markov Chain, developed by Andrey Markov in the early 1900s [@sheynin1989aa]. At the time, Markov publicly feuded with Pavel Nekrasov, who claimed statistical laws required independent events, arguing this supported divine free will. To disprove this, Markov analyzed the first 20,000 letters of a poem by Pushkin finding 8,638 vowels and 11,362 consonants. He demonstrated that the probability of the next letter depends on the current letter, vowels tend to follow consonants and vice versa, yet aggregated over thousands of letter sequences, the system still converged to a stable distribution (43% vowels, 57% consonants). This proved statistical predictability holds even with strong causal dependence.
 
@@ -112,40 +127,18 @@ Law of Large Numbers: As iterations increase, sample statistics converge to popu
 <br>
 
 ::: callout-important
-## Causal Dependence of Forests
+## Causal Dependence Trends of Forests
 
 This concept of causal dependence is crucial in forest carbon science because ecosystems are not a series of independent coin flips. They are dynamic systems where the state of the forest in Year ^*t+1*^ is heavily dependent on the state in Year ^*t*^.
 
 -   Tipping Points and Disturbances: Markovian principles model system transitions, which are vital for understanding disturbance regimes, such as wildfire and pest outbreaks, and potential for ecological tipping points. For example, the probability of a forest transitioning to a degraded state this year is dependent on its current health, not its health 50 years ago.
+
 -   Modeling Uncertainty: By incorporating these dependent, causal relationships, Monte Carlo models can more realistically simulate the path-dependent uncertainty of carbon stocks over time, rather than treating all uncertainty sources as randomly independent variables
 :::
 
 <br>
 
-## Uncertainty Compliance
-
-Section 8 of the ART Standard V2.0 mandates the following criteria [@artREDDEnvironmentalExcellence2021, pp. 45]:
-
-1.  Monte Carlo simulations: Minimum 10,000 iterations for uncertainty propagation
-2.  90% confidence intervals: Half-width calculation for adjustment factors
-3.  Conservative bias: Systematic underestimation acceptable, overestimation prohibited
-4.  Whole-chain integration: Combine activity data + emission factor uncertainties
-5.  Crediting period aggregation: Flexibility to sum uncertainty deductions across years
-6.  Allometry Exemption: Allometric modelling uncertainty is excluded as non-mandatory.
-
-Equation 10: Uncertainty deduction
-
-$$
-UNC_t = (GHGER_t + GHGREMV_t) \times UA_t
-$$
-
-Equation 11: Uncertainty adjustment factor
-
-$$
-UA_t = 0.524417 \times \frac{HW_{90\%}}{1.645006}
-$$
-
-## Training Layout
+## Curriculum Design
 
 This curriculum addresses the four primary sources of uncertainty in REDD+ carbon accounting: allometric equations, emission factors, activity data, and their combined error propagation. Winrock International works with partner jurisdictions to implement targeted interventions using Monte Carlo simulation frameworks tailred to each domain. The curriculum draws on real-world examples and practical exercises from this ongoing work:
 
@@ -154,13 +147,13 @@ This curriculum addresses the four primary sources of uncertainty in REDD+ carbo
 -   Chapter 3 Activity Data Uncertainty: Significant uncertainty reductions can be achieved through: enhanced reference data collection; improved image classification algorithms; multi-temporal validation datasets; systematic accuracy assessment protocols; and integration of high-resolution imagery or LiDAR for forest/non-forest mapping.
 -   Chapter 4 Monte Carlo Aggregation: Effective Monte Carlo simulation frameworks incorporate sensitivity analyses to identify uncertainty sources and quantify their contribution to overall credit deductions. Winrock provides technical assistance in implementing these strategies, drawing on use cases to help jurisdictions prioritize cost-effective improvements and quality assurance measures tailored to their specific forest conditions and monitoring infrastructure.
 
-<b>
+<br>
 
 ::: calout-tip
-Appendix I provides supplementary reading on the theoretical foundations of biostatistics and uncertainty analysis, organized by these four topics. This includes perspectives on power law distributions, IPCC methodological limitations in complex systems, and the historical development of stochastic methods.
+Appendix I includes collection of additional reading specific to each of the chapters' topics and expanded subsections drawn from Winrock's ongoing work in uncertainty reporting of combustion emissions and wetland emissions in above-ground and below-ground pools across organic and mineral soils, with key references listed the move towards carbon flux accounting. Keys references and notes also and the historical disaggregation of uncertainty from natural disturbances. This also includes annotated bibliography of IPCC resources discussing the statistical assumptions involved and their known limitations in specific geographic regions of South America and South East Asia.
 :::
 
-<b>
+<br>
 
 [^index-1]: https://www.forestcarbonpartnership.org/sites/default/files/documents/fcpf_buffer_guidelines_v4.2_clean_cf28.pdf
 

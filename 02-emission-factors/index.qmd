@@ -1,11 +1,10 @@
 ---
 title: "Emission Factors"
 format:
-  html:
-    reference-doc: ../references/style.docx
-    toc: true
-    highlight-style: pygments
-    df-print: tibble
+  docx:
+    #reference-doc: ../references/style.docx
+    toc: false
+    highlight-style: github
     number-sections: false
 
 execute:
@@ -31,7 +30,7 @@ Allometric equations translate tree diameter measurements into biomass estimates
 
 ```{r}
 #| echo: false
-
+#| eval: false
 install.packages("webshot2")
 
 ```
@@ -45,28 +44,19 @@ install.packages("webshot2")
 #| comment: NA
 
 easypackages::packages(
-  "bslib", 
-  "cols4all", "covr", "cowplot", 
-  "dendextend", "digest","DiagrammeR","dtwclust", "downlit", 
-  "e1071", "exactextractr","elevatr", 
-  "FNN", "future", "forestdata",
-  "gdalcubes", "gdalUtilities", "geojsonsf", "geos", "ggplot2", "ggstats", 
-  "ggspatial", "ggmap", "ggplotify", "ggpubr", "ggrepel", "giscoR", 
-  "hdf5r", "httr", "httr2", "htmltools",
-  "jsonlite", 
-  "kohonen", 
-  "leaflet.providers", "leafem", "libgeos","luz","lwgeom", "leaflet", "leafgl",
-  "mapedit", "mapview", "maptiles", "methods", "mc2d", 
-  "ncdf4", "nnet", 
-  "openxlsx", "parallel", "plotly", 
-  "randomForest", "rasterVis", "raster", "Rcpp", "RcppArmadillo", 
-  "RcppCensSpatial","rayshader", "RcppEigen", "RcppParallel", 
-  "RColorBrewer", "reactable", "rgl", "rsconnect","RStoolbox", "rts", 
+  "bslib", "cols4all", "covr", "cowplot", "dendextend", "digest",
+  "DiagrammeR","dtwclust", "downlit", "e1071", "exactextractr","elevatr", 
+  "FNN", "future", "forestdata", "gdalcubes", "gdalUtilities", "geojsonsf", 
+  "geos", "ggplot2", "ggstats", "ggspatial", "ggmap", "ggplotify", "ggpubr", 
+  "ggrepel", "giscoR", "hdf5r", "httr", "httr2", "htmltools",
+  "jsonlite", "kohonen", "leaflet.providers", "leafem", "libgeos","luz",
+  "lwgeom", "leaflet", "leafgl", "mapedit", "mapview", "maptiles", "methods", "mc2d", 
+  "ncdf4", "nnet", "openxlsx", "parallel", "plotly", "randomForest", "rasterVis", 
+  "raster", "Rcpp", "RcppArmadillo", "RcppCensSpatial","rayshader", "RcppEigen", 
+  "RcppParallel", "RColorBrewer", "reactable", "rgl", "rsconnect","RStoolbox", "rts", 
   "s2", "sf", "scales", "sits","spdep", "stars", "stringr","supercells", 
-  "terra", "testthat", "tidyverse", "tidyterra","tools", 
-  "tmap", "tmaptools", "terrainr", 
-  "xgboost",
-  "webshot", "webshot2",
+  "terra", "testthat", "tidyverse", "tidyterra","tools", "tmap", "tmaptools", "terrainr", 
+  "xgboost", "webshot", "webshot2",
   prompt = F)
 
 #mapviewOptions(fgb = FALSE)

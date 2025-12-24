@@ -1,11 +1,10 @@
 ---
 title: "Activity Data"
 format:
-  html:
-    reference-doc: ../references/style.docx
-    toc: true
-    highlight-style: pygments
-    df-print: tibble
+  docx:
+    #reference-doc: ../references/style.docx
+    toc: false
+    highlight-style: github
     number-sections: false
 
 execute:
