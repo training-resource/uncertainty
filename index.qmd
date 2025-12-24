@@ -1,13 +1,12 @@
 ---
-title: "Statistical Uncertainty in Forest Carbon Accounting"
-subtitle: "Training Curriculum & Toolkit for Jurisdictional Carbon Offset Programs" 
+title: "REDD+ Uncertainty Training"
+subtitle: "Training Curriculum for Jurisdictional Carbon Offset Programs under ART-TREES Standard (V2.0)" 
 
 format:
   docx:
-    #reference-doc: ./references/style.docx
+    reference-doc: ./references/style.docx
     toc: false
     highlight-style: github
-    number-sections: false
 
 execute:
   echo: true
@@ -24,7 +23,11 @@ bibliography: ./references/references.bib
 csl: ./references/apa.csl
 ---
 
-# Preface {.unnumbered}
+# Preface
+
+This training resource was commissioned by Winrock International under its JTAP portfolio (20065-2025-ICA-03) as a Foundation Module for uncertainty quantification training in jurisdictional REDD+ carbon accounting. The following training curriculum provides methodological guidance for quantifying, reporting, and reducing uncertainty in REDD+ carbon accounting in accordance with ART-TREES Standard (V2.0) requirements and the IPCC 2019 guidelines [@artREDDEnvironmentalExcellence2021; @ipcc2019Refinement20062019a].
+
+Rather than viewing estimation uncertainty as a penalty to manage, this framework treats it as a strategic metric for identifying dominant error sources and optimizing credit issuance [@camaraUncertaintyActiveLearning2024; @simoes2021satellite; @duncansonAbovegroundWoodyBiomass2021]. Projects investing in targeted uncertainty reduction can achieve improved crediting revenue through minimizing penalty deductions, as well as through stronger pricing from enhanced credibility and lower verification and monitoring costs [@kohler2010towards].
 
 ------------------------------------------------------------------------
 
@@ -40,11 +43,7 @@ easypackages::packages(
   prompt = F)
 ```
 
-This training resource was commissioned by Winrock International under its JTAP portfolio (20065-2025-ICA-03) as a Foundation Module for uncertainty quantification training in jurisdictional REDD+ carbon accounting. The following training curriculum provides methodological guidance for quantifying, reporting, and reducing uncertainty in REDD+ carbon accounting in accordance with ART-TREES Standard (V2.0) requirements and the IPCC 2019 guidelines [@artREDDEnvironmentalExcellence2021; @ipcc2019Refinement20062019a].
-
-Rather than viewing estimation uncertainty as a penalty to manage, this framework treats it as a strategic metric for identifying dominant error sources and optimizing credit issuance [@camaraUncertaintyActiveLearning2024; @simoes2021satellite; @duncansonAbovegroundWoodyBiomass2021]. Projects investing in targeted uncertainty reduction can achieve improved crediting revenue through minimizing penalty deductions, as well as through stronger pricing from enhanced credibility and lower verification and monitoring costs [@kohler2010towards].
-
-## Potential of Uncertainty Reporting
+## Uncertainty Opportunities {.unnumbered}
 
 Recent analyses have identified opportunities to strengthen uncertainty reporting across REDD+ programs. According to @butler2024uncertainty, while 91% of participating countries report activity data uncertainty, only 4-14% report emission factor and allometric uncertainty. This pattern presents an opportunity for jurisdictions to enhance methodological completeness and improve credit issuance outcomes. Research demonstrates that comprehensive uncertainty quantification, including emission factors and modeling assumptions contribute to significant variance across reference levels ranging from 4.2% to 262.2% [@pelletierREDDEmissionsEstimation2013].
 
@@ -60,7 +59,7 @@ FCPF Uncertainty Deduction `Conservativeness Factors`:[^index-1]
 
 This structure ensures that programs with very high initial uncertainty face the same maximum 15% deduction, removing the penalty for reporting comprehensive uncertainty while maintaining incentives to improve. The ART-TREES Standard goes further by allowing participants to recover over-deducted credits when cumulative uncertainty decreases across multi-year crediting periods (Section 8, V2.0). These provisions reward demonstrable improvements and create positive incentives for methodological investment.
 
-## Requirements for Uncertainty Reporting
+## Uncertainty Requirements {.unnumbered}
 
 Section 8 of the ART Standard V2.0 mandates the following criteria [@artREDDEnvironmentalExcellence2021, pp. 45]:
 
@@ -83,7 +82,7 @@ $$
 UA_t = 0.524417 \times \frac{HW_{90\%}}{1.645006}
 $$
 
-## Primer on Statistical Uncertainty
+## An Uncertainty Primer {.unnumbered}
 
 Forest carbon inventory fundamentally relies on making inferences about true population estimates from limited samples of observed data. But a forest is complex, and our measuring tools and samples are never perfect. For example, when we measure 50 field plots across a million-hectare jurisdiction, we expect that our sample mean will vary from the true mean. Uncertainty is simply how much doubt we have that our measured average is close to the true average.
 
@@ -100,7 +99,7 @@ $\sqrt{\frac{1}{n} \sum_{i=1}^{n} (\text{ref}_i - x_i)^2}$
 
 The Uncertainty Adjustment Factor (UAF) applies a conservative deduction to carbon credits based on this prediction error. Higher RMSE necessitates larger deductions. Understanding this error-to-deduction pathway reveals why model quality directly affects credit revenue: a 50% reduction in allometric uncertainty can translate to a 10-15% increase in creditable carbon.
 
-## Primer on Monte Carlo Methods
+## A Monte Carlo Primer {.unnumbered}
 
 Monte Carlo simulation traces its roots to the Markov Chain, developed by Andrey Markov in the early 1900s [@sheynin1989aa]. At the time, Markov publicly feuded with Pavel Nekrasov, who claimed statistical laws required independent events, arguing this supported divine free will. To disprove this, Markov analyzed the first 20,000 letters of a poem by Pushkin finding 8,638 vowels and 11,362 consonants. He demonstrated that the probability of the next letter depends on the current letter, vowels tend to follow consonants and vice versa, yet aggregated over thousands of letter sequences, the system still converged to a stable distribution (43% vowels, 57% consonants). This proved statistical predictability holds even with strong causal dependence.
 
@@ -124,8 +123,6 @@ $$
 
 Law of Large Numbers: As iterations increase, sample statistics converge to population parameters. Standard error decreases by $\sqrt{m}$ when samples increase by factor $m$. This informs ART requirement for minimum 10,000 iterations.
 
-<br>
-
 ::: callout-important
 ## Causal Dependence Trends of Forests
 
@@ -136,9 +133,9 @@ This concept of causal dependence is crucial in forest carbon science because ec
 -   Modeling Uncertainty: By incorporating these dependent, causal relationships, Monte Carlo models can more realistically simulate the path-dependent uncertainty of carbon stocks over time, rather than treating all uncertainty sources as randomly independent variables
 :::
 
-<br>
+------------------------------------------------------------------------
 
-## Curriculum Design
+## Curriculum Design {.unnumbered}
 
 This curriculum addresses the four primary sources of uncertainty in REDD+ carbon accounting: allometric equations, emission factors, activity data, and their combined error propagation. Winrock International works with partner jurisdictions to implement targeted interventions using Monte Carlo simulation frameworks tailred to each domain. The curriculum draws on real-world examples and practical exercises from this ongoing work:
 

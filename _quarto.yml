@@ -2,7 +2,7 @@ project:
   type: book
 
 book:
-  title: "Uncertainty Metrics for Forest Carbon Reporting"
+  title: "REDD+ Uncertainty Training"
   author: 
     - name: Winrock International
       url: https://winrock.org/program-areas/environment-and-climate/ecosystem-services/
@@ -16,7 +16,7 @@ book:
     - name: Nicole Scotti
       url: https://winrock.org/program-areas/environment-and-climate/ecosystem-services/
       email: nicole.scotti@winrock.org
-      date: 2025/10/30
+  date: 2025/10/30
   open-graph: true 
   page-footer:
     left: "[Source](https://github.com/training-resource/uncertainty)"
@@ -40,25 +40,25 @@ bibliography: references/references.bib
 csl: references/apa.csl
 citeproc: true  
 
-filters:
-  - quarto
-
 sidebar:
-    title: "Uncertainty Stats"
+    title: ""
     search: true
     style: "docked"
     collapse-level: 4
 
 format:
   docx:
-    #reference-doc: ./references/style.docx
-    toc: false
+    reference-doc: ./references/style.docx
+    toc: true
+    number-sections: false
+    highlight-style: github
+
+  html:
+    toc: true
+    toc-title: "**On this page**"
     toc-location: right
     toc-depth: 3
-    toc-title: "**On this page**"
-    number-sections: false
-    embed-resources: false
-    highlight-style: github
+    number-sections: true
     theme: 
       - styles.scss
       - default
@@ -66,22 +66,10 @@ format:
     code-summary: "Code"
     code-tools: true
     code-link: true
-    title-block-style: plain
-    knitr:
-      opts_chunk:
-        out.width: 100%
-        R.options:
-          width: 60
-
+    
 engine: knitr
 
 knitr:
   opts_chunk: 
     collapse: true
     comment: "#" 
-    R.options:
-      knitr.graphics.auto_pdf: true
-      dplyr.print_min: 6
-      dplyr.print_max: 6
-      stars.crs: 17
-      digits: 3

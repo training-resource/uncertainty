@@ -6,7 +6,6 @@ format:
     toc: false
     number-sections: false
     highlight-style: github
-    df-print: default
     latex_engine: xelatex
     
 execute:
@@ -110,7 +109,7 @@ knitr::opts_chunk$set(
 #pak::pak(c("Cidree/forestdata", "andrew-plowright/ForestTools", "ytarazona/ForesToolboxRS", "ropensci/allodb"))
 ```
 
-### ~~Environment Setup (Python)~~[^index-11] {.unnumbered}
+### ~~Environment Setup (Python)~~[^index-1] {.unnumbered}
 
 ```{python}
 #| comment: NA
@@ -368,7 +367,7 @@ Following best practices from forest inventory methodology [@duncansonAbovegroun
 1.  Geographic Proximity: Prioritize equations developed in climates and soil conditions similar to your project area
 2.  Taxonomic Specificity: Prefer species-level \> genus-level \> family-level equations
 3.  DBH Range Coverage: Ensure equation applicability spans ≥80% of measured diameter distribution
-4.  Sample Size Adequacy: Minimum n=50 trees for species-specific; n\>150 for genus-level equations[^index-12]
+4.  Sample Size Adequacy: Minimum n=50 trees for species-specific; n\>150 for genus-level equations[^index-2]
 
 ```{r}
 #| message: false
@@ -610,7 +609,7 @@ equation_metadata |>
 *Table X: Equation Selection Documentation for REDD+ MRV*
 
 |  |  |
-|------------------------------------|------------------------------------|
+|----|----|
 | Attribute | Detail |
 | Equation Taxa/ID | *Quercus* spp. (Genus-level) |
 | Biomass Method | Non-destructive estimation using Terrestrial Laser Scanning (TLS) or Terrestrial LiDAR to model tree volume, which was then converted to biomass using published wood density values. |
@@ -620,7 +619,7 @@ equation_metadata |>
 | Citation | Stovall, A. E., Anderson-Teixeira, K. J., & Shugart, H. H. (2018). Terrestrial LiDAR-derived non-destructive woody biomass estimates for 10 hardwood species in Virginia. *Data in brief*, *19*, 1560-1569 |
 
 |  |  |
-|------------------------------------|------------------------------------|
+|----|----|
 | Attribute | Detail |
 | Equation Taxa/ID | Quercus rubra (Species-level) |
 | Biomass Method | Destructive Harvesting (Dimensional Analysis). The traditional method involving felling, weighing, and drying tree components to directly measure biomass. |
@@ -768,11 +767,11 @@ Always verify if equations require unit conversions or scaling limiters. For exa
 :::
 
 ```{r}
-#| comment: NA
-#| message: false
-#| error: false
-#| echo: true
 #| eval: true
+#| echo: true
+#| error: false
+#| message: false
+#| comment: NA
 
 # derive generic estimates using standard equations
 wood_densities <- BIOMASS::getWoodDensity(
@@ -1674,6 +1673,6 @@ Chapter 2: Emission Factors will address:
 -   Gas-specific emission ratios (CO₂, CH₄, N₂O)
 -   Field measurement protocols (FTIR, eddy covariance)
 
-[^index-11]: Removal of `python` workflow was requested during first review (November 24, 2025). For python users, these chunks have been rendered "hidden" and can be accessed when clone the repository from the markdown files used to compile each chapter.
+[^index-1]: Removal of `python` workflow was requested during first review (November 24, 2025). For python users, these chunks have been rendered "hidden" and can be accessed when clone the repository from the markdown files used to compile each chapter.
 
-[^index-12]: Follow-up: Allometry Sample Size Guidelines [@roxburgh2015guidelines] = [Link](https://esajournals.onlinelibrary.wiley.com/doi/full/10.1890/ES14-00251.1#sa2).
+[^index-2]: Follow-up: Allometry Sample Size Guidelines [@roxburgh2015guidelines] = [Link](https://esajournals.onlinelibrary.wiley.com/doi/full/10.1890/ES14-00251.1#sa2).
