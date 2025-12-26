@@ -1,5 +1,5 @@
 ---
-title: "Emission Factors"
+title: "2. Emission Factors"
 format:
   docx:
     reference-doc: ../references/style.docx
@@ -77,7 +77,7 @@ Table 2.B: Strategic Opportunities for Carbon Credit Generation
 
 ------------------------------------------------------------------------
 
-## 2.2 Below-Ground Stock Change
+## 2.2 Belowground Stock Change
 
 #### Stock-Difference Method {.unnumbered}
 
@@ -93,7 +93,7 @@ Where:
 -   D = Time dependence of stock change factors (default: 20 years)
 -   Area = Land area of stratum (hectares)
 
-#### SOC Stock Calculation
+#### Stock Difference Computation
 
 For each SOC inventory period, an initial and and final value of carbon is computed using stock change factors estimated for the region and general growing conditions, as defined in Eq2.25b below:
 
@@ -172,7 +172,7 @@ Tier 1 Unchanged:
 Cost-Effective Approach: Use SoilGrids250m validated with stratified field sampling (n=30-50 profiles per climate-soil zone) to develop project-specific SOC~REF~ distributions.
 :::
 
-## 2.3 SOC Grassland Management Factors
+## 2.3 Grassland Management Factors
 
 Grassland systems are stratified by management intensity and input levels, with separate factors for tropical versus temperate boreal zones.
 
@@ -181,7 +181,7 @@ Grassland systems are stratified by management intensity and input levels, with 
 Table 2.C: Grassland Management Stock Change Factors (IPCC 2019, Vol. 4, Ch. 6, [Table 6.4](https://www.ipcc-nggip.iges.or.jp/public/2006gl/pdf/4_Volume4/V4_06_Ch6_Grassland.pdf#page=27))
 
 | Management Status | Description | F~MG~ | Uncertainty | Climate |
-|-----------|----------------------------|-----------|-----------|-----------|
+|--------------|-----------------|--------------|--------------|--------------|
 | Nominal/Native | Low to medium intensity grazing; periodic cutting; no significant management improvements | 1.00 | NA (ref) | All climates |
 | High Intensity Grazing | Shifts in vegetation composition and structure; NOT severely degraded; sustainable stocking rates maintained | 0.90 | ±8% | All climates |
 | Severely Degraded | Major long-term productivity loss; severe soil erosion; extensive bare soil patches; structural damage | 0.70 | ±40% | All climates |
@@ -202,7 +202,7 @@ Table 2.C: Grassland Management Stock Change Factors (IPCC 2019, Vol. 4, Ch. 6, 
 Table 2.D: Input Stock Change Factors for Improved Grasslands (*IPCC 2019, Ch. 6, [Table 6.2](https://www.ipcc-nggip.iges.or.jp/public/2006gl/pdf/4_Volume4/V4_06_Ch6_Grassland.pdf#page=27))*
 
 | Input Level | Description | F~I~ | Uncertainty | Application |
-|------------|---------------------------|------------|------------|------------|
+|--------------|----------------|--------------|--------------|--------------|
 | Medium | Baseline improved grassland; no *additional* inputs beyond the single improvement that qualifies the system as "improved" | 1.00 | NA (ref) | Default for F~MG~ = 1.14-1.17 |
 | High | Improved grassland receiving one or more additional management inputs/improvements beyond baseline | 1.11 | ±7% | Multiple concurrent improvements |
 
@@ -219,7 +219,7 @@ Do not apply F~I~ = 1.11 to the single improvement used to justify F~MG~ = 1.17.
 
 ------------------------------------------------------------------------
 
-## 2.4 SOC Cropland Management Factors
+## 2.4 Cropland Management Factors
 
 Cropland accounting requires stratification by tillage system (F~LU~), tillage intensity (F~MG~), and organic input level (F~I~).
 
@@ -228,7 +228,7 @@ Cropland accounting requires stratification by tillage system (F~LU~), tillage i
 Table 2.E: Cropland Land Use Stock Change Factors *PCC 2019, Vol. 4, Ch. 5, [Table 5.5](https://www.ipcc-nggip.iges.or.jp/public/2019rf/pdf/4_Volume4/19R_V4_Ch05_Cropland.pdf#page=27)))*
 
 | Tillage System | Description | F~LU~ | Climate Zone | Application |
-|-------------|--------------------|-------------|-------------|-------------|
+|---------------|---------------|---------------|---------------|---------------|
 | Long-term Cultivated | Continuous annual crops \>20 years | 0.69 | Tropical Moist | Baseline degraded state |
 | Long-term Cultivated | Continuous annual crops \>20 years | 0.80 | Tropical Montane | Baseline degraded state |
 | Long-term Cultivated | Continuous annual crops \>20 years | 0.92 | Tropical Dry | Baseline degraded state |
@@ -243,12 +243,10 @@ The F~LU~ = 0.69 factor for long-term cultivated tropical moist croplands repres
 
 ------------------------------------------------------------------------
 
-#### Management Factor (F~MG~) {.unnumbered}
-
 Table 2.F: Cropland Tillage Intensity Stock Change Factors (*IPCC 2019, Vol. 4, Ch. 5, [Table 5.5](https://www.ipcc-nggip.iges.or.jp/public/2019rf/pdf/4_Volume4/19R_V4_Ch05_Cropland.pdf#page=27))*
 
 | Tillage Practice | Description | F~MG~ | Climate Zone | Materiality (Ref Value) |
-|------------|--------------------------|------------|------------|------------|
+|--------------|----------------|--------------|--------------|--------------|
 | Full Tillage | Substantial soil disturbance; \>30% surface bare after planting; moldboard/disc plowing | 1.00 | All climates | no benefit |
 | Reduced Tillage | Primary and/or secondary tillage before planting; \<30% residue remaining on surface | 0.99 | Tropical Dry | Minimal benefit |
 | Reduced Tillage | Primary and/or secondary tillage before planting; \<30% residue remaining on surface | 1.02 | Tropical Montane | Slight SOC gain |
@@ -265,14 +263,14 @@ No-till systems in Tropical Moist climates provide a 10% SOC increase (F~MG~ = 1
 
 ------------------------------------------------------------------------
 
-## 2.5 Example SOC Strategy
+## 2.5 Example Tier 1 Strategy
 
 Input factors apply to both cropland and improved grassland systems, stratified by level of organic matter additions.
 
 Table 2.F: Organic Input Stock Change Factors (*IPCC 2019, Vol. 4, Ch. 5, [Table 5.5](https://www.ipcc-nggip.iges.or.jp/public/2019rf/pdf/4_Volume4/19R_V4_Ch05_Cropland.pdf#page=27))*
 
 | Input Level | Description | F~I~ | Uncertainty | Examples |
-|-------------|---------------------|-------------|-------------|-------------|
+|---------------|---------------|---------------|---------------|---------------|
 | Low | Residue removal OR bare fallowing OR no N-fixing crops | 0.92 | ±30% | Export all straw/stover; burn residues |
 | Medium | All residues returned to field OR supplemental organic matter added | 1.00 | NA (reference) | Standard practice; residue retention |
 | High (without manure) | High residue crops + green manures + cover crops | 1.04 | ±30% | Intensive cover cropping; legume rotations |
@@ -301,14 +299,14 @@ This demonstrates how strategic management can approach carbon neutrality for ne
 
 ------------------------------------------------------------------------
 
-## 2.6 Reference SOC Stocks
+## 2.6 Reference Stock Values
 
 Reference stocks (SOC~REF~) represent soil organic carbon content under native vegetation, stratified by climate zone and soil type. For example, the following default pre-conversion soil conditions are estimated for the following soil types in Tropical Montane ecozones, reporting mean stock volumes and their associated uncertainty metrics.
 
 Table 2.G: Reference SOC Stocks, Tropical Montane (*IPCC 2019, Vol. 4, Ch. 2, [Table 2.3](https://www.ipcc-nggip.iges.or.jp/public/2019rf/pdf/4_Volume4/19R_V4_Ch02_Generic%20Methods.pdf#page=35)*)
 
 | Soil Type | SOC~REF~ (tC/ha) | Uncertainty | Typical Locations |
-|---------------|---------------|---------------|----------------------------|
+|-----------------|-----------------|-----------------|-----------------------|
 | High Activity Clay (HAC) | 51 | ±10% | Montane valleys; moderate weathering; base-rich parent material |
 | Low Activity Clay (LAC) | 44 | ±11% | Older highly weathered montane soils; kaolinitic clays |
 | Sandy (SAN) | 52 | ±34% | Alluvial terraces (uncommon in mountains) |
@@ -328,7 +326,7 @@ Volcanic soils (VOL) in Andean regions hold nearly double the carbon of other mi
 Table 2.H: Reference SOC Stocks, Tropical Moist *(IPCC 2019, Vol. 4, Ch. 2, Table 2.3)*
 
 | Soil Type | SOC~REF~ (tC/ha) | Uncertainty | Application |
-|---------------|---------------|---------------|-----------------------------|
+|-----------------|-----------------|-----------------|-----------------------|
 | High Activity Clay (HAC) | 40 | ±7% | Nutrient-rich floodplains; recent alluvial deposits |
 | Low Activity Clay (LAC) | 38 | ±5% | Most widespread tropical upland soils—use as default |
 | Sandy (SAN) | 27 | ±12% | Degraded leached soils; low fertility |
@@ -338,7 +336,7 @@ Table 2.H: Reference SOC Stocks, Tropical Moist *(IPCC 2019, Vol. 4, Ch. 2, Tabl
 Table 2.I: Reference SOC Stocks, Tropical Wet *(IPCC 2019, Vol. 4, Ch. 2, Table 2.3)*
 
 | Soil Type | SOC~REF~ (tC/ha) | Uncertainty | Context                             |
-|---------------|---------------|---------------|-----------------------------|
+|-----------------|-----------------|-----------------|-----------------------|
 | HAC       | 60               | ±8%         | Rich alluvial floodplains           |
 | LAC       | 52               | ±6%         | Standard humid rainforest soils     |
 | SAN       | 46               | ±20%        | Poor drainage; seasonally saturated |
@@ -348,7 +346,7 @@ Table 2.I: Reference SOC Stocks, Tropical Wet *(IPCC 2019, Vol. 4, Ch. 2, Table 
 : Table 2.J: Reference SOC Stocks, Tropical Dry *(IPCC 2019, Vol. 4, Ch. 2, Table 2.3)*
 
 | Soil Type | SOC~REF~ (tC/ha) | Uncertainty | Context (\<1000mm Rainfall) |
-|--------------|--------------|--------------|------------------------------|
+|----------------|----------------|----------------|------------------------|
 | HAC | 21 | ±5% | Vertisols in semi-arid zones |
 | LAC | 19 | ±10% | Lowest SOC—limited below-ground credit potential |
 | SAN | 9 | ±9% | Desert margins; very low productivity |
@@ -363,7 +361,7 @@ Tropical dry zones have inherently low SOC baselines (19-21 tC/ha for mineral so
 
 ------------------------------------------------------------------------
 
-## 2.7. Above-Ground Stock Change
+## 2.7. Aboveground Stock Change
 
 ### Agroforestry Systems {.unnumbered}
 
@@ -372,7 +370,7 @@ Agroforestry represents a high-value opportunity for carbon crediting, combining
 Table 2.K: Agroforestry System Typology *(IPCC 2019, Vol. 4, Ch. 5, Table 5.4)*
 
 | System | Definition | Tree Component | Crop/Livestock Component |
-|----------------|-------------------|----------------------|----------------|
+|------------------|------------------|--------------------|------------------|
 | Silvoarable | Trees integrated with annual crop production in spatial mixture | Regularly spaced rows or scattered; 20-1,000 stems/ha; managed for timber/fruit | Cereals, legumes, vegetables in rotation |
 | Silvopasture | Trees integrated with livestock grazing | Scattered individuals or clusters; 150-2,000 stems/ha; shade and fodder provision | Grasses, improved pasture species |
 | Alley Cropping | Dense tree rows with annual crops planted in alleys between hedgerows | Dense hedgerows; \~8,500 stems/ha; regular pruning for biomass/mulch | Annual crops in rotation between tree rows |
@@ -428,7 +426,7 @@ Example: Silvoarable
 Table 2.M: Cool Temperate Agroforestry Systems
 
 | System | Climate | AGB Growth (G) | Harvest Cycle | Max Stock | Application |
-|------------|------------|------------|------------|------------|--------------|
+|------------|------------|------------|------------|------------|------------|
 | Silvoarable | Cool Temperate | 0.91 tC/ha/yr | 30 years | 27.3 tC/ha | Northern hemisphere programs |
 | Silvopasture | Cool Temperate | 2.33 tC/ha/yr | 30 years | 69.9 tC/ha | Temperate pasture regions |
 | Hedgerow | Cool Temperate | 0.87 tC/ha/km | 30 years | 26.1 tC/km | Note: per km, not per ha |
@@ -451,21 +449,21 @@ Table 2.M: Cool Temperate Agroforestry Systems
 ------------------------------------------------------------------------
 
 ::: callout-important
-## Agroforestry vs. Monoculture Comparison
+## Mixed vs. Monoculture Tree Cropping
 
 Shaded coffee/cacao (Multistrata system: 3.25 tC/ha/yr) accumulates 3.6× more carbon than unshaded monocultures (\~0.9 tC/ha/yr). This provides strong economic incentive for agroforestry adoption in suitable climates.
 :::
 
 ------------------------------------------------------------------------
 
-## 2.8 Post-Conversion Stock Retention
+## 2.8 Post-Clearance Stock Retention
 
 When forest is converted to perennial cropland, IPCC provides specific "Year 1" biomass retention values representing residual carbon after clearing but before full crop maturity.
 
 Table 2.O: First-Year Biomass Stock After Forest Conversion (*IPCC 2019, Vol. 4, Ch. 5, Table 5.9)*
 
 | Crop Type             | Climate          | Year-1 AGB (C~G~) | Source            |
-|--------------------|-----------------|-----------------|-----------------|
+|-------------------|------------------|------------------|------------------|
 | Perennial (generic)   | Tropical Moist   | 4.7 tC/ha         | Default           |
 | Perennial (generic)   | Tropical Montane | 4.7 tC/ha         | Default           |
 | Oil Palm              | Tropical         | 2.4 tC/ha         | Specific factor   |
@@ -491,7 +489,7 @@ Secondary forest regrowth rates are age-dependent, with young stands (≤20 year
 Table 2.P: Secondary Rainforest Growth Rates (Americas) (*IPCC 2019, Vol. 4, Ch. 4, Table 4.9)*
 
 | Age Class | Growth Rate (G) | Carbon Gain | Max Biomass | Strategic Application |
-|------------|------------|------------|------------|-------------------------|
+|--------------|--------------|--------------|--------------|----------------|
 | ≤ 20 years | 5.9 t DM/ha/yr | 2.77 tC/ha/yr | 75.7 t DM/ha | Rapid regrowth phase—prioritize protection |
 | \> 20 years | 2.3 t DM/ha/yr | 1.08 tC/ha/yr | 206.4 t DM/ha | Mature phase—lower annual credits |
 
@@ -688,13 +686,10 @@ Annual average: 4,243 tCO₂e/yr
 ```
 
 ::: callout-important
-## Key Insight
+With comprehensive uncertainty reporting strategies, conservation agriculture practices, characterized by no-till and high manure inputs, very nearly neutralizes SOC loss from forest conversion, representing only a \~0.18 tCO₂e/ha/yr decline across the inventory period. Biomass loss remains unavoidable, which clearly demonstrates the importance of:
 
-Conservation agriculture practices (no-till + high inputs) nearly neutralize SOC loss from forest conversion (only -0.18 tCO₂e/ha/yr), but biomass loss remains unavoidable. This demonstrates the importance of:
-
-1.  Avoiding forest conversion where possible
-2.  Applying maximum conservation practices when conversion is necessary
-3.  Prioritizing conversion of already-degraded lands rather than forest
+1.  Applying and documenting maximum conservation practices when conversion is necessary
+2.  Prioritizing conversion of already-degraded lands rather than forest
 :::
 
 ### Example C: Young Secondary Forest Conservation {.unnumbered}
@@ -763,7 +758,7 @@ This makes areas with 20 year regeneration rates prime candidates for Tier 1 rep
 
 ## 2.11 Double-Counting Risks
 
-### SOC Temporal Double-Counting {.unnumbered}
+### Double-Counting SOC Timelines {.unnumbered}
 
 -   Problem: Legacy emissions from historical land conversion overlap with new management activity credits
 -   Rule: Each hectare reports in only one land category per reporting year
@@ -795,7 +790,7 @@ INCORRECT approach:
 Consider reporting only non-CO₂ gases separately as CO₂ from biomass burning is already accounted for in the "Biomass Stock Change" calculation through the assumption of immediate oxidation in Tier 1 default for that transition type.
 :::
 
-### Tracking Site-Level Timelines
+### Tracking Site-Specific Timelines
 
 -   Problem: Claiming infinite biomass accumulation in systems with periodic harvest
 -   Rule: Agroforestry credits must account for harvest cycle and removal
@@ -828,7 +823,7 @@ Net Over 40 Years:
 
 However, Tier 2 data may report longer rotations, such as from 20-year coffee systems farming records.
 
-### Tracking Overlapping Activities
+### Tracking Overlapping Management Activities
 
 Problem: Multiple improvements on same land (e.g., tillage change + lime + manure)
 
@@ -867,18 +862,16 @@ When uncertain about cumulative versus saturating effects, apply the most conser
 
 ### Error Propagation {.unnumbered}
 
-For independent variables, total uncertainty is calculated as:
+For independent variables, total uncertainty is calculated as follows
 
-$
-U_{total} = \sqrt{(U_1)^2 + (U_2)^2 + ... + (U_n)^2}
-$
+$U_{\text{total}} = \sqrt{(U_1)^2 + (U_2)^2 + \dots + (U_n)^2}$
 
-Where U represents proportional uncertainty (e.g., ±11% → 0.11)
+Where U = proportional uncertainty (e.g., ±11% → 0.11)
 
 Table 2.U: Typical Range in Uncertainty from Tier 1 Emission Factors
 
 | Parameter | Source of Uncertainty | Typical Range | Impact on Credits |
-|---------------------|--------------------|------------------|------------------|
+|-------------------|---------------------------|------------------|------------------|
 | SOC~REF~ | Climate/soil classification ambiguity; spatial heterogeneity | ±5-90% | High—drives baseline calculation |
 | F~MG~ (Improved Grassland) | Management definition; intensity measurement | ±9-11% | Moderate—multiplicative factor |
 | F~I~ (High Input) | Quantification of organic matter additions | ±30% | Moderate—multiplicative factor |
@@ -918,18 +911,9 @@ Upper Bound:
 95% Confidence Interval: 5,328 - 31,672 tCO₂e/yr
 ```
 
-::: callout-warning
-## Agroforestry Variance
+## 2.14 Chapter Summary
 
-High uncertainty levels of agroforestry growth rate emission factors (±63%) can being to dominate the error budget. When total uncertainty exceeds ±50%, consider the:
-
-1.  Conservative reporting using lower confidence bound
-2.  Tier 2 upgrade with site-specific measurements to reduce key parameter uncertainties
-:::
-
-## 2.15 Chapter Summary
-
-The following were compiled as critical decison points for program proponents.
+The following were compiled as critical decision points for program proponents.
 
 1.  Verify Soil Type First: Distinguish mineral vs. organic soils before selecting accounting method—this is the most fundamental decision
 
@@ -949,17 +933,17 @@ ART-TREES Uncertainty Documentation:
 2.  Propagated Total Uncertainty for final emission/removal estimates
 3.  Documented Justification for Tier 2 or 3 Upgrade in support of variance requests
 
-Table 2.V Highest-Value Emissions Factor Uncertainty Enhancements
+Table 2.V Emissions Factor Uncertainty Enhancements
 
-| Rank | Activity | Carbon Benefit | Key Considerations |
-|----------|------------------------------|-------------------------|-----------------------------------------|
-| 1 | Grassland restoration (degraded → improved) | 67% SOC increase | Requires documented degradation baseline |
+| Rank | Conversion Activity | Carbon Benefit | Key Considerations |
+|-------|---------------------------|----------------------------|---------------------------------|
+| 1 | Grassland Restoration (degraded \>\> improved) | 67% SOC increase | Requires documented degradation baseline |
 | 2 | Silvoarable agroforestry establishment | 7.86 tC/ha/yr total gain | Needs strong silvicultural capacity |
-| 3 | Young secondary forest protection | 2.77-5.9 tC/ha/yr + avoided loss | High additionality, rapid credits |
+| 3 | Young secondary forest conservation | 2.77-5.9 tC/ha/yr + avoided loss | High additionality, rapid credits |
 | 4 | Multistrata coffee/cacao conversion | 4.05 tC/ha/yr + commodity income | Market-dependent feasibility |
 | 5 | Conservation agriculture adoption | 22% SOC retention vs. tillage | Cumulative with other practices |
 
-## 2.16 Next Steps
+## 2.15 Next Steps
 
 Practitioners should now be prepared to:
 

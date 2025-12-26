@@ -41,17 +41,6 @@ book:
     search: true
     style: "docked"
     collapse-level: 4
-    contents:
-      - text: "Preface"
-        href: index.qmd
-      - text: "1. Allometry"
-        href: 01-allometry/index.qmd
-      - text: "2. Emission Factors"
-        href: 02-emission-factors/index.qmd
-      - text: "3. Activity Data"
-        href: 03-activity-data/index.qmd
-      - text: "4. Monte Carlo"
-        href: 04-monte-carlo/index.qmd
 
 bibliography: references/references.bib
 csl: references/apa.csl

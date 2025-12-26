@@ -1,5 +1,5 @@
 ---
-title: "Allometry"
+title: "1. Allometry"
 format:
   docx:
     reference-doc: ../references/style.docx

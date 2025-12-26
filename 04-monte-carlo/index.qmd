@@ -1,5 +1,5 @@
 ---
-title: "Monte Carlo Simulations"
+title: "4. Monte Carlo"
 format:
   docx:
     reference-doc: ../references/style.docx

@@ -1,0 +1,235 @@
+---
+title: "notes"
+editor: visual
+---
+
+```{r setup}
+#| warning: false
+#| message: false
+#| include: false
+#| error: false
+#| echo: false
+
+library(remotes)
+install_github("ytarazona/ForesToolboxRS")
+suppressMessages(library(ForesToolboxRS))
+
+#install.packages("pak")
+easypackages::packages(
+  'caret',
+  'raster', 
+  'sf', 
+  'snow',
+  'tmap',
+  prompt = F
+  )
+
+knitr::opts_chunk$set(
+  echo        = T, 
+  message     = F, 
+  warning     = F, 
+  error       = T, 
+  comment     = NA
+  ) 
+
+base::options(
+  htmltools.dir.version  = F, 
+  htmltools.preserve.raw = F)
+
+# switch on/off for spherical geometries
+sf::sf_use_s2(use_s2 = FALSE)
+```
+
+## Import AOI
+
+```{r}
+# assign master crs
+crs_master    = sf::st_crs("epsg:4326")
+# derive aoi windows
+country   = geodata::gadm(country="GUY", level=0, path=tempdir()) |>
+  sf::st_as_sf() |> sf::st_cast() |> sf::st_transform(crs_master)
+
+states    = geodata::gadm(country="GUY", level=1, path=tempdir()) |>
+  sf::st_as_sf() |> sf::st_cast() |> sf::st_transform(crs_master) |>
+  dplyr::rename(State = NAME_1)
+
+aoi    = dplyr::filter(states, State == "Barima-Waini") 
+
+# visualize
+tmap::tmap_mode("view")
+tmap::tm_shape(states) + tmap::tm_borders(col = "white", lwd = 0.5) +
+  tmap::tm_text("State", col = "white", size = 1, alpha = 0.3, just = "bottom") +
+  tmap::tm_shape(country) + tmap::tm_borders(col = "white", lwd = 1) +
+  tmap::tm_shape(aoi) + tmap::tm_borders(col = "red", lwd = 2) +
+  tmap::tm_text("State", col = "red", size = 2) +
+  tmap::tm_basemap("Esri.WorldImagery")
+```
+
+## Supervised classification
+
+```{r}
+library(ForesToolboxRS)
+# Data Preparation
+dir.create("testdata")
+# downloading the image
+download.file("https://github.com/ytarazona/ft_data/raw/main/data/LC08_232066_20190727_SR.zip",
+              destfile = "testdata/LC08_232066_20190727_SR.zip")
+# unziping the image
+unzip("testdata/LC08_232066_20190727_SR.zip", exdir = "testdata")
+# downloading the signatures
+download.file("https://github.com/ytarazona/ft_data/raw/main/data/signatures.zip",
+              destfile = "testdata/signatures.zip")
+# unziping the signatures
+unzip("testdata/signatures.zip", exdir = "testdata")
+
+
+# Read raster
+image <- stack("testdata/LC08_232066_20190727_SR.tif")
+
+# Read signatures
+sig <- read_sf("testdata/signatures.shp")
+
+# Classification with Random Forest
+classRF <- mla(img = image, model = "randomForest", endm = sig, training_split = 80)
+
+# Results
+print(classRF)
+```
+
+```{r}
+# Classification
+colmap <- c("#0000FF","#228B22","#FF1493", "#00FF00")
+plot(classRF$Classification, main = "RandomForest Classification", col = colmap, axes = TRUE)#
+```
+
+## Monte Carlo Cross-Validation
+
+```{r}
+cal_ml <- calmla(img = image, endm = sig,
+                 model = c("svm", "randomForest", "naiveBayes", "knn"),
+                 training_split = 70, approach = "MCCV", iter = 10)
+```
+
+```{r}
+# Calibration result
+plot(
+  cal_ml$svm_mccv,
+  main = "Monte Carlo Cross-Validation calibration",
+  col = "darkmagenta",
+  type = "b",
+  ylim = c(0, 0.4),
+  ylab = "Error between 0 and 1",
+  xlab = "Number of iterations"
+)
+lines(cal_ml$randomForest_mccv, col = "red", type = "b")
+lines(cal_ml$naiveBayes_mccv, col = "green", type = "b")
+lines(cal_ml$knn_mccv, col = "blue", type = "b")
+legend(
+  "topleft",
+  c(
+    "Support Vector Machine",
+    "Random Forest",
+    "Naive Bayes",
+    "K-nearest Neighbors"
+  ),
+  col = c("darkmagenta", "red", "green", "blue"),
+  lty = 1,
+  cex = 0.7
+)
+```
+
+Monte Carlo of activity data tainty of LULC classification maps and activity data.
+
+This section showcases application of Monte Carlo simulations to uncer-
+
+Import data
+
+remotes::install_github("ytarazona/ForesToolboxRS")
+
+library(ForesToolboxRS)
+
+dir.create("./data/testdata")
+
+download.file("https://github.com/ytarazona/ft_data/raw/main/data/LC08_232066_20190727_SR.zip", destfile
+
+unzip("testdata/LC08_232066_20190727_SR.zip", exdir = "testdata")
+
+download.file("https://github.com/ytarazona/ft_data/raw/main/data/signatures.zip", destfile = "testdata/
+
+unzip("testdata/signatures.zip", exdir = "testdata")
+
+image \<- stack("./data/testdata/LC08_232066_20190727_SR.tif")
+
+sig \<- read_sf("./data/testdata/signatures.shp")
+
+RandomForest classifier
+
+classRF \<- mla(img = image, model = "randomForest", endm = sig, training_split = 80)
+
+print(classRF)
+
+Classify land cover
+
+\# Classification
+
+colmap \<- c("#0000FF","#228B22","#FF1493", "#00FF00")
+
+plot(classRF\$Classification, main = "RandomForest Classification", col = colmap, axes = TRUE)
+
+8Figure
+
+2: LULC map classified with randomForest classifier kernel
+
+Monte Carlo of classification uncertainty
+
+plot(
+
+cal_ml\$svm_mccv,
+
+main = "Monte Carlo Cross-Validation calibration",
+
+col = "darkmagenta",
+
+type = "b",
+
+ylim = c(0, 0.4),
+
+ylab = "Error between 0 and 1",
+
+xlab = "Number of iterations"
+
+)
+
+lines(cal_ml\$randomForest_mccv, col = "red", type = "b")
+
+lines(cal_ml\$naiveBayes_mccv, col = "green", type = "b")
+
+lines(cal_ml\$knn_mccv, col = "blue", type = "b")
+
+legend(
+
+"topleft",
+
+c(
+
+"Support Vector Machine",
+
+"Random Forest",
+
+"Naive Bayes",
+
+"K-nearest Neighbors"
+
+),
+
+lty = 1,
+
+col = c("darkmagenta", "red", "green", "blue"),
+
+9cex = 0.7
+
+)
+
+Figure
+
+3: Monte Carlo ensemble of uncertainty estimates of common classifiers.
