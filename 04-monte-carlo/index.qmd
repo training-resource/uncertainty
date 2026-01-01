@@ -1,0 +1,299 @@
+---
+title: "4. Monte Carlo"
+format:
+  docx:
+    reference-doc: ../references/style.docx
+    highlight-style: github
+    latex_engine: xelatex
+    
+execute:
+  eval: true
+  echo: true
+  warning: false
+  message: false
+  comment: NA
+
+knitr:
+  opts_chunk:
+    prefer-html: true
+    dev: "png"
+    dpi: 300
+
+bibliography: ../references/references.bib
+csl: ../references/apa.csl
+---
+
+## Overview {.unnumbered}
+
+Monte Carlo simulation aggregates uncertainties from activity data (Chapter 3), emission factors (Chapter 2), and allometric equations (Chapter 1) into a single conservativeness deduction for ART-TREES credit issuance. This chapter demonstrates compliant simulation design, presents worked examples achieving 20-50% uncertainty reductions through strategic optimization, and provides decision frameworks for maximizing credit revenue under Section 8 requirements.
+
+ART-TREES Section 8 mandates Monte Carlo Approach 2 with minimum 10,000 iterations, 90% confidence intervals, and bootstrap sampling for unknown probability distributions [@artREDDEnvironmentalExcellence2021]. The simulation calculates the Uncertainty Adjustment Factor (UAF) from the half-width of emission distribution confidence intervals:
+
+$$
+UA_t = 0.524417 \times \frac{HW_{90\%}}{1.645006}
+$$
+
+Where $HW_{90\%}$ represents the half-width of the 90% confidence interval around mean emissions. This UAF then determines the conservativeness deduction applied to creditable emissions.
+
+### Environment Setup {.unnumbered}
+
+```{r}
+#| comment: NA
+#| warning: false
+#| message: false
+#| error: false
+#| echo: true
+
+easypackages::packages(
+  "ropensci/allodb", "animation", "BIOMASS", "cols4all", "covr", "cowplot", "caret",
+  "DescTools", "dataMaid", "dplyr", "FawR", "ForestToolsRS", "forestdata", 
+  "flextable", "ggplot2", "giscoR", "ggfortify", "htmltools", "janitor", "jsonlite", 
+  "lattice", "leaflet.providers", "leaflet", "lmtest", "lwgeom", 
+  "kableExtra", "kernlab", "knitr", "mapedit", "mapview", "maptiles", "Mlmetrics", 
+  "ModelMetrics", "moments", "olsrr", "openxlsx", "plotly", "psych", "randomForest", 
+  "raster","RColorBrewer", "rmarkdown", "renv", "reticulate", "s2", "sf", "scales", 
+  "sits","spdep", "stars", "stringr", "terra", "tmap", "tmaptools", "tidymodels", 
+  "tidyverse", "tidyr", "tune", "useful",
+  prompt = F
+  )
+
+```
+
+```{r}
+#| warning: false
+#| message: false
+#| error: false
+#| echo: false
+#| comment: NA
+
+sf::sf_use_s2(use_s2 = FALSE)
+set.seed(8787)
+#renv::init()
+#renv::activate()
+#renv::snapshot()
+#renv::update()s
+#renv::restore() # Debugger
+#renv::install("readxl", type = "binary")
+
+options(repos = c(CRAN = "https://cloud.r-project.org"),
+	htmltools.dir.version = FALSE, 
+  htmltools.preserve.raw = FALSE,
+  scipen = 999
+	)
+
+knitr::opts_chunk$set(
+  echo = TRUE, 
+  message = FALSE, 
+  warning = FALSE,
+  error = FALSE, 
+  comment = NA, 
+  tidy.opts = list(width.cutoff = 60)
+  ) 
+
+#reticulate::use_python(required = T, 
+#  "/Users/seamus/Library/Python/3.9/bin/python3")
+```
+
+## 4.1 Simulation Architecture
+
+Temporal Scope Design
+
+ART-TREES permits single-year or multi-year aggregation. Program participants may recognize that single-year simulations tend to reduce uncertainty by avoiding temporal error propagation. We discuss below some of the advantages and disadvantages in applying similar adjustments and aggregations to Monte Carlo simulated estimates.
+
+```{r}
+#| eval: true
+
+# Single-year simulation (RECOMMENDED)
+simulate_single_year <- function(n_sim = 10000, year_data) {
+  
+	# Sample activity data uncertainty
+  deforestation_ha <- rnorm(n_sim, 
+    mean = year_data$deforestation_ha,
+    sd = year_data$deforestation_ha * year_data$ad_uncertainty_pct / 100)
+  
+  # Sample emission factor uncertainty  
+  ef_tco2_ha <- rnorm(n_sim,
+    mean = year_data$ef_tco2_ha,
+    sd = year_data$ef_tco2_ha * year_data$ef_uncertainty_pct / 100)
+  
+  # Calculate emissions distribution
+  emissions_tco2 <- deforestation_ha * ef_tco2_ha
+  
+  # Compute 90% CI
+  ci_90 <- quantile(emissions_tco2, probs = c(0.05, 0.95))
+  hw_90 <- (ci_90[2] - ci_90[1]) / 2
+  uaf <- 0.524417 * (hw_90 / mean(emissions_tco2)) / 1.645006
+  
+  return(list(
+    mean_emissions = mean(emissions_tco2),
+    hw_90_pct = (hw_90 / mean(emissions_tco2)) * 100,
+    uaf = uaf,
+    simulated_emissions = emissions_tco2
+  ))
+}
+
+# Example year data
+year_2024 <- list(
+  deforestation_ha = 5000,
+  ad_uncertainty_pct = 12,      # Input from Chapter 3 accuracy assessment
+  ef_tco2_ha = 200,
+  ef_uncertainty_pct = 18       # Input from Chapter 2 default values
+)
+
+results <- simulate_single_year(year_data = year_2024)
+cat(sprintf("Mean Emissions: %.0f tCO2\n", results$mean_emissions))
+cat(sprintf("90%% CI Half-Width: %.1f%%\n", results$hw_90_pct))
+cat(sprintf("Uncertainty Adjustment Factor: %.3f\n", results$uaf))
+```
+
+### Baseline Treatment
+
+Use the arithmetic mean of verified historical emissions as deterministic baseline, avoiding stochastic variance. For example, country X computed their HFLDCL as 21,037,534 tCO₂ rather than simulating historical variability [@artREDDEnvironmentalExcellence2021, Section 8.4].
+
+## 4.2 Uncertainty Source Prioritization
+
+### Sensitivity Analysis
+
+Tornado diagrams identify dominant error sources:
+
+```{r}
+#| eval: true
+
+# Sensitivity analysis across uncertainty sources
+sensitivity_analysis <- function(base_scenario, n_sim = 10000) {
+  
+  scenarios <- list(
+    baseline = base_scenario,
+    low_ad = modifyList(base_scenario, list(ad_uncertainty_pct = base_scenario$ad_uncertainty_pct * 0.5)),
+    low_ef = modifyList(base_scenario, list(ef_uncertainty_pct = base_scenario$ef_uncertainty_pct * 0.5)),
+    low_both = modifyList(base_scenario, list(
+      ad_uncertainty_pct = base_scenario$ad_uncertainty_pct * 0.5,
+      ef_uncertainty_pct = base_scenario$ef_uncertainty_pct * 0.5))
+  )
+  
+  results <- lapply(scenarios, function(s) {
+    sim <- simulate_single_year(n_sim, s)
+    data.frame(
+      scenario = deparse(substitute(s)),
+      uaf = sim$uaf,
+      hw_90_pct = sim$hw_90_pct
+    )
+  })
+  
+  do.call(rbind, results)
+}
+
+# Run sensitivity
+sensitivity_results <- sensitivity_analysis(year_2024)
+print(sensitivity_results)
+```
+
+For jurisdictions where emission factor uncertainty dominates (typical in Tier 1 approaches), investments in plot-based Tier 2 emission factors yield greater UAF reductions than marginal improvements in classification accuracy.
+
+## 4.3 Optimization Strategies
+
+### Bootstrap Sampling
+
+When probability distributions are unknown, ART-TREES requires bootstrap resampling. Efficient implementation draws samples from empirical error distributions:
+
+```{r}
+#| eval: true
+
+# Bootstrap activity data from confusion matrix
+bootstrap_activity_data <- function(n_sim, confusion_matrix, mapped_area_ha) {
+  
+  # Extract user's accuracy (precision) for focal class
+  users_accuracy <- confusion_matrix["Forest", "Forest"] / 
+    sum(confusion_matrix["Forest", ])
+  
+  # Bootstrap from binomial distribution
+  true_area_ha <- rbinom(n_sim, 
+    size = mapped_area_ha, 
+    prob = users_accuracy)
+  
+  return(true_area_ha)
+}
+```
+
+### Temporal Aggregation
+
+ART-TREES Section 8.7 permits recalculation every 5 years to recover over-deducted credits when cumulative uncertainty decreases. Programs achieving systematic uncertainty reduction through improved methods can retroactively claim additional credits:
+
+$$
+\text{Recovered Credits}_t = \sum_{i=1}^{5} (UA_{i,original} - UA_{i,updated}) \times \text{Emissions}_i
+$$
+
+This provision incentives continuous methodological improvement rather than penalizing early-stage high uncertainty.
+
+## 4.4 Worked Example: Jurisdictional Program
+
+### Multi-Source Integration
+
+Combine uncertainties from all three chapters into crediting period simulation:
+
+```{r}
+#| eval: true
+
+# Complete jurisdictional simulation
+jurisdictional_simulation <- function(n_sim = 10000) {
+  
+  # Activity Data (Chapter 3: ±12% from accuracy assessment)
+  deforestation_2024_ha <- rnorm(n_sim, mean = 5000, sd = 5000 * 0.12)
+  
+  # Emission Factors (Chapter 2: Tier 1 ±18%)
+  # Aboveground biomass removal
+  agb_loss_tco2_ha <- rnorm(n_sim, mean = 180, sd = 180 * 0.18)
+  
+  # Belowground biomass (Chapter 2: root-shoot ratio ±15%)
+  bgb_loss_tco2_ha <- rnorm(n_sim, mean = 40, sd = 40 * 0.15)
+  
+  # Total emission factor
+  total_ef_tco2_ha <- agb_loss_tco2_ha + bgb_loss_tco2_ha
+  
+  # Calculate emissions distribution
+  emissions_tco2 <- deforestation_2024_ha * total_ef_tco2_ha
+  
+  # Reference level (deterministic)
+  hfldcl_tco2 <- 21037534  # Mean of 2016-2020
+  
+  # Emission reductions
+  reductions_tco2 <- pmax(0, hfldcl_tco2 - emissions_tco2)
+  
+  # Uncertainty metrics
+  ci_90 <- quantile(reductions_tco2, probs = c(0.05, 0.95))
+  hw_90 <- (ci_90[2] - ci_90[1]) / 2
+  uaf <- 0.524417 * (hw_90 / mean(reductions_tco2)) / 1.645006
+  
+  # Creditable emissions after conservativeness deduction
+  creditable <- mean(reductions_tco2) * (1 - uaf)
+  
+  return(list(
+    mean_reductions = mean(reductions_tco2),
+    uaf = uaf,
+    hw_90_pct = (hw_90 / mean(reductions_tco2)) * 100,
+    creditable_tco2 = creditable,
+    deduction_pct = uaf * 100
+  ))
+}
+
+# Execute simulation
+program_results <- jurisdictional_simulation()
+
+cat(sprintf("Mean Emission Reductions: %.0f tCO2\n", program_results$mean_reductions))
+cat(sprintf("90%% CI Half-Width: %.1f%%\n", program_results$hw_90_pct))
+cat(sprintf("Uncertainty Deduction: %.1f%%\n", program_results$deduction_pct))
+cat(sprintf("Creditable Emissions: %.0f tCO2\n", program_results$creditable_tco2))
+```
+
+## 4.5 Compliance Checklist
+
+-   Minimum 10,000 iterations per crediting year
+-   90% confidence intervals (5th and 95th percentiles)
+-   Bootstrap sampling for unknown distributions
+-   Conservative bias (systematic underestimation permitted)
+-   Whole-chain integration (activity data + emission factors)
+-   Documentation of simulation code and random seed
+
+## 4.6 Chapter Summary
+
+Monte Carlo simulation aggregates component uncertainties into conservativeness deductions determining credit issuance. Strategic optimization prioritizes dominant sources, such as emission factors in Tier 1 programs or activity data in high-resolution systems. Single-year simulation, deterministic reference levels, and systematic improvements achieve attractive uncertainty reductions, directly increasing revenue and while meeting ART-TREES Section 8 requirements.
