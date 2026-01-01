@@ -25,3 +25,19 @@ Gemfile.lock
 
 /.quarto/
 /01-allometry/literature/
+*.tif
+*.tiff
+*.hdf
+*.nc
+*.grd
+*.gri
+*.bil
+*.bip
+*.bsq
+*.zip
+*.tar
+*.gz
+
+03-activity-data/assets/images/classified/
+03-activity-data/assets/images/probs/
+03-activity-data/assets/images/reg/
