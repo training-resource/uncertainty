@@ -1,0 +1,78 @@
+project:
+  type: book
+
+book:
+  title: "REDD+ Uncertainty Training"
+  subtitle: "Foundational Training on Uncertainty Statistics in Carbon Accounting for Jurisdictional ART-TREES Programs (V2.0)"
+  author: 
+    - name: Winrock International
+      url: https://winrock.org/program-areas/environment-and-climate/ecosystem-services/
+    - name: Dr Seamus Murphy
+      url: https://scholar.google.com/citations?hl=en&user=jDGq9I4AAAAJ
+      orcid: 0000-0002-1792-0351 
+      email: seamusrobertmurphy@gmail.com
+    - name: Dr Julie Nash
+      url: https://winrock.org/program-areas/environment-and-climate/ecosystem-services/
+      email: julie.nash@winrock.org
+    - name: Nicole Scotti
+      url: https://winrock.org/program-areas/environment-and-climate/ecosystem-services/
+      email: nicole.scotti@winrock.org
+  date: 2025/12/27
+  open-graph: true 
+  page-footer:
+    left: "[Source](https://github.com/training-resource/uncertainty)"
+  repo-url: https://github.com/training-resource/uncertainty
+  repo-branch: main
+  repo-actions: [edit, issue]
+  
+  chapters:
+    - index.qmd
+    - 01-allometry/index.qmd
+    - 02-emission-factors/index.qmd
+    - 03-activity-data/index.qmd
+    - 04-monte-carlo/index.qmd
+  
+  appendices:
+    - references/index.qmd
+    - AA-Appendix/glossary-terms.qmd
+    - AA-Appendix/additional-reading.qmd
+  
+  sidebar:
+    title: "REDD+ Uncertainty"
+    search: true
+    style: "docked"
+    collapse-level: 4
+
+bibliography: references/references.bib
+csl: references/apa.csl
+citeproc: true  
+
+number-sections: false
+
+format:
+  docx:
+    toc: true
+    number-sections: false
+    highlight-style: github
+    reference-doc: ./references/style.docx
+  
+  html:
+    toc: true
+    number-sections: false
+    toc-title: "**On this page**"
+    toc-location: right
+    toc-depth: 3
+    theme: 
+      - styles.scss
+      - default
+    code-fold: false
+    code-summary: "Code"
+    code-tools: true
+    code-link: true
+    
+engine: knitr
+
+knitr:
+  opts_chunk: 
+    collapse: true
+    comment: "#"

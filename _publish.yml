@@ -1,0 +1,6 @@
+- source: project
+  quarto-pub:
+    - id: 99cff58e-3a4d-4025-b8e5-97ea6a4da41f
+      url: https://seamusrobertmurphy.quarto.pub/uncertainty
+    - id: 764ca84c-6ffb-41a9-9654-b4f6773c5541
+      url: https://seamusrobertmurphy.quarto.pub/redd-uncertainty-training
