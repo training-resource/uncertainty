@@ -7,13 +7,13 @@ book:
   author: 
     - name: Winrock International
       url: https://winrock.org/program-areas/environment-and-climate/ecosystem-services/
+    - name: Dr Julie Nash
+      url: https://winrock.org/program-areas/environment-and-climate/ecosystem-services/
+      email: julie.nash@winrock.org
     - name: Dr Seamus Murphy
       url: https://scholar.google.com/citations?hl=en&user=jDGq9I4AAAAJ
       orcid: 0000-0002-1792-0351 
       email: seamusrobertmurphy@gmail.com
-    - name: Dr Julie Nash
-      url: https://winrock.org/program-areas/environment-and-climate/ecosystem-services/
-      email: julie.nash@winrock.org
     - name: Nicole Scotti
       url: https://winrock.org/program-areas/environment-and-climate/ecosystem-services/
       email: nicole.scotti@winrock.org

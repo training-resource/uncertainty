@@ -358,7 +358,7 @@ plot(cube_s2_probs,
 		 )
 ```
 
-![](assets/images/png/activity-data-d.png){fig-align="center"}
+![](https://raw.githubusercontent.com/training-resource/uncertainty/refs/heads/main/03-activity-data/assets/images/png/activity-data-d.png){fig-align="center"}
 
 Each pixel in the probability cube contains `n` probability values (where `n` = number of classes), summing to 1.0. Low maximum probability values indicate pixels with high classification uncertainty, typically occurring at class boundaries, in mixed pixels, or where spectral-temporal signatures deviate from training data. These pixel-level uncertainty metrics support subsequent:
 
@@ -397,7 +397,7 @@ cube_s2_uncertainty <- sits::sits_uncertainty(
 plot(cube_s2_uncertainty, palette = "Oranges")
 ```
 
-![](assets/images/png/activity-data-l1.png){fig-align="center"}
+![](https://raw.githubusercontent.com/training-resource/uncertainty/refs/heads/main/03-activity-data/assets/images/png/activity-data-l1.png){fig-align="center"}
 
 ```{r}
 #| eval: false
@@ -472,7 +472,7 @@ plot(cube_s2_uncertainty_v2, palette = "Oranges")
 ```
 
 ::: {#fig-entropy-b layout-ncol="2"}
-![](assets/images/png/activity-data-l1.png){fig-align="center"} ![](assets/images/png/activity-data-l2.png){fig-align="center"}
+![](https://raw.githubusercontent.com/training-resource/uncertainty/refs/heads/main/03-activity-data/assets/images/png/activity-data-l1.png){fig-align="center"} ![](https://raw.githubusercontent.com/training-resource/uncertainty/refs/heads/main/03-activity-data/assets/images/png/activity-data-l2.png){fig-align="center"}
 :::
 
 ```{r}
@@ -538,7 +538,7 @@ clusters <- sits::sits_cluster_dendro(
 sits::sits_cluster_frequency(clusters)
 ```
 
-![](assets/images/png/activity-data-g.png){fig-align="center"}
+![](https://raw.githubusercontent.com/training-resource/uncertainty/refs/heads/main/03-activity-data/assets/images/png/activity-data-g.png){fig-align="center"}
 
 ```         
                            1    2    3    4    5    6    7 Total
@@ -599,9 +599,9 @@ plot(som_map)
 ```
 
 ::: {layout-ncol="2"}
-![](assets/images/png/activity-data-h1.png){#fig-som-a}
+![](https://raw.githubusercontent.com/training-resource/uncertainty/refs/heads/main/03-activity-data/assets/images/png/activity-data-h1.png){#fig-som-a}
 
-![](assets/images/png/activity-data-h2.png){#fig-som-freq}
+![](https://raw.githubusercontent.com/training-resource/uncertainty/refs/heads/main/03-activity-data/assets/images/png/activity-data-h2.png){#fig-som-freq}
 :::
 
 Neurons containing multiple classes reveal spectral overlap requiring investigation. The SOM-based cleaning removes samples from mixed neurons, improving class separability while preserving within-class variability essential for generalization.
@@ -639,9 +639,9 @@ summary(samples_balanced)
 ```
 
 ::: {layout-ncol="2"}
-![](assets/images/png/activity-data-i1.png){#fig-som-b}
+![](https://raw.githubusercontent.com/training-resource/uncertainty/refs/heads/main/03-activity-data/assets/images/png/activity-data-i1.png){#fig-som-b}
 
-![](assets/images/png/activity-data-h1.png){#fig-som-c}
+![](https://raw.githubusercontent.com/training-resource/uncertainty/refs/heads/main/03-activity-data/assets/images/png/activity-data-h1.png){#fig-som-c}
 :::
 
 ```         
@@ -686,7 +686,7 @@ distances <- sits::sits_geo_dist(
 plot(distances)
 ```
 
-![](assets/images/png/activity-data-j.png){fig-align="center"}
+![](https://raw.githubusercontent.com/training-resource/uncertainty/refs/heads/main/03-activity-data/assets/images/png/activity-data-j.png){fig-align="center"}
 
 Mismatched distributions indicate insufficient spatial coverage. Areas with few nearby training samples will exhibit higher classification uncertainty, requiring either additional field sampling or explicit uncertainty quantification in those regions during accuracy assessment.
 
@@ -712,37 +712,37 @@ sits::sits_merge(
 ```
 
 ::: {layout-ncol="4"}
-![](assets/images/png/activity-data-k1a.png)
+![](https://raw.githubusercontent.com/training-resource/uncertainty/refs/heads/main/03-activity-data/assets/images/png/activity-data-k1a.png)
 
-![](assets/images/png/activity-data-k1b.png)
+![](https://raw.githubusercontent.com/training-resource/uncertainty/refs/heads/main/03-activity-data/assets/images/png/activity-data-k1b.png)
 
-![](assets/images/png/activity-data-k2a.png)
+![](https://raw.githubusercontent.com/training-resource/uncertainty/refs/heads/main/03-activity-data/assets/images/png/activity-data-k2a.png)
 
-![](assets/images/png/activity-data-k2b.png)
+![](https://raw.githubusercontent.com/training-resource/uncertainty/refs/heads/main/03-activity-data/assets/images/png/activity-data-k2b.png)
 
-![](assets/images/png/activity-data-k3a.png)
+![](https://raw.githubusercontent.com/training-resource/uncertainty/refs/heads/main/03-activity-data/assets/images/png/activity-data-k3a.png)
 
-![](assets/images/png/activity-data-k3b.png)
+![](https://raw.githubusercontent.com/training-resource/uncertainty/refs/heads/main/03-activity-data/assets/images/png/activity-data-k3b.png)
 
-![](assets/images/png/activity-data-k4a.png)
+![](https://raw.githubusercontent.com/training-resource/uncertainty/refs/heads/main/03-activity-data/assets/images/png/activity-data-k4a.png)
 
-![](assets/images/png/activity-data-k4b.png)
+![](https://raw.githubusercontent.com/training-resource/uncertainty/refs/heads/main/03-activity-data/assets/images/png/activity-data-k4b.png)
 
-![](assets/images/png/activity-data-k5a.png)
+![](https://raw.githubusercontent.com/training-resource/uncertainty/refs/heads/main/03-activity-data/assets/images/png/activity-data-k5a.png)
 
-![](assets/images/png/activity-data-k5b.png)
+![](https://raw.githubusercontent.com/training-resource/uncertainty/refs/heads/main/03-activity-data/assets/images/png/activity-data-k5b.png)
 
-![](assets/images/png/activity-data-k6a.png)
+![](https://raw.githubusercontent.com/training-resource/uncertainty/refs/heads/main/03-activity-data/assets/images/png/activity-data-k6a.png)
 
-![](assets/images/png/activity-data-k6b.png)
+![](https://raw.githubusercontent.com/training-resource/uncertainty/refs/heads/main/03-activity-data/assets/images/png/activity-data-k6b.png)
 
-![](assets/images/png/activity-data-k7a.png)
+![](https://raw.githubusercontent.com/training-resource/uncertainty/refs/heads/main/03-activity-data/assets/images/png/activity-data-k7a.png)
 
-![](assets/images/png/activity-data-k7b.png)
+![](https://raw.githubusercontent.com/training-resource/uncertainty/refs/heads/main/03-activity-data/assets/images/png/activity-data-k7b.png)
 
-![](assets/images/png/activity-data-k8a.png)
+![](https://raw.githubusercontent.com/training-resource/uncertainty/refs/heads/main/03-activity-data/assets/images/png/activity-data-k8a.png)
 
-![](assets/images/png/activity-data-k8b.png)
+![](https://raw.githubusercontent.com/training-resource/uncertainty/refs/heads/main/03-activity-data/assets/images/png/activity-data-k8b.png)
 :::
 
 Over-smoothing (high lambda values) eliminates legitimate phenological variation, reducing model discriminatory power. Conservative filtering (lambda ≤ 1.0) balances noise reduction with pattern preservation [@Atkinson2012; @Zhou2016].
@@ -780,7 +780,7 @@ plot(cube_s2_bayes,
 		 )
 ```
 
-![Smoothed probability map for class `Forest`.](assets/images/png/activity-data-e.png){fig-align="center"}
+![Smoothed probability map for class `Forest`.](https://raw.githubusercontent.com/training-resource/uncertainty/refs/heads/main/03-activity-data/assets/images/png/activity-data-e.png){fig-align="center"}
 
 ::: callout-note
 ## Smoothing Risks
@@ -820,7 +820,7 @@ cube_s2_lulc <- sits::sits_label_classification(
 plot(cube_s2_lulc, legend_text_size = 0.7)
 ```
 
-![Classified cube obtained by Random Forest model.](assets/images/png/activity-data-f.png)
+![Classified cube obtained by Random Forest model.](https://raw.githubusercontent.com/training-resource/uncertainty/refs/heads/main/03-activity-data/assets/images/png/activity-data-f.png)
 
 The classified cube produced by `sits` workflows provides the activity data foundation for REDD+ accounting, but uncertainty quantification requires additional analysis beyond the discrete classification procedures. Sections 3.2-3.5 demonstrate more more advanced operations using `caret` [@kuhn2011caret], `ForestToolbox` [@ForesToolboxRS], and `terra` packages [@terra-2] required to:
 
