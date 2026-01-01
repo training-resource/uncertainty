@@ -1,0 +1,2052 @@
+---
+title: "notes"
+editor: visual
+---
+
+```{r setup}
+#| warning: false
+#| message: false
+#| include: false
+#| error: false
+#| echo: false
+
+library(remotes)
+install_github("ytarazona/ForesToolboxRS")
+suppressMessages(library(ForesToolboxRS))
+
+#install.packages("pak")
+easypackages::packages(
+  'caret',
+  'raster', 
+  'sf', 
+  'snow',
+  'tmap',
+  prompt = F
+  )
+
+knitr::opts_chunk$set(
+  echo        = T, 
+  message     = F, 
+  warning     = F, 
+  error       = T, 
+  comment     = NA
+  ) 
+
+base::options(
+  htmltools.dir.version  = F, 
+  htmltools.preserve.raw = F)
+
+# switch on/off for spherical geometries
+sf::sf_use_s2(use_s2 = FALSE)
+```
+
+## Import AOI
+
+```{r}
+# assign master crs
+crs_master    = sf::st_crs("epsg:4326")
+# derive aoi windows
+country   = geodata::gadm(country="GUY", level=0, path=tempdir()) |>
+  sf::st_as_sf() |> sf::st_cast() |> sf::st_transform(crs_master)
+
+states    = geodata::gadm(country="GUY", level=1, path=tempdir()) |>
+  sf::st_as_sf() |> sf::st_cast() |> sf::st_transform(crs_master) |>
+  dplyr::rename(State = NAME_1)
+
+aoi    = dplyr::filter(states, State == "Barima-Waini") 
+
+# visualize
+tmap::tmap_mode("view")
+tmap::tm_shape(states) + tmap::tm_borders(col = "white", lwd = 0.5) +
+  tmap::tm_text("State", col = "white", size = 1, alpha = 0.3, just = "bottom") +
+  tmap::tm_shape(country) + tmap::tm_borders(col = "white", lwd = 1) +
+  tmap::tm_shape(aoi) + tmap::tm_borders(col = "red", lwd = 2) +
+  tmap::tm_text("State", col = "red", size = 2) +
+  tmap::tm_basemap("Esri.WorldImagery")
+```
+
+## Supervised classification
+
+```{r}
+library(ForesToolboxRS)
+# Data Preparation
+dir.create("testdata")
+# downloading the image
+download.file("https://github.com/ytarazona/ft_data/raw/main/data/LC08_232066_20190727_SR.zip",
+              destfile = "testdata/LC08_232066_20190727_SR.zip")
+# unziping the image
+unzip("testdata/LC08_232066_20190727_SR.zip", exdir = "testdata")
+# downloading the signatures
+download.file("https://github.com/ytarazona/ft_data/raw/main/data/signatures.zip",
+              destfile = "testdata/signatures.zip")
+# unziping the signatures
+unzip("testdata/signatures.zip", exdir = "testdata")
+
+
+# Read raster
+image <- stack("/Users/seamus/repos/02-lulc-classification/testdata/LC08_232066_20190727_SR.tif")
+
+class(image)
+names(image)
+raster::nbands(image)
+
+# Read signatures
+sig <- read_sf("testdata/signatures.shp")
+
+# Classification with Random Forest
+classRF <- mla(img = image, model = "randomForest", endm = sig, training_split = 80)
+
+# Results
+print(classRF)
+```
+
+```{r}
+# Classification
+colmap <- c("#0000FF","#228B22","#FF1493", "#00FF00")
+plot(classRF$Classification, main = "RandomForest Classification", col = colmap, axes = TRUE)#
+```
+
+## Monte Carlo Cross-Validation
+
+```{r}
+cal_ml <- calmla(img = image, endm = sig,
+                 model = c("svm", "randomForest", "naiveBayes", "knn"),
+                 training_split = 70, approach = "MCCV", iter = 10)
+```
+
+```{r}
+# Calibration result
+plot(
+  cal_ml$svm_mccv,
+  main = "Monte Carlo Cross-Validation calibration",
+  col = "darkmagenta",
+  type = "b",
+  ylim = c(0, 0.4),
+  ylab = "Error between 0 and 1",
+  xlab = "Number of iterations"
+)
+lines(cal_ml$randomForest_mccv, col = "red", type = "b")
+lines(cal_ml$naiveBayes_mccv, col = "green", type = "b")
+lines(cal_ml$knn_mccv, col = "blue", type = "b")
+legend(
+  "topleft",
+  c(
+    "Support Vector Machine",
+    "Random Forest",
+    "Naive Bayes",
+    "K-nearest Neighbors"
+  ),
+  col = c("darkmagenta", "red", "green", "blue"),
+  lty = 1,
+  cex = 0.7
+)
+```
+
+Monte Carlo of activity data tainty of LULC classification maps and activity data.
+
+This section showcases application of Monte Carlo simulations to uncer-
+
+Import data
+
+remotes::install_github("ytarazona/ForesToolboxRS")
+
+library(ForesToolboxRS)
+
+dir.create("./data/testdata")
+
+download.file("https://github.com/ytarazona/ft_data/raw/main/data/LC08_232066_20190727_SR.zip", destfile
+
+unzip("testdata/LC08_232066_20190727_SR.zip", exdir = "testdata")
+
+download.file("https://github.com/ytarazona/ft_data/raw/main/data/signatures.zip", destfile = "testdata/
+
+unzip("testdata/signatures.zip", exdir = "testdata")
+
+image \<- stack("./data/testdata/LC08_232066_20190727_SR.tif")
+
+sig \<- read_sf("./data/testdata/signatures.shp")
+
+RandomForest classifier
+
+classRF \<- mla(img = image, model = "randomForest", endm = sig, training_split = 80)
+
+print(classRF)
+
+Classify land cover
+
+\# Classification
+
+colmap \<- c("#0000FF","#228B22","#FF1493", "#00FF00")
+
+plot(classRF\$Classification, main = "RandomForest Classification", col = colmap, axes = TRUE)
+
+8Figure
+
+2: LULC map classified with randomForest classifier kernel
+
+Monte Carlo of classification uncertainty
+
+plot(
+
+cal_ml\$svm_mccv,
+
+main = "Monte Carlo Cross-Validation calibration",
+
+col = "darkmagenta",
+
+type = "b",
+
+ylim = c(0, 0.4),
+
+ylab = "Error between 0 and 1",
+
+xlab = "Number of iterations"
+
+)
+
+lines(cal_ml\$randomForest_mccv, col = "red", type = "b")
+
+lines(cal_ml\$naiveBayes_mccv, col = "green", type = "b")
+
+lines(cal_ml\$knn_mccv, col = "blue", type = "b")
+
+legend(
+
+"topleft",
+
+c(
+
+"Support Vector Machine",
+
+"Random Forest",
+
+"Naive Bayes",
+
+"K-nearest Neighbors"
+
+),
+
+lty = 1,
+
+col = c("darkmagenta", "red", "green", "blue"),
+
+9cex = 0.7
+
+)
+
+Figure
+
+3: Monte Carlo ensemble of uncertainty estimates of common classifiers.
+
+```{r}
+# Define AOI
+roi <- c(
+    lon_min = -63.9,
+    lat_min = -9.1,
+    lon_max = -62.8,
+    lat_max = -8.2
+)
+
+
+crs_master    = sf::st_crs("epsg:4326")
+country   = geodata::gadm(country="GUY", level=0, path=tempdir()) |>
+  sf::st_as_sf() |> sf::st_cast() |> sf::st_transform(crs_master)
+states    = geodata::gadm(country="GUY", level=1, path=tempdir()) |>
+  sf::st_as_sf() |> sf::st_cast() |> sf::st_transform(crs_master) |>
+  dplyr::rename(State = NAME_1)
+aoi    = dplyr::filter(states, State == "Barima-Waini") 
+
+
+# visualize
+tmap::tmap_mode("view")
+tmap::tm_shape(states) + tmap::tm_borders(col = "white", lwd = 0.5) +
+  tmap::tm_text("State", col = "white", size = 1, alpha = 0.3, just = "bottom") +
+  tmap::tm_shape(country) + tmap::tm_borders(col = "white", lwd = 1) +
+  tmap::tm_shape(aoi) + tmap::tm_borders(col = "red", lwd = 2) +
+  tmap::tm_text("State", col = "red", size = 2) +
+  tmap::tm_basemap("Esri.WorldImagery")
+
+```
+
+The data structure contains spatial coordinates (longitude, latitude), temporal validity bounds (start_date, end_date), assigned land cover labels, source cube identifiers, and a nested time_series column storing the full spectral sequence. For instance, a training sample labeled `Pasture` at coordinates (-58.5631, -13.8844) with temporal validity from 2006-09-14 to 2007-08-29 would contain its complete MODIS vegetation index time series in the nested column. Explicit temporal validity periods are critical for avoiding label-date mismatches that introduce systematic bias in classification models.
+
+#### Relabeling Time Series {.unnumbered}
+
+In many operational contexts, merging spectrally similar classes reduces classification confusion and thereby lowers overall uncertainty. The `sits_labels()` function enables systematic relabeling across entire training sets. For example, collapsing multiple annual crop types (Soybean, Cotton, Maize) into a single `Cropland` class may be justified when spectral separability between these classes is insufficient to maintain acceptable classification accuracy.
+
+```{r}
+# Create working copy
+samples_consolidated <- samples_matogrosso_mod13q1
+
+# Check original labels
+sits::sits_labels(samples_consolidated)
+
+# Consolidate crop classes
+sits::sits_labels(samples_consolidated) <- c(
+  "Cerrado", "Forest", "Pasture",
+  "Cropland", "Cropland", "Cropland", "Cropland"
+)
+
+# Verify class distribution
+summary(samples_consolidated)
+```
+
+#### **Filtering** Time Series {.unnumbered}
+
+Training data manipulation leverages standard R `tidyverse` operations [@tidyverse]. Band selection via `sits_select()` combined with class filtering through `dplyr::filter()` enables targeted dataset preparation for specific classification tasks.
+
+```{r}
+#| message: false
+# Select NDVI band
+samples_ndvi = sits::sits_select(samples_matogrosso_mod13q1, bands = "NDVI")
+
+# Select only samples with Cerrado label
+samples_cerrado <- dplyr::filter(samples_ndvi, label == "Cerrado")
+```
+
+These initial steps support iterative model development where class-specific spectral signatures are analyzed independently before full multi-class classification. For REDD+ applications, maintaining explicit traceability between filtered training sets and their parent datasets is essential for documenting sample selection procedures in verification reports.Temporal & Spatial Uncertainty
+
+The data cube architecture directly influences activity data accuracy through sampling decisions along temporal and spatial dimensions. Key considerations include:
+
+------------------------------------------------------------------------
+
+Temporal uncertainty:
+
+-   Observation frequency: Annual vs. multi-year reduces detection of gradual changes
+-   Phenological timing: Inconsistent acquisition dates introduce seasonal variation
+-   Temporal composites: Median vs. mean aggregation affects cloud/shadow handling
+-   Gap filling: Missing observations require interpolation, introducing uncertainty
+
+Spatial uncertainty:
+
+-   Pixel resolution: Trade-off between coverage and computational burden
+-   Spatial aggregation: Resampling methods affect edge accuracy to different degrees, varying between nearest neighbor, bilinear, cubic operations.
+-   Geometric precision: Co-registration errors propagate across temporal stack
+-   Minimum mapping unit: Small patches below detection threshold
+
+------------------------------------------------------------------------
+
+```{r}
+
+classified = terra::rast("/Users/seamus/repos/uncertainty/03-activity-data/assets/images/classified/SENTINEL-2_MSI_20LMR_2022-01-05_2022-12-23_class_rf-raster.tif")
+
+bayes = terra::rast("/Users/seamus/repos/uncertainty/03-activity-data/assets/images/bayes/SENTINEL-2_MSI_20LMR_2022-01-05_2022-12-23_bayes_rf-raster.tif")
+
+names(classified)
+names(bayes)
+signatures = sf::st_read("/Users/seamus/repos/02-lulc-classification/testdata/signatures.shp")
+
+```
+
+```{r}
+
+# Function to calculate pixel uncertainty metrics
+calculate_pixel_uncertainty <- function(rf_model, imagery_stack) {
+  # Derive class probabilities
+  pred_probs <- predict(imagery_stack, rf_model, type = "prob")
+  # Calculate uncertainty metrics
+  entropy <- app(pred_probs, function(x) {
+    x[x == 0] <- 1e-10  # Avoid log(0)
+    -sum(x * log(x))
+  })
+  names(entropy) <- "entropy"
+  margin <- app(pred_probs, function(x) {
+    sorted <- sort(x, decreasing = TRUE)
+    sorted[1] - sorted[2]
+  })
+  names(margin) <- "margin"
+  max_prob <- app(pred_probs, max)
+  names(max_prob) <- "max_probability"
+  # 4. Normalized entropy (0-1 scale)
+  n_classes <- nlyr(pred_probs)
+  norm_entropy <- entropy / log(n_classes)
+  names(norm_entropy) <- "normalized_entropy"
+  uncertainty_stack <- c(entropy, margin, max_prob, norm_entropy)
+  return(uncertainty_stack)
+  }
+
+# Calculate uncertainty
+uncertainty_metrics <- calculate_pixel_uncertainty(
+  rf_model = rfor_model,
+  imagery_stack = STACK
+)
+
+# Visualize
+plot(uncertainty_metrics$normalized_entropy,
+     main = "Classification Uncertainty (Normalized Entropy)",
+     col = hcl.colors(100, "YlOrRd"))
+```
+
+### Approach 1: Aggregated Statistics {#sec-approach-1}
+
+Approach 1 estimates total land areas by category without spatial information or transition tracking.
+
+Methodology:
+
+-   Inventory surveys or statistical sampling
+-   Annual land use totals by category
+-   Net change calculation (no gross transitions)
+
+Uncertainty sources:
+
+-   Sample design inadequacy
+-   Non-response bias in surveys
+-   Definition inconsistencies across time
+-   Lack of spatial validation
+
+Disadvantages
+
+-   Locate deforestation events
+-   Verify permanence
+-   Support stratified sampling
+-   Enable independent validation
+
+### Approach 2: Sampling-Based Transitions {#sec-approach-2}
+
+Approach 2 uses systematic sampling to estimate land-use transition matrices without complete spatial coverage.
+
+Methodology:
+
+```{r}
+#| eval: false
+#| label: approach-2-transitions
+#| code-summary: "Approach 2 transition matrix estimation"
+
+# Function to estimate transitions from sample plots
+estimate_transitions_approach2 <- function(sample_data, 
+                                           total_area_ha,
+                                           confidence = 0.90) {
+  
+  # Calculate transition proportions
+  transition_counts <- table(sample_data$t1_class, sample_data$t2_class)
+  transition_props <- prop.table(transition_counts)
+  
+  # Estimate areas
+  n_samples <- nrow(sample_data)
+  transition_areas <- transition_props * total_area_ha
+  
+  # Calculate standard errors (stratified sampling)
+  transition_se <- sqrt(transition_props * (1 - transition_props) / n_samples) * 
+                   total_area_ha
+  
+  # Confidence intervals
+  z_score <- qnorm((1 + confidence) / 2)
+  transition_ci_lower <- transition_areas - z_score * transition_se
+  transition_ci_upper <- transition_areas + z_score * transition_se
+  
+  results <- data.frame(
+    from = rep(rownames(transition_areas), ncol(transition_areas)),
+    to = rep(colnames(transition_areas), each = nrow(transition_areas)),
+    area_ha = as.vector(transition_areas),
+    se_ha = as.vector(transition_se),
+    ci_lower = as.vector(transition_ci_lower),
+    ci_upper = as.vector(transition_ci_upper),
+    uncertainty_pct = as.vector(transition_se / transition_areas * 100)
+  )
+  
+  return(results)
+}
+
+# Example: Estimate transitions from 500 sample points
+sample_plots <- data.frame(
+  plot_id = 1:500,
+  t1_class = sample(c("Forest", "Non-forest"), 500, replace = TRUE,
+                   prob = c(0.7, 0.3)),
+  t2_class = sample(c("Forest", "Non-forest"), 500, replace = TRUE,
+                   prob = c(0.65, 0.35))
+)
+
+transitions_a2 <- estimate_transitions_approach2(
+  sample_data = sample_plots,
+  total_area_ha = 1000000
+)
+
+print(transitions_a2)
+```
+
+Advantages:
+
+-   Lower data requirements than wall-to-wall mapping
+-   Statistical foundation for uncertainty
+-   Can incorporate field validation directly
+
+Disadvantages:
+
+-   Cannot produce spatially explicit maps
+-   Difficult to stratify by drivers or risk
+-   Limited ability to detect small/dispersed changes
+-   Sample size requirements may be prohibitive for rare transitions
+
+### Approach 3: Spatially Explicit Mapping {#sec-approach-3}
+
+Approach 3 provides complete spatial coverage through wall-to-wall classification of satellite imagery.
+
+Methodology:
+
+```{r}
+#| eval: false
+#| label: approach-3-wall-to-wall
+#| code-summary: "Approach 3 spatially explicit change detection"
+
+# Function for wall-to-wall change detection
+detect_lulc_change_approach3 <- function(cube_t1, cube_t2, 
+                                         classification_model) {
+  
+  # Classify both time periods
+  lulc_t1 <- predict(cube_t1, classification_model)
+  lulc_t2 <- predict(cube_t2, classification_model)
+  
+  # Create transition map
+  transition_map <- overlay(lulc_t1, lulc_t2, fun = function(x, y) {
+    ifelse(x == 1 & y == 0, 1,  # Forest to Non-forest (deforestation)
+    ifelse(x == 0 & y == 1, 2,  # Non-forest to Forest (afforestation)
+    ifelse(x == 1 & y == 1, 3,  # Forest stable
+           4)))                  # Non-forest stable
+  })
+  
+  # Calculate areas by transition
+  pixel_area_ha <- prod(res(transition_map)) / 10000
+  transition_areas <- freq(transition_map) * pixel_area_ha
+  
+  # Assign labels
+  transition_labels <- c("Deforestation", "Afforestation", 
+                        "Forest stable", "Non-forest stable")
+  
+  results <- data.frame(
+    transition = transition_labels,
+    area_ha = transition_areas,
+    percent_total = transition_areas / sum(transition_areas) * 100
+  )
+  
+  return(list(
+    transition_map = transition_map,
+    areas = results
+  ))
+}
+
+# Run wall-to-wall analysis
+lulc_changes <- detect_lulc_change_approach3(
+  cube_t1 = pre_period,
+  cube_t2 = post_period,
+  classification_model = rf_model
+)
+
+# Visualize transition map
+library(tmap)
+tm_shape(lulc_changes$transition_map) +
+  tm_raster(
+    palette = c("#d62728", "#2ca02c", "#1f77b4", "#ff7f0e"),
+    title = "Land Use Transition",
+    labels = c("Deforestation", "Afforestation", 
+               "Forest stable", "Non-forest stable")
+  ) +
+  tm_layout(legend.outside = TRUE)
+```
+
+Advantages:
+
+-   Complete spatial coverage
+-   Enables stratification and targeting
+-   Supports independent validation
+-   Transparent and reproducible
+-   Compatible with degradation monitoring
+
+Uncertainty sources:
+
+-   Classification errors; commission/omission
+-   Geometric co-registration
+-   Temporal inconsistencies
+-   Edge effects and mixed pixels
+
+### Approach Selection Criteria {#sec-approach-selection}
+
+For REDD+ projects, Approach 3 is required because:
+
+1.  Spatial verification: Auditors need to verify specific deforestation events
+2.  Baseline stratification: Historical patterns inform future risk mapping
+3.  Leakage monitoring: Adjacent areas must be tracked spatially
+4.  Permanence: Long-term forest stability requires pixel-level tracking
+5.  Nested accounting: Jurisdictional programs require spatially consistent data
+
+Minimum requirements for Approach 3:
+
+```{r}
+#| eval: false
+# Approach 3 minimum specifications
+approach3_specs <- data.frame(
+  parameter = c(
+    "Spatial resolution",
+    "Temporal frequency",
+    "Overall accuracy",
+    "Geometric precision",
+    "Cloud-free coverage"
+  ),
+  minimum = c(
+    "≤30 m",
+    "Annual",
+    "≥85%",
+    "≤1 pixel RMSE",
+    "≥80% per year"
+  ),
+  preferred = c(
+    "≤10 m",
+    "Bi-annual or better",
+    "≥90%",
+    "≤0.5 pixel RMSE",
+    "≥95% per year"
+  )
+)
+
+print(approach3_specs)
+```
+
+------------------------------------------------------------------------
+
+## 3.3 Pixel Uncertainty Mapping {#sec-pixel-uncertainty}
+
+Random Forest and other machine learning classifiers produce pixel-level probability estimates that can be converted to uncertainty metrics. For each pixel $i$, Random Forest produces class probabilities $\{p_{i,1}, p_{i,2}, ..., p_{i,k}\}$ across $k$ classes. Using the following randomForest residual metrics, we can spatially detect pixel clustersshowing greatest uncertainty:
+
+\$ \text{Entropy}*i = -*\sum{j=1}\^{k} p\_{i,j} \log(p\_{i,j}) \$
+
+\$ \text{Margin}*i = p*{i,\text{max}} - p\_{i,\text{second}} \$
+
+\$ \text{Prediction strength}*i =* \max(p{i,j}) \$
+
+As example, we propagate errors by employing a Monte Carlo training regime that is run only 100 iterations. This should be increased to 10,000 iterations to meet ART TREES requirements.
+
+```{r}
+#| comment: NA
+#| warning: false
+#| message: false
+#| eval: false
+#| echo: false
+
+# Assemble single-date image stack
+B02	= raster::raster("./assets/images/reg/SENTINEL-2_MSI_20LMR_B02_2022-11-05.tif") 
+B03 = raster::raster("./assets/images/reg/SENTINEL-2_MSI_20LMR_B03_2022-11-05.tif") 
+B04	= raster::raster("./assets/images/reg/SENTINEL-2_MSI_20LMR_B04_2022-11-05.tif") 
+B8A	= raster::raster("./assets/images/reg/SENTINEL-2_MSI_20LMR_B8A_2022-11-05.tif") 
+B11	= raster::raster("./assets/images/reg/SENTINEL-2_MSI_20LMR_B11_2022-11-05.tif") 
+NDVI = raster::raster("./assets/images/reg/SENTINEL-2_MSI_20LMR_NDVI_2022-11-05.tif") 
+cube_s2_dec = brick(BLUE, GREEN, RED, NIR, SWIR, NDVI)
+
+names(cube_s2_dec[[1]]) = "B02"
+names(cube_s2_dec[[2]]) = "B03"
+names(cube_s2_dec[[3]]) = "B04"
+names(cube_s2_dec[[4]]) = "B8A"
+names(cube_s2_dec[[5]]) = "B11"
+names(cube_s2_dec[[6]]) = "NDVI"
+```
+
+```{r}
+#| eval: false
+#| echo: false
+
+raster::writeRaster(STACK, format = "GTiff", bandorder = "BIL", 
+	"./assets/images/stack/SENTINEL-2_MSI_20LMR_2022-11-05.tif",
+	overwrite = T)
+
+STACK = raster::brick("./assets/images/stack/SENTINEL-2_MSI_20LMR_2022-11-05.tif")
+
+
+
+# extract signatures
+samples = raster::extract(cube_s2_dec, samples_deforestation_rondonia, df=T, sp=T) 
+samples$geometry <- NULL # set geometry to NULL for faster model training
+samples <- as.data.frame(samples)
+
+# additional interpolation of missing cloud pixels with class-median-normalization
+samples <- samples |> 
+  dplyr::group_by(label) |>  
+	dplyr::mutate(across(where(is.numeric), ~ ifelse(
+			is.na(.), median(., na.rm = TRUE), .))) |> 
+	dplyr::ungroup()
+
+# assign variables before processing steps below
+response  <- c("label")
+predictors <- c("B02", "B03", "B04", "B8A", "B11", "NDVI")
+
+# Strata-check function to ensure class proportions are maintained across train and test split
+stratified_partition <- function(data, group_col, train_ratio = 0.7) {
+  split_data <- lapply(split(data, data[[group_col]]), function(df) {
+    train_size <- max(1, floor(train_ratio * nrow(df)))
+    train_idx <- sample(seq_len(nrow(df)), size = train_size)
+    list(train = df[train_idx, ], test = df[-train_idx, ])})
+  train_data <- do.call(rbind, lapply(split_data, `[[`, "train"))
+  test_data <- do.call(rbind, lapply(split_data, `[[`, "test"))
+  list(train = train_data, test = test_data)
+  }
+
+partitioned_data_2018 <- stratified_partition(
+	samples_signatures_2018, 
+	group_col="label", 
+	train_ratio=0.8)
+trainData_2018 = partitioned_data_2018$train
+testData_2018  = partitioned_data_2018$test
+table(trainData_2018$ipcc_label)
+table(testData_2018$ipcc_label)
+
+# synthetic minotrity oversampling technique
+train_for_smote <- trainData_2018 |>
+  dplyr::select(all_of(c(predictors_2018, response))) |>
+  dplyr::mutate(ipcc_label = as.factor(ipcc_label))
+test_for_smote <- testData_2018 |>
+  dplyr::select(all_of(c(predictors_2018, response))) |>
+  dplyr::mutate(ipcc_label = as.factor(ipcc_label))
+
+trainData_2018 <- performanceEstimation::smote(
+  ipcc_label ~ ., data = train_for_smote,
+  perc.over = 30, perc.under = 30)
+
+testData_2018 <- performanceEstimation::smote(
+  ipcc_label ~ ., data = test_for_smote,
+  perc.over = 30, perc.under = 30)
+
+table(trainData_2018$ipcc_label)
+table(testData_2018$ipcc_label)
+
+# set training parameters
+cv_regime <- caret::trainControl(
+  method          = 'LGOCV',
+  number          = 100, #no. of simulation iterations
+  savePredictions = T,
+  verboseIter     = F
+  )
+
+# train classifier
+rf_model_2018 <- caret::train(
+  ipcc_label~.,
+  data = trainData_2018[, c(predictors_2018, "label")], # drop ID var
+  trControl = cv_regime,
+  method    = "rf", 
+  metric    = 'Kappa', 
+  ntree     = 500,
+  tuneLength= 6,
+  importance= T
+  )
+
+```
+
+### Spatial Patterns in Uncertainty {#sec-spatial-uncertainty-patterns}
+
+Pixel-level uncertainty metrics reveal spatial patterns that inform sampling design:
+
+```{r}
+#| eval: false
+#| label: spatial-uncertainty-analysis
+#| code-summary: "Analyze spatial patterns in classification uncertainty"
+
+# Function to identify high-uncertainty zones
+identify_uncertainty_zones <- function(uncertainty_raster, 
+                                       threshold_percentile = 0.90,
+                                       min_patch_size_ha = 5) {
+  
+  # Define high uncertainty threshold
+  threshold <- quantile(values(uncertainty_raster), 
+                       threshold_percentile, 
+                       na.rm = TRUE)
+  
+  # Create binary high-uncertainty mask
+  high_unc_mask <- uncertainty_raster > threshold
+  
+  # Remove small patches
+  pixel_area_ha <- prod(res(uncertainty_raster)) / 10000
+  min_cells <- ceiling(min_patch_size_ha / pixel_area_ha)
+  
+  high_unc_patches <- patches(high_unc_mask)
+  patch_sizes <- freq(high_unc_patches)
+  
+  # Filter patches
+  large_patches <- patch_sizes$value[patch_sizes$count >= min_cells]
+  high_unc_filtered <- high_unc_patches %in% large_patches
+  
+  # Convert to polygons
+  uncertainty_zones <- as.polygons(high_unc_filtered)
+  
+  # Calculate zonal statistics
+  zone_stats <- zonal(uncertainty_raster, high_unc_patches, fun = "mean")
+  
+  results <- list(
+    zones = uncertainty_zones,
+    zonal_stats = zone_stats,
+    threshold = threshold,
+    n_zones = length(large_patches)
+  )
+  
+  return(results)
+}
+
+# Identify zones
+high_uncertainty_zones <- identify_uncertainty_zones(
+  uncertainty_raster = uncertainty_metrics$normalized_entropy,
+  threshold_percentile = 0.90,
+  min_patch_size_ha = 5
+)
+
+# Summary
+cat(sprintf("Identified %d high-uncertainty zones\n", 
+            high_uncertainty_zones$n_zones))
+cat(sprintf("Threshold: %.3f\n", high_uncertainty_zones$threshold))
+```
+
+### Targeted Sample Allocation {#sec-targeted-sampling}
+
+Use uncertainty maps to optimize validation sample allocation:
+
+```{r}
+#| eval: false
+#| label: adaptive-sampling
+#| code-summary: "Allocate validation samples based on uncertainty"
+
+# Function for uncertainty-based sample allocation
+allocate_adaptive_samples <- function(uncertainty_zones,
+                                     classification_map,
+                                     total_samples = 500,
+                                     high_unc_proportion = 0.40) {
+  
+  # Calculate sample allocation
+  n_high_unc <- round(total_samples * high_unc_proportion)
+  n_standard <- total_samples - n_high_unc
+  
+  # Standard stratified random sampling
+  standard_strata <- freq(classification_map)
+  standard_samples <- spatSample(
+    classification_map,
+    size = n_standard,
+    method = "stratified",
+    strata = classification_map
+  )
+  
+  # Targeted sampling in high uncertainty zones
+  targeted_samples <- spatSample(
+    uncertainty_zones$zones,
+    size = n_high_unc,
+    method = "random"
+  )
+  
+  # Combine sample sets
+  all_samples <- rbind(
+    cbind(standard_samples, sample_type = "standard"),
+    cbind(targeted_samples, sample_type = "targeted")
+  )
+  
+  # Add uncertainty values
+  all_samples$uncertainty <- extract(
+    uncertainty_metrics$normalized_entropy,
+    all_samples
+  )[,2]
+  
+  results <- list(
+    samples = all_samples,
+    allocation = data.frame(
+      type = c("Standard stratified", "High uncertainty targeted"),
+      n_samples = c(n_standard, n_high_unc),
+      percent = c(n_standard, n_high_unc) / total_samples * 100
+    )
+  )
+  
+  return(results)
+}
+
+# Allocate samples
+adaptive_design <- allocate_adaptive_samples(
+  uncertainty_zones = high_uncertainty_zones,
+  classification_map = lulc_map,
+  total_samples = 500,
+  high_unc_proportion = 0.40
+)
+
+print(adaptive_design$allocation)
+```
+
+### Ground Truth Collection Priorities {#sec-ground-truth-priorities}
+
+Model residuals guide field campaign design by identifying:
+
+1.  Edge effects: Forest-agriculture boundaries with mixed pixels
+2.  Spectral confusion: Similar spectral signatures (mature regrowth vs. primary forest)
+3.  Temporal inconsistencies: Phenological variation vs. permanent change
+4.  Rare classes: Under-represented land cover types
+
+```{r}
+#| eval: false
+#| label: field-priorities
+#| code-summary: "Prioritize locations for ground truthing"
+
+# Function to rank field visit priorities
+prioritize_field_visits <- function(uncertainty_metrics,
+                                   classification_map,
+                                   existing_samples = NULL,
+                                   max_visits = 50) {
+  
+  # Calculate composite priority score
+  # Higher uncertainty + rarer classes + distance from existing samples
+  
+  # 1. Normalize uncertainty (0-1)
+  unc_norm <- (uncertainty_metrics$normalized_entropy - 
+               global(uncertainty_metrics$normalized_entropy, "min")[1,1]) /
+              (global(uncertainty_metrics$normalized_entropy, "max")[1,1] - 
+               global(uncertainty_metrics$normalized_entropy, "min")[1,1])
+  
+  # 2. Class rarity weight
+  class_freq <- freq(classification_map)
+  class_weights <- 1 - (class_freq$count / sum(class_freq$count))
+  rarity_raster <- classify(classification_map, 
+                            cbind(class_freq$value, class_weights))
+  
+  # 3. Distance from existing samples
+  if (!is.null(existing_samples)) {
+    dist_raster <- distance(rasterize(existing_samples, uncertainty_metrics))
+    dist_norm <- dist_raster / global(dist_raster, "max")[1,1]
+  } else {
+    dist_norm <- uncertainty_metrics * 0 + 1  # Uniform if no samples
+  }
+  
+  # Composite priority score
+  priority_score <- (unc_norm * 0.5) + (rarity_raster * 0.3) + (dist_norm * 0.2)
+  
+  # Extract top priority locations
+  priority_points <- as.points(priority_score)
+  priority_df <- as.data.frame(priority_points, geom = "XY")
+  priority_df <- priority_df[order(-priority_df$lyr1), ]
+  
+  # Select top N
+  field_priorities <- priority_df[1:min(max_visits, nrow(priority_df)), ]
+  
+  results <- list(
+    priority_map = priority_score,
+    field_locations = vect(field_priorities, geom = c("x", "y")),
+    summary = data.frame(
+      metric = c("Mean priority", "Min priority", "Max priority"),
+      value = c(mean(field_priorities$lyr1),
+               min(field_priorities$lyr1),
+               max(field_priorities$lyr1))
+    )
+  )
+  
+  return(results)
+}
+
+# Prioritize field visits
+field_campaign <- prioritize_field_visits(
+  uncertainty_metrics = uncertainty_metrics,
+  classification_map = lulc_map,
+  existing_samples = training_points,
+  max_visits = 50
+)
+
+# Export for field teams
+writeVector(field_campaign$field_locations, 
+            "field_priority_locations.gpkg")
+```
+
+The pixel-level uncertainty framework enables: - Adaptive sampling design - Efficient resource allocation - Continuous model improvement - Spatially explicit confidence intervals
+
+------------------------------------------------------------------------
+
+## 3.4 Monte Carlo Trained RandomForest Model {#sec-rf-monte-carlo}
+
+### Training Regime Design {#sec-training-design}
+
+Monte Carlo cross-validation (MCCV) provides robust assessment of Random Forest model performance by repeatedly partitioning training data into calibration and validation sets.
+
+Objectives: 1. Optimize hyperparameters (ntree, mtry, nodesize) 2. Assess model stability across random partitions 3. Quantify prediction uncertainty 4. Select optimal training sample size
+
+Theoretical framework:
+
+For $M$ Monte Carlo iterations: 1. Randomly partition training data: 70-80% calibration, 20-30% validation 2. Train Random Forest model on calibration subset 3. Evaluate on validation subset 4. Record performance metrics (OOB error, accuracy, kappa) 5. Aggregate results across iterations
+
+```{r}
+#| eval: false
+#| label: mccv-framework
+#| code-summary: "Monte Carlo cross-validation for Random Forest"
+
+library(randomForest)
+library(caret)
+
+# Function for Monte Carlo cross-validation
+mccv_random_forest <- function(training_data,
+                               response_var = "class",
+                               predictors = NULL,
+                               n_iterations = 100,
+                               training_split = 0.75,
+                               ntree = 500,
+                               mtry = NULL) {
+  
+  # Set up predictors if not specified
+  if (is.null(predictors)) {
+    predictors <- setdiff(names(training_data), response_var)
+  }
+  
+  # Set mtry default (sqrt of n_predictors for classification)
+  if (is.null(mtry)) {
+    mtry <- floor(sqrt(length(predictors)))
+  }
+  
+  # Initialize results storage
+  results <- data.frame(
+    iteration = integer(),
+    oob_error = numeric(),
+    overall_accuracy = numeric(),
+    kappa = numeric(),
+    producers_forest = numeric(),
+    users_forest = numeric()
+  )
+  
+  # Run Monte Carlo iterations
+  set.seed(123)  # For reproducibility
+  
+  for (i in 1:n_iterations) {
+    
+    # Random partition
+    train_idx <- sample(1:nrow(training_data), 
+                       size = floor(nrow(training_data) * training_split))
+    
+    train_set <- training_data[train_idx, ]
+    valid_set <- training_data[-train_idx, ]
+    
+    # Train Random Forest
+    rf_formula <- as.formula(paste(response_var, "~", 
+                                  paste(predictors, collapse = " + ")))
+    
+    rf_model <- randomForest(
+      formula = rf_formula,
+      data = train_set,
+      ntree = ntree,
+      mtry = mtry,
+      importance = TRUE,
+      keep.forest = TRUE
+    )
+    
+    # Predict on validation set
+    predictions <- predict(rf_model, valid_set)
+    
+    # Calculate confusion matrix
+    cm <- confusionMatrix(
+      data = predictions,
+      reference = valid_set[[response_var]]
+    )
+    
+    # Extract metrics
+    results <- rbind(results, data.frame(
+      iteration = i,
+      oob_error = tail(rf_model$err.rate[, "OOB"], 1),
+      overall_accuracy = cm$overall["Accuracy"],
+      kappa = cm$overall["Kappa"],
+      producers_forest = cm$byClass["Sensitivity"][1],
+      users_forest = cm$byClass["Pos Pred Value"][1]
+    ))
+    
+    # Progress update
+    if (i %% 10 == 0) {
+      cat(sprintf("Completed %d/%d iterations\n", i, n_iterations))
+    }
+  }
+  
+  # Summary statistics
+  summary_stats <- data.frame(
+    metric = c("OOB Error", "Overall Accuracy", "Kappa", 
+               "Producer's Accuracy (Forest)", "User's Accuracy (Forest)"),
+    mean = c(mean(results$oob_error),
+            mean(results$overall_accuracy),
+            mean(results$kappa),
+            mean(results$producers_forest),
+            mean(results$users_forest)),
+    sd = c(sd(results$oob_error),
+          sd(results$overall_accuracy),
+          sd(results$kappa),
+          sd(results$producers_forest),
+          sd(results$users_forest)),
+    ci_lower = c(quantile(results$oob_error, 0.05),
+                quantile(results$overall_accuracy, 0.05),
+                quantile(results$kappa, 0.05),
+                quantile(results$producers_forest, 0.05),
+                quantile(results$users_forest, 0.05)),
+    ci_upper = c(quantile(results$oob_error, 0.95),
+                quantile(results$overall_accuracy, 0.95),
+                quantile(results$kappa, 0.95),
+                quantile(results$producers_forest, 0.95),
+                quantile(results$users_forest, 0.95))
+  )
+  
+  return(list(
+    iterations = results,
+    summary = summary_stats
+  ))
+}
+
+# Run MCCV
+mccv_results <- mccv_random_forest(
+  training_data = training_samples,
+  response_var = "class",
+  n_iterations = 100,
+  training_split = 0.75,
+  ntree = 500
+)
+
+print(mccv_results$summary)
+```
+
+### Hyperparameter Optimization {#sec-hyperparameter-optimization}
+
+Use MCCV to systematically evaluate hyperparameter combinations:
+
+```{r}
+#| eval: false
+#| label: hyperparameter-grid-search
+#| code-summary: "Grid search for optimal RF hyperparameters"
+
+# Function for hyperparameter grid search
+optimize_rf_hyperparameters <- function(training_data,
+                                       response_var = "class",
+                                       ntree_values = c(100, 300, 500, 700),
+                                       mtry_values = NULL,
+                                       nodesize_values = c(1, 5, 10),
+                                       n_iterations = 50) {
+  
+  # Set mtry range if not specified
+  n_predictors <- ncol(training_data) - 1
+  if (is.null(mtry_values)) {
+    mtry_values <- floor(c(sqrt(n_predictors),
+                          n_predictors / 3,
+                          n_predictors / 2))
+  }
+  
+  # Create parameter grid
+  param_grid <- expand.grid(
+    ntree = ntree_values,
+    mtry = mtry_values,
+    nodesize = nodesize_values
+  )
+  
+  # Initialize results
+  grid_results <- param_grid
+  grid_results$mean_oob <- NA
+  grid_results$sd_oob <- NA
+  grid_results$mean_accuracy <- NA
+  grid_results$computation_time <- NA
+  
+  # Iterate through parameter combinations
+  for (i in 1:nrow(param_grid)) {
+    
+    cat(sprintf("\nTesting combination %d/%d:\n", i, nrow(param_grid)))
+    cat(sprintf("  ntree=%d, mtry=%d, nodesize=%d\n",
+               param_grid$ntree[i],
+               param_grid$mtry[i],
+               param_grid$nodesize[i]))
+    
+    start_time <- Sys.time()
+    
+    # Run MCCV for this parameter set
+    mccv_temp <- mccv_random_forest(
+      training_data = training_data,
+      response_var = response_var,
+      n_iterations = n_iterations,
+      ntree = param_grid$ntree[i],
+      mtry = param_grid$mtry[i]
+    )
+    
+    end_time <- Sys.time()
+    
+    # Store results
+    grid_results$mean_oob[i] <- mean(mccv_temp$iterations$oob_error)
+    grid_results$sd_oob[i] <- sd(mccv_temp$iterations$oob_error)
+    grid_results$mean_accuracy[i] <- mean(mccv_temp$iterations$overall_accuracy)
+    grid_results$computation_time[i] <- as.numeric(
+      difftime(end_time, start_time, units = "secs")
+    )
+  }
+  
+  # Identify optimal parameters
+  best_idx <- which.min(grid_results$mean_oob)
+  
+  optimal_params <- list(
+    ntree = grid_results$ntree[best_idx],
+    mtry = grid_results$mtry[best_idx],
+    nodesize = grid_results$nodesize[best_idx],
+    oob_error = grid_results$mean_oob[best_idx],
+    accuracy = grid_results$mean_accuracy[best_idx]
+  )
+  
+  return(list(
+    grid_results = grid_results,
+    optimal = optimal_params
+  ))
+}
+
+# Run hyperparameter optimization
+rf_optimization <- optimize_rf_hyperparameters(
+  training_data = training_samples,
+  response_var = "class",
+  ntree_values = c(100, 300, 500, 700),
+  n_iterations = 50
+)
+
+# Display optimal parameters
+cat("\nOptimal hyperparameters:\n")
+print(rf_optimization$optimal)
+
+# Visualize results
+library(ggplot2)
+ggplot(rf_optimization$grid_results, 
+       aes(x = ntree, y = mean_oob, color = factor(mtry))) +
+  geom_line() +
+  geom_point() +
+  facet_wrap(~nodesize, labeller = label_both) +
+  labs(
+    title = "Random Forest Hyperparameter Optimization",
+    x = "Number of Trees",
+    y = "Mean OOB Error",
+    color = "mtry"
+  ) +
+  theme_minimal()
+```
+
+### Sample Size Determination {#sec-sample-size}
+
+Determine minimum training sample size through learning curves:
+
+```{r}
+#| eval: false
+#| label: learning-curves
+#| code-summary: "Assess training sample size requirements"
+
+# Function to generate learning curves
+generate_learning_curve <- function(training_data,
+                                   response_var = "class",
+                                   sample_sizes = seq(50, 1000, by = 50),
+                                   n_iterations = 30,
+                                   ntree = 500) {
+  
+  results <- data.frame()
+  
+  for (n in sample_sizes) {
+    
+    cat(sprintf("Testing sample size: %d\n", n))
+    
+    iteration_results <- numeric(n_iterations)
+    
+    for (i in 1:n_iterations) {
+      # Random subsample
+      subsample_idx <- sample(1:nrow(training_data), size = n)
+      subsample <- training_data[subsample_idx, ]
+      
+      # Train model
+      rf_model <- randomForest(
+        formula = as.formula(paste(response_var, "~ .")),
+        data = subsample,
+        ntree = ntree
+      )
+      
+      iteration_results[i] <- tail(rf_model$err.rate[, "OOB"], 1)
+    }
+    
+    results <- rbind(results, data.frame(
+      sample_size = n,
+      mean_error = mean(iteration_results),
+      sd_error = sd(iteration_results),
+      ci_lower = quantile(iteration_results, 0.05),
+      ci_upper = quantile(iteration_results, 0.95)
+    ))
+  }
+  
+  return(results)
+}
+
+# Generate learning curve
+learning_curve <- generate_learning_curve(
+  training_data = training_samples,
+  response_var = "class",
+  sample_sizes = seq(100, 1000, by = 100),
+  n_iterations = 30
+)
+
+# Plot learning curve
+ggplot(learning_curve, aes(x = sample_size, y = mean_error)) +
+  geom_line(size = 1.2, color = "darkblue") +
+  geom_ribbon(aes(ymin = ci_lower, ymax = ci_upper), 
+              alpha = 0.3, fill = "darkblue") +
+  geom_hline(yintercept = 0.10, linetype = "dashed", color = "red") +
+  annotate("text", x = max(learning_curve$sample_size) * 0.8, 
+           y = 0.11, label = "10% error threshold", color = "red") +
+  labs(
+    title = "Random Forest Learning Curve",
+    subtitle = "OOB error vs. training sample size",
+    x = "Training Sample Size",
+    y = "Out-of-Bag Error Rate"
+  ) +
+  theme_minimal()
+
+# Identify minimum sample size for <10% error
+min_samples <- learning_curve$sample_size[
+  which(learning_curve$ci_upper < 0.10)[1]
+]
+
+cat(sprintf("\nMinimum sample size for <10%% error: %d\n", min_samples))
+```
+
+### Model Selection and Final Training {#sec-model-selection}
+
+Use MCCV results to train final production model:
+
+```{r}
+#| eval: false
+#| label: final-model-training
+#| code-summary: "Train final Random Forest model with optimal parameters"
+
+# Train final model with full dataset and optimal parameters
+final_rf_model <- randomForest(
+  formula = as.formula("class ~ ."),
+  data = training_samples,
+  ntree = rf_optimization$optimal$ntree,
+  mtry = rf_optimization$optimal$mtry,
+  nodesize = rf_optimization$optimal$nodesize,
+  importance = TRUE,
+  proximity = TRUE,
+  keep.forest = TRUE,
+  keep.inbag = TRUE
+)
+
+# Model diagnostics
+cat("\n=== Final Random Forest Model ===\n")
+print(final_rf_model)
+
+# Variable importance
+var_importance <- as.data.frame(importance(final_rf_model))
+var_importance$variable <- rownames(var_importance)
+var_importance <- var_importance[order(-var_importance$MeanDecreaseAccuracy), ]
+
+# Plot variable importance
+ggplot(var_importance[1:20, ], 
+       aes(x = reorder(variable, MeanDecreaseAccuracy), 
+           y = MeanDecreaseAccuracy)) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  coord_flip() +
+  labs(
+    title = "Top 20 Most Important Variables",
+    x = "Variable",
+    y = "Mean Decrease in Accuracy"
+  ) +
+  theme_minimal()
+
+# Save model
+saveRDS(final_rf_model, "final_lulc_random_forest_model.rds")
+```
+
+Monte Carlo cross-validation provides: 1. Robust performance estimates 2. Hyperparameter optimization 3. Sample size guidance 4. Model stability assessment 5. Uncertainty quantification for predictions
+
+------------------------------------------------------------------------
+
+## 3.5 Accuracy Assessment and Confusion Matrix Analysis {#sec-accuracy-assessment}
+
+### Confusion Matrix Construction {#sec-confusion-matrix-construction}
+
+The confusion matrix (error matrix) forms the foundation for all classification accuracy metrics:
+
+```{r}
+#| eval: false
+#| label: confusion-matrix-basic
+#| code-summary: "Construct and analyze confusion matrix"
+
+library(caret)
+library(tidyverse)
+
+# Function to create comprehensive confusion matrix
+create_confusion_matrix <- function(reference, predicted, 
+                                   class_names = NULL) {
+  
+  # Ensure factors with same levels
+  if (is.null(class_names)) {
+    class_names <- sort(unique(c(reference, predicted)))
+  }
+  
+  reference <- factor(reference, levels = class_names)
+  predicted <- factor(predicted, levels = class_names)
+  
+  # Create confusion matrix
+  cm <- confusionMatrix(data = predicted, reference = reference)
+  
+  # Extract components
+  conf_table <- cm$table
+  n_total <- sum(conf_table)
+  n_classes <- length(class_names)
+  
+  # Calculate class-specific metrics
+  class_metrics <- data.frame(
+    class = class_names,
+    reference_total = colSums(conf_table),
+    classified_total = rowSums(conf_table),
+    correct = diag(conf_table)
+  )
+  
+  class_metrics <- class_metrics %>%
+    mutate(
+      producers_accuracy = correct / reference_total,
+      users_accuracy = correct / classified_total,
+      omission_error = 1 - producers_accuracy,
+      commission_error = 1 - users_accuracy,
+      f1_score = 2 * (producers_accuracy * users_accuracy) / 
+                 (producers_accuracy + users_accuracy)
+    )
+  
+  # Overall metrics
+  overall_metrics <- data.frame(
+    metric = c("Overall Accuracy", "Kappa", "95% CI Lower", "95% CI Upper"),
+    value = c(
+      cm$overall["Accuracy"],
+      cm$overall["Kappa"],
+      cm$overall["AccuracyLower"],
+      cm$overall["AccuracyUpper"]
+    )
+  )
+  
+  results <- list(
+    confusion_matrix = conf_table,
+    class_metrics = class_metrics,
+    overall_metrics = overall_metrics,
+    caret_object = cm
+  )
+  
+  return(results)
+}
+
+# Example: Validation dataset
+validation_results <- data.frame(
+  reference = sample(c("Forest", "Non-Forest"), 400, replace = TRUE,
+                    prob = c(0.6, 0.4)),
+  predicted = sample(c("Forest", "Non-Forest"), 400, replace = TRUE,
+                    prob = c(0.58, 0.42))
+)
+
+# Add realistic error structure
+validation_results$predicted[
+  validation_results$reference == "Forest" & 
+  sample(1:nrow(validation_results), 30)
+] <- "Non-Forest"  # Omission errors
+
+validation_results$predicted[
+  validation_results$reference == "Non-Forest" & 
+  sample(1:nrow(validation_results), 25)
+] <- "Forest"  # Commission errors
+
+# Create confusion matrix
+cm_analysis <- create_confusion_matrix(
+  reference = validation_results$reference,
+  predicted = validation_results$predicted
+)
+
+# Display results
+print("Confusion Matrix:")
+print(cm_analysis$confusion_matrix)
+print("\nClass-Specific Metrics:")
+print(cm_analysis$class_metrics)
+print("\nOverall Metrics:")
+print(cm_analysis$overall_metrics)
+```
+
+### Key Accuracy Metrics {#sec-accuracy-metrics}
+
+Producer's Accuracy (Sensitivity, Recall): - Probability that reference class is correctly classified - $PA_i = \frac{n_{ii}}{\sum_j n_{ij}}$ where $n_{ii}$ is diagonal, $\sum_j n_{ij}$ is column total - Measures omission error: $OE_i = 1 - PA_i$ - Critical for REDD+: Low forest producer's accuracy → missed deforestation
+
+User's Accuracy (Precision, Positive Predictive Value): - Probability that classified pixel truly belongs to that class\
+- $UA_i = \frac{n_{ii}}{\sum_j n_{ji}}$ where $\sum_j n_{ji}$ is row total - Measures commission error: $CE_i = 1 - UA_i$ - Critical for REDD+: Low forest user's accuracy → over-credited forest area
+
+Overall Accuracy: - Proportion of correctly classified pixels - $OA = \frac{\sum_i n_{ii}}{n_{total}}$ - Simple but can be misleading with imbalanced classes
+
+Kappa Coefficient: - Agreement beyond chance - $\kappa = \frac{OA - P_e}{1 - P_e}$ where $P_e$ is expected agreement by chance - Interpretation: \<0.4 (poor), 0.4-0.6 (moderate), 0.6-0.8 (substantial), \>0.8 (excellent)
+
+F1 Score: - Harmonic mean of precision and recall - $F1_i = 2 \times \frac{PA_i \times UA_i}{PA_i + UA_i}$ - Balances omission and commission errors
+
+### Area-Adjusted Accuracy Metrics {#sec-area-adjusted-accuracy}
+
+Standard confusion matrices from validation samples must be adjusted to account for sampling design and class prevalence:
+
+```{r}
+#| eval: false
+#| label: area-adjusted-accuracy
+#| code-summary: "Calculate area-adjusted accuracy estimates"
+
+# Function for area-adjusted accuracy assessment
+area_adjusted_accuracy <- function(confusion_matrix,
+                                  mapped_areas_ha,
+                                  sample_counts = NULL) {
+  
+  # If sample counts not provided, use confusion matrix totals
+  if (is.null(sample_counts)) {
+    sample_counts <- colSums(confusion_matrix)
+  }
+  
+  # Calculate mapped class proportions
+  total_area <- sum(mapped_areas_ha)
+  mapped_props <- mapped_areas_ha / total_area
+  
+  # Calculate error matrix proportions
+  error_props <- confusion_matrix / sum(confusion_matrix)
+  
+  # User's accuracy (unchanged)
+  users_acc <- diag(error_props) / rowSums(error_props)
+  
+  # Area-adjusted producer's accuracy
+  # Accounts for fact that validation samples may not represent true class distribution
+  
+  # Calculate estimated area proportions
+  estimated_props <- colSums(error_props * 
+                             matrix(rep(mapped_props, each = nrow(confusion_matrix)), 
+                                   nrow = nrow(confusion_matrix)))
+  
+  # Adjust confusion matrix by mapped proportions
+  adjusted_matrix <- sweep(error_props, 1, mapped_props, "*")
+  
+  # Calculate adjusted producer's accuracy
+  adjusted_producers_acc <- diag(adjusted_matrix) / colSums(adjusted_matrix)
+  
+  # Calculate standard errors
+  # Variance of estimated proportion = (Wi^2 * UAi * (1-UAi)) / (ni - 1)
+  # Where Wi = mapped proportion, UAi = user's accuracy, ni = sample size
+  
+  variance_props <- (mapped_props^2 * users_acc * (1 - users_acc)) / 
+                    (sample_counts - 1)
+  
+  se_props <- sqrt(variance_props)
+  
+  # 95% confidence intervals
+  ci_lower <- estimated_props - 1.96 * se_props
+  ci_upper <- estimated_props + 1.96 * se_props
+  
+  # Estimated areas with uncertainty
+  estimated_areas <- data.frame(
+    class = names(mapped_areas_ha),
+    mapped_area_ha = mapped_areas_ha,
+    mapped_proportion = mapped_props,
+    estimated_proportion = estimated_props,
+    estimated_area_ha = estimated_props * total_area,
+    se_proportion = se_props,
+    ci_lower_ha = ci_lower * total_area,
+    ci_upper_ha = ci_upper * total_area,
+    area_adjusted_producers_acc = adjusted_producers_acc,
+    users_acc = users_acc
+  )
+  
+  results <- list(
+    adjusted_areas = estimated_areas,
+    adjusted_matrix = adjusted_matrix
+  )
+  
+  return(results)
+}
+
+# Example application
+mapped_areas <- c(Forest = 850000, `Non-Forest` = 150000)
+
+area_adjusted <- area_adjusted_accuracy(
+  confusion_matrix = cm_analysis$confusion_matrix,
+  mapped_areas_ha = mapped_areas
+)
+
+print("\nArea-Adjusted Estimates:")
+print(area_adjusted$adjusted_areas)
+```
+
+### Stratified Random Sampling Accuracy {#sec-stratified-accuracy}
+
+For stratified validation designs, calculate accuracy metrics accounting for stratum weights:
+
+```{r}
+#| eval: false
+#| label: stratified-accuracy
+#| code-summary: "Accuracy assessment with stratified sampling"
+
+# Function for stratified accuracy assessment
+stratified_accuracy_assessment <- function(strata_data,
+                                          mapped_areas_by_stratum) {
+  
+  # strata_data: list of confusion matrices, one per stratum
+  # mapped_areas_by_stratum: vector of mapped areas for each stratum
+  
+  n_strata <- length(strata_data)
+  total_area <- sum(mapped_areas_by_stratum)
+  stratum_weights <- mapped_areas_by_stratum / total_area
+  
+  # Initialize storage
+  overall_confusion <- matrix(0, 
+                             nrow = nrow(strata_data[[1]]),
+                             ncol = ncol(strata_data[[1]]))
+  
+  stratum_results <- list()
+  
+  for (i in 1:n_strata) {
+    # Confusion matrix for this stratum
+    cm_stratum <- strata_data[[i]]
+    
+    # Weight by stratum area
+    weighted_cm <- cm_stratum * stratum_weights[i]
+    overall_confusion <- overall_confusion + weighted_cm
+    
+    # Stratum-specific metrics
+    stratum_results[[i]] <- data.frame(
+      stratum = i,
+      overall_accuracy = sum(diag(cm_stratum)) / sum(cm_stratum),
+      sample_size = sum(cm_stratum),
+      weight = stratum_weights[i]
+    )
+  }
+  
+  # Overall weighted accuracy
+  overall_accuracy <- sum(diag(overall_confusion)) / sum(overall_confusion)
+  
+  # Calculate standard error accounting for stratification
+  stratum_df <- do.call(rbind, stratum_results)
+  
+  variance_overall <- sum(
+    stratum_df$weight^2 * 
+    stratum_df$overall_accuracy * (1 - stratum_df$overall_accuracy) / 
+    (stratum_df$sample_size - 1)
+  )
+  
+  se_overall <- sqrt(variance_overall)
+  
+  results <- list(
+    overall_confusion = overall_confusion,
+    overall_accuracy = overall_accuracy,
+    se_accuracy = se_overall,
+    ci_lower = overall_accuracy - 1.96 * se_overall,
+    ci_upper = overall_accuracy + 1.96 * se_overall,
+    stratum_results = stratum_df
+  )
+  
+  return(results)
+}
+```
+
+### Minimum Sample Size Requirements {#sec-minimum-sample-size}
+
+Determine validation sample size to achieve target confidence intervals:
+
+```{r}
+#| eval: false
+#| label: sample-size-calculation
+#| code-summary: "Calculate minimum validation sample size"
+
+# Function to calculate required sample size
+calculate_required_sample_size <- function(target_accuracy = 0.90,
+                                          target_ci_width = 0.05,
+                                          confidence = 0.95,
+                                          n_classes = 2,
+                                          stratified = TRUE) {
+  
+  # Z-score for confidence level
+  z <- qnorm((1 + confidence) / 2)
+  
+  # For binary classification (common in REDD+)
+  # Sample size for proportion: n = (z^2 * p * (1-p)) / E^2
+  # where E = half-width of CI
+  
+  p <- target_accuracy
+  half_width <- target_ci_width / 2
+  
+  n_unstratified <- (z^2 * p * (1 - p)) / half_width^2
+  
+  if (stratified) {
+    # Stratified sampling often more efficient
+    # Assume proportional allocation and gain factor of ~1.5
+    n_stratified <- n_unstratified / 1.5
+  } else {
+    n_stratified <- n_unstratified
+  }
+  
+  # Minimum samples per class
+  min_per_class <- max(50, ceiling(n_stratified / n_classes))
+  
+  # Total recommended
+  n_total <- ceiling(max(n_stratified, min_per_class * n_classes))
+  
+  results <- data.frame(
+    parameter = c("Target accuracy", "Target CI width", "Confidence level",
+                 "N unstratified", "N stratified", 
+                 "Min per class", "Total recommended"),
+    value = c(target_accuracy, target_ci_width, confidence,
+             ceiling(n_unstratified), ceiling(n_stratified),
+             min_per_class, n_total)
+  )
+  
+  return(results)
+}
+
+# Calculate for typical REDD+ requirements
+sample_requirements <- calculate_required_sample_size(
+  target_accuracy = 0.90,
+  target_ci_width = 0.05,
+  confidence = 0.95,
+  n_classes = 2
+)
+
+print("Required validation sample sizes:")
+print(sample_requirements)
+```
+
+### Temporal Consistency Assessment {#sec-temporal-consistency}
+
+For multi-temporal classifications, assess consistency across time periods:
+
+```{r}
+#| eval: false
+#| label: temporal-consistency
+#| code-summary: "Assess classification consistency over time"
+
+# Function to assess temporal consistency
+assess_temporal_consistency <- function(time_series_classifications,
+                                       validation_points,
+                                       dates) {
+  
+  # For each validation point, track classification through time
+  consistency_metrics <- data.frame(
+    point_id = validation_points$id,
+    n_changes = 0,
+    modal_class = NA,
+    stability_score = NA
+  )
+  
+  for (i in 1:nrow(validation_points)) {
+    # Extract time series for this point
+    point_series <- sapply(time_series_classifications, function(x) {
+      extract(x, validation_points[i, ])
+    })
+    
+    # Count changes
+    n_changes <- sum(point_series[-1] != point_series[-length(point_series)])
+    
+    # Modal class
+    modal <- names(sort(table(point_series), decreasing = TRUE))[1]
+    
+    # Stability score (proportion of time in modal class)
+    stability <- sum(point_series == modal) / length(point_series)
+    
+    consistency_metrics$n_changes[i] <- n_changes
+    consistency_metrics$modal_class[i] <- modal
+    consistency_metrics$stability_score[i] <- stability
+  }
+  
+  # Summary
+  summary_stats <- data.frame(
+    metric = c("Mean changes", "Median stability", 
+               "Unstable points (>2 changes)"),
+    value = c(
+      mean(consistency_metrics$n_changes),
+      median(consistency_metrics$stability_score),
+      sum(consistency_metrics$n_changes > 2) / nrow(consistency_metrics) * 100
+    )
+  )
+  
+  results <- list(
+    point_metrics = consistency_metrics,
+    summary = summary_stats
+  )
+  
+  return(results)
+}
+```
+
+### ART-TREES Reporting Format {#sec-art-trees-reporting}
+
+Format accuracy results for ART-TREES compliance:
+
+```{r}
+#| eval: false
+#| label: art-trees-accuracy-table
+#| code-summary: "Generate ART-TREES compliant accuracy table"
+
+# Create CRF-compatible accuracy table
+create_art_trees_accuracy_table <- function(confusion_matrix_analysis,
+                                           area_adjusted_results) {
+  
+  art_table <- data.frame(
+    Parameter = c(
+      "Overall accuracy (%)",
+      "Kappa coefficient",
+      "Forest producer's accuracy (%)",
+      "Forest user's accuracy (%)",
+      "Non-forest producer's accuracy (%)",
+      "Non-forest user's accuracy (%)",
+      "Forest area mapped (ha)",
+      "Forest area estimated (ha)",
+      "Forest area 95% CI lower (ha)",
+      "Forest area 95% CI upper (ha)",
+      "Forest area uncertainty (%)"
+    ),
+    Value = c(
+      round(confusion_matrix_analysis$overall_metrics$value[1] * 100, 2),
+      round(confusion_matrix_analysis$overall_metrics$value[2], 3),
+      round(confusion_matrix_analysis$class_metrics$producers_accuracy[1] * 100, 2),
+      round(confusion_matrix_analysis$class_metrics$users_accuracy[1] * 100, 2),
+      round(confusion_matrix_analysis$class_metrics$producers_accuracy[2] * 100, 2),
+      round(confusion_matrix_analysis$class_metrics$users_accuracy[2] * 100, 2),
+      round(area_adjusted_results$adjusted_areas$mapped_area_ha[1], 0),
+      round(area_adjusted_results$adjusted_areas$estimated_area_ha[1], 0),
+      round(area_adjusted_results$adjusted_areas$ci_lower_ha[1], 0),
+      round(area_adjusted_results$adjusted_areas$ci_upper_ha[1], 0),
+      round((area_adjusted_results$adjusted_areas$ci_upper_ha[1] - 
+             area_adjusted_results$adjusted_areas$ci_lower_ha[1]) /
+            (2 * area_adjusted_results$adjusted_areas$estimated_area_ha[1]) * 100, 2)
+    ),
+    Compliance = c(
+      ifelse(confusion_matrix_analysis$overall_metrics$value[1] >= 0.85, 
+             "✓ Pass", "✗ Fail"),
+      ifelse(confusion_matrix_analysis$overall_metrics$value[2] >= 0.70, 
+             "✓ Pass", "✗ Fail"),
+      rep("-", 9)
+    )
+  )
+  
+  return(art_table)
+}
+
+# Generate compliance table
+compliance_table <- create_art_trees_accuracy_table(
+  cm_analysis,
+  area_adjusted
+)
+
+library(knitr)
+kable(compliance_table,
+      caption = "Activity Data Accuracy Assessment (ART-TREES Reporting Format)",
+      align = c("l", "r", "c"))
+```
+
+------------------------------------------------------------------------
+
+## 3.6 Reproducible Workflow {#sec-integrated-workflow}
+
+### Complete Activity Data Uncertainty Assessment {#sec-complete-assessment}
+
+Combine all uncertainty sources into integrated Monte Carlo framework:
+
+```{r}
+#| eval: false
+#| label: integrated-uncertainty
+#| code-summary: "Complete activity data uncertainty quantification"
+
+# =============================================================================
+# INTEGRATED ACTIVITY DATA UNCERTAINTY ASSESSMENT
+# Combines: Classification + Change Detection + Spatial Aggregation
+# =============================================================================
+
+library(tidyverse)
+library(MASS)
+
+# Master function for integrated uncertainty
+integrated_activity_data_uncertainty <- function(
+  confusion_matrix,
+  area_t1_ha,
+  area_t2_ha,
+  registration_error_m = 30,
+  pixel_size_m = 30,
+  temporal_lag_months = 6,
+  n_sim = 10000
+) {
+  
+  # Extract classification uncertainties
+  conf_table <- confusion_matrix$table
+  producers_acc <- diag(conf_table) / colSums(conf_table)
+  users_acc <- diag(conf_table) / rowSums(conf_table)
+  
+  # Calculate uncertainty components
+  
+  # 1. Classification uncertainty (CV)
+  cv_classification <- sqrt((1 - producers_acc[1]) / producers_acc[1])
+  
+  # 2. Registration error (as proportion of pixel)
+  cv_registration <- registration_error_m / pixel_size_m
+  
+  # 3. Temporal lag effect (degrading accuracy ~2%/month)
+  cv_temporal <- 0.02 * (temporal_lag_months / 12)
+  
+  # Monte Carlo simulation
+  sim_results <- matrix(NA, nrow = n_sim, ncol = 4)
+  colnames(sim_results) <- c("area_t1", "area_t2", "change", "change_pct")
+  
+  set.seed(123)
+  
+  for (i in 1:n_sim) {
+    # Classification error (lognormal to ensure positive)
+    error_class_t1 <- rnorm(1, mean = 0, sd = area_t1_ha * cv_classification)
+    error_class_t2 <- rnorm(1, mean = 0, sd = area_t2_ha * cv_classification)
+    
+    # Registration error (correlated between dates)
+    error_reg <- rnorm(1, mean = 0, 
+                      sd = mean(c(area_t1_ha, area_t2_ha)) * cv_registration)
+    
+    # Temporal error
+    error_temp <- rnorm(1, mean = 0, sd = area_t2_ha * cv_temporal)
+    
+    # Simulate areas with combined errors
+    sim_area_t1 <- max(0, area_t1_ha + error_class_t1)
+    sim_area_t2 <- max(0, area_t2_ha + error_class_t2 + error_reg + error_temp)
+    
+    # Calculate change
+    sim_change <- sim_area_t2 - sim_area_t1
+    sim_change_pct <- (sim_change / sim_area_t1) * 100
+    
+    sim_results[i, ] <- c(sim_area_t1, sim_area_t2, sim_change, sim_change_pct)
+  }
+  
+  # Calculate statistics
+  results_summary <- data.frame(
+    parameter = c("Forest area (t1)", "Forest area (t2)", 
+                 "Change (ha)", "Change (%)"),
+    mean = colMeans(sim_results),
+    median = apply(sim_results, 2, median),
+    sd = apply(sim_results, 2, sd),
+    ci_lower_90 = apply(sim_results, 2, quantile, 0.05),
+    ci_upper_90 = apply(sim_results, 2, quantile, 0.95),
+    ci_lower_95 = apply(sim_results, 2, quantile, 0.025),
+    ci_upper_95 = apply(sim_results, 2, quantile, 0.975)
+  ) %>%
+    mutate(
+      cv_pct = sd / abs(mean) * 100,
+      hw_90 = (ci_upper_90 - ci_lower_90) / 2,
+      uncertainty_90_pct = hw_90 / abs(mean) * 100
+    )
+  
+  # Variance decomposition
+  variance_components <- data.frame(
+    source = c("Classification", "Registration", "Temporal", "Total"),
+    variance = c(
+      (area_t2_ha * cv_classification)^2,
+      (mean(c(area_t1_ha, area_t2_ha)) * cv_registration)^2,
+      (area_t2_ha * cv_temporal)^2,
+      var(sim_results[, "change"])
+    )
+  ) %>%
+    mutate(
+      sd = sqrt(variance),
+      percent_contribution = variance / sum(variance) * 100
+    )
+  
+  return(list(
+    summary = results_summary,
+    variance_decomposition = variance_components,
+    simulations = sim_results
+  ))
+}
+
+# Example usage
+uncertainty_results <- integrated_activity_data_uncertainty(
+  confusion_matrix = cm_analysis$caret_object,
+  area_t1_ha = 850000,
+  area_t2_ha = 810000,
+  registration_error_m = 30,
+  pixel_size_m = 30,
+  temporal_lag_months = 6,
+  n_sim = 10000
+)
+
+# Display results
+cat("\n=== Activity Data Uncertainty Summary ===\n")
+print(uncertainty_results$summary)
+
+cat("\n=== Variance Decomposition ===\n")
+print(uncertainty_results$variance_decomposition)
+
+# Visualize uncertainty distribution
+library(ggplot2)
+
+data.frame(
+  change_ha = uncertainty_results$simulations[, "change"]
+) %>%
+  ggplot(aes(x = change_ha)) +
+  geom_histogram(bins = 50, fill = "steelblue", alpha = 0.7) +
+  geom_vline(
+    xintercept = mean(uncertainty_results$simulations[, "change"]),
+    color = "red", size = 1, linetype = "dashed"
+  ) +
+  geom_vline(
+    xintercept = uncertainty_results$summary$ci_lower_90[3],
+    color = "darkred", size = 0.8, linetype = "dotted"
+  ) +
+  geom_vline(
+    xintercept = uncertainty_results$summary$ci_upper_90[3],
+    color = "darkred", size = 0.8, linetype = "dotted"
+  ) +
+  annotate(
+    "text",
+    x = mean(uncertainty_results$simulations[, "change"]),
+    y = Inf,
+    label = sprintf("Mean: %.0f ha", 
+                   mean(uncertainty_results$simulations[, "change"])),
+    vjust = 2, color = "red"
+  ) +
+  labs(
+    title = "Activity Data Uncertainty: Forest Area Change",
+    subtitle = sprintf(
+      "90%% CI: %.0f to %.0f ha (±%.1f%%)",
+      uncertainty_results$summary$ci_lower_90[3],
+      uncertainty_results$summary$ci_upper_90[3],
+      uncertainty_results$summary$uncertainty_90_pct[3]
+    ),
+    x = "Change in Forest Area (ha)",
+    y = "Frequency"
+  ) +
+  theme_minimal()
+```
+
+------------------------------------------------------------------------
+
+### Target Uncertainty Levels {#sec-target-levels}
+
+For \<10% activity data uncertainty (Tier 3):
+
+1.  Overall classification accuracy \>90%
+2.  Validation sample size \>400 points (stratified)
+3.  Geometric co-registration \<1 pixel RMSE
+4.  Reference data temporal lag \<6 months
+5.  Minimum mapping unit ≤0.5 ha
+
+For 10-20% uncertainty (Tier 2, acceptable):
+
+-   Overall accuracy 85-90%
+-   Validation samples 200-400
+-   Registration \<2 pixels
+-   Temporal lag \<12 months
+
+For \>20% uncertainty (Tier 1, high deductions):
+
+-   Overall accuracy \<85%
+-   Inadequate validation (\<200 samples)
+-   Significant temporal/spatial misalignment
+-   Inconsistent methodology
+
+### Quality Assurance Checklist {#sec-qa-checklist}
+
+```{r}
+#| eval: false
+# Activity Data QA/QC Checklist
+qa_checklist <- data.frame(
+  component = c(
+    "Data cube temporal consistency",
+    "Geometric co-registration",
+    "Cloud/shadow masking",
+    "Training sample distribution",
+    "Validation sample independence",
+    "Classification algorithm documentation",
+    "Confusion matrix completeness",
+    "Area adjustment calculations",
+    "Uncertainty quantification",
+    "ART-TREES reporting compliance"
+  ),
+  requirement = c(
+    "Same sensor/processing across time",
+    "<1 pixel RMSE between dates",
+    "<20% cloud/shadow per scene",
+    "Covers all classes/regions",
+    "No overlap with training data",
+    "Hyperparameters, version recorded",
+    "≥2x2 matrix with sample sizes",
+    "Mapped vs. estimated areas",
+    "Monte Carlo ≥5000 iterations",
+    "All required tables/metrics"
+  ),
+  status = rep("☐", 10)
+)
+
+print(qa_checklist)
+```
