@@ -94,9 +94,9 @@ knitr::opts_chunk$set(
 #  "/Users/seamus/Library/Python/3.9/bin/python3")
 ```
 
-## 4.1 Simulation Architecture
+## 4.1 Simulation Design
 
-Temporal Scope Design
+Temporal Dimensions
 
 ART-TREES permits single-year or multi-year aggregation. Program participants may recognize that single-year simulations tend to reduce uncertainty by avoiding temporal error propagation. We discuss below some of the advantages and disadvantages in applying similar adjustments and aggregations to Monte Carlo simulated estimates.
 
@@ -153,8 +153,6 @@ Use the arithmetic mean of verified historical emissions as deterministic baseli
 ## 4.2 Uncertainty Source Prioritization
 
 ### Sensitivity Analysis
-
-Tornado diagrams identify dominant error sources:
 
 ```{r}
 #| eval: true
@@ -217,13 +215,127 @@ bootstrap_activity_data <- function(n_sim, confusion_matrix, mapped_area_ha) {
 
 ### Temporal Aggregation
 
-ART-TREES Section 8.7 permits recalculation every 5 years to recover over-deducted credits when cumulative uncertainty decreases. Programs achieving systematic uncertainty reduction through improved methods can retroactively claim additional credits:
+#### Single-Year vs. Multi-Year Simulation Design
+
+ART-TREES permits two approaches to temporal scope in Monte Carlo simulations. Recent validation work demonstrates that single-year simulation design substantially reduces uncertainty compared to multi-year aggregation approaches.
+
+#### Multi-Year Aggregation:
+
+```{r}
+#| eval: false
+
+# Multi-year approach: Propagates uncertainty forward through years
+multi_year_simulation <- function(n_sim = 10000, years_data) {
+  cumulative_emissions <- numeric(n_sim)
+  
+  for (i in 1:n_sim) {
+    # Sample each year, accumulating uncertainties
+    year_emissions <- sapply(years_data, function(year) {
+      defor <- rnorm(1, year$deforestation_ha, year$deforestation_ha * year$ad_unc / 100)
+      ef <- rnorm(1, year$ef_tco2_ha, year$ef_tco2_ha * year$ef_unc / 100)
+      defor * ef
+    })
+    cumulative_emissions[i] <- sum(year_emissions)
+  }
+  
+  # UAF from cumulative distribution
+  ci_90 <- quantile(cumulative_emissions, probs = c(0.05, 0.95))
+  hw_90 <- (ci_90[2] - ci_90[1]) / 2
+  uaf <- 0.524417 * (hw_90 / mean(cumulative_emissions)) / 1.645006
+  
+  return(list(uaf = uaf, mean_emissions = mean(cumulative_emissions)))
+}
+```
+
+Note some important limitations to this. Error propagation across years inflates confidence interval width, which depending data dimensions, can produce UA \> 100% uncertainty as it exceeds mean emissions earlier in the trend.
+
+#### Single-Year Design:
+
+On the other hand, the single-year approach constrains simulation to single monitoring period:
+
+```{r}
+#| eval: true
+
+# Single-year approach: Isolates uncertainty to reporting period  
+single_year_simulation <- function(n_sim = 10000, year_data) {
+  
+  # Sample activity data
+  deforestation_ha <- rnorm(n_sim, 
+    mean = year_data$deforestation_ha,
+    sd = year_data$deforestation_ha * year_data$ad_uncertainty_pct / 100)
+  
+  # Sample emission factor
+  ef_tco2_ha <- rnorm(n_sim,
+    mean = year_data$ef_tco2_ha,
+    sd = year_data$ef_tco2_ha * year_data$ef_uncertainty_pct / 100)
+  
+  # Emissions distribution
+  emissions_tco2 <- deforestation_ha * ef_tco2_ha
+  
+  # Compute 90% CI
+  ci_90 <- quantile(emissions_tco2, probs = c(0.05, 0.95))
+  hw_90 <- (ci_90[2] - ci_90[1]) / 2
+  uaf <- 0.524417 * (hw_90 / mean(emissions_tco2)) / 1.645006
+  
+  return(list(
+    mean_emissions = mean(emissions_tco2),
+    hw_90_pct = (hw_90 / mean(emissions_tco2)) * 100,
+    uaf = uaf
+  ))
+}
+
+# Example: 2024 monitoring period
+year_2024 <- list(
+  deforestation_ha = 5000,
+  ad_uncertainty_pct = 12,      # Chapter 3 accuracy assessment
+  ef_tco2_ha = 200,
+  ef_uncertainty_pct = 18       # Chapter 2 IPCC defaults
+)
+
+results <- single_year_simulation(year_data = year_2024)
+cat(sprintf("Mean Emissions: %.0f tCO2\n", results$mean_emissions))
+cat(sprintf("90%% CI Half-Width: %.1f%%\n", results$hw_90_pct))
+cat(sprintf("Uncertainty Adjustment Factor: %.1f%%\n", results$uaf * 100))
+```
+
+Validated performance: Jurisdictional program testing achieved 21-percentage-point reduction (from 104% to 83% UAF) by switching from multi-year to single-year design.
+
+#### Reference Level Treatment
+
+Treat the HFLDCL baseline as deterministic or fixed verified value rather than stochastic and persistently in effect:
+
+```{r}
+#| eval: true
+
+# CORRECT: Deterministic baseline (Guyana-validated approach)
+hfldcl_fixed <- 21037534  # Arithmetic mean of verified 2016-2020 period (tCO2)
+
+# Simulate only crediting period emissions
+n_sim <- 10000
+emissions_2024 <- rnorm(n_sim, mean = 1000000, sd = 1000000 * 0.15)
+
+# Reductions with fixed baseline
+reductions_tco2 <- pmax(0, hfldcl_fixed - emissions_2024)
+
+# UAF calculation
+ci_90 <- quantile(reductions_tco2, probs = c(0.05, 0.95))
+hw_90 <- (ci_90[2] - ci_90[1]) / 2
+uaf <- 0.524417 * (hw_90 / mean(reductions_tco2)) / 1.645006
+
+cat(sprintf("\nDeterministic Baseline UAF: %.1f%%\n", uaf * 100))
+```
+
+One can assume the historical mean or a reference level that has been VVB-verified. By ART's definition, audit statements are irreversible and issues are non-fungible, which therefore adds removes compliance concerns value and helps avoid artificially inflating UAF with repeat revisions.
+
+#### Credit Recovery Provision
+
+Recalculate every 5 years to recover over-deducted credits:
 
 $$
-\text{Recovered Credits}_t = \sum_{i=1}^{5} (UA_{i,original} - UA_{i,updated}) \times \text{Emissions}_i
+\text{Recovered Credits}_t = \sum_{i=1}^{5} (UA_{i,annual} - UA_{cumulative}) \times \text{Emissions}_i
 $$
 
-This provision incentives continuous methodological improvement rather than penalizing early-stage high uncertainty.
+This incentivizes continuous methodological improvement.
 
 ## 4.4 Worked Example: Jurisdictional Program
 

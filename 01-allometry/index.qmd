@@ -607,7 +607,7 @@ equation_metadata |>
 *Table X: Equation Selection Documentation for REDD+ MRV*
 
 |  |  |
-|----|----|
+|------------------------------------|------------------------------------|
 | Attribute | Detail |
 | Equation Taxa/ID | *Quercus* spp. (Genus-level) |
 | Biomass Method | Non-destructive estimation using Terrestrial Laser Scanning (TLS) or Terrestrial LiDAR to model tree volume, which was then converted to biomass using published wood density values. |
@@ -617,7 +617,7 @@ equation_metadata |>
 | Citation | Stovall, A. E., Anderson-Teixeira, K. J., & Shugart, H. H. (2018). Terrestrial LiDAR-derived non-destructive woody biomass estimates for 10 hardwood species in Virginia. *Data in brief*, *19*, 1560-1569 |
 
 |  |  |
-|----|----|
+|------------------------------------|------------------------------------|
 | Attribute | Detail |
 | Equation Taxa/ID | Quercus rubra (Species-level) |
 | Biomass Method | Destructive Harvesting (Dimensional Analysis). The traditional method involving felling, weighing, and drying tree components to directly measure biomass. |
@@ -626,23 +626,23 @@ equation_metadata |>
 | Rationale for Selection | This equation provides high taxonomic specificity (a perfect species match for Quercus rubra). Although its location (West Virginia) is not as proximate as the Stovall (2018) study, it is still within the same Appalachian/Eastern US Temperate Forest region. It serves as a crucial check and source of high-quality empirical data derived from the gold-standard destructive method. `allodb` balances its lower geographic proximity with its higher taxonomic specificity and robust methodology, making it the strongest secondary candidate. |
 | Citation | Clark, A. (1985). *Weight, volume, and physical properties of major hardwood species in the Gulf and Atlantic Coastal Plains* (Vol. 250). US Department of Agriculture, Forest Service, Southeastern Forest Experiment Station |
 
-|               |                  |
-|---------------|------------------|
-| **Attribute** | **Detail**       |
-|               | Chave et al 2014 |
-|               |                  |
-|               |                  |
-|               |                  |
-|               |                  |
+|           |                  |
+|-----------|------------------|
+| Attribute | Detail           |
+|           | Chave et al 2014 |
+|           |                  |
+|           |                  |
+|           |                  |
+|           |                  |
 
-|               |                  |
-|---------------|------------------|
-| **Attribute** | **Detail**       |
-|               | Brown et al 1996 |
-|               |                  |
-|               |                  |
-|               |                  |
-|               |                  |
+|           |                  |
+|-----------|------------------|
+| Attribute | Detail           |
+|           | Brown et al 1996 |
+|           |                  |
+|           |                  |
+|           |                  |
+|           |                  |
 
 <br>
 
@@ -723,7 +723,7 @@ print(paste("Estimated AGB using the combined custom table:", agb_custom_estimat
 
 <br>
 
-## Biomass Estimations
+### Biomass Estimations
 
 Having identified candidate species equations, we now compare their aboveground biomass estimates with biome-generic equations [@chave2014improved; @brown1997a]. Noting their geographic mismatch, we compared these with pan-tropical equations specifically in order to highlight discrepancies in uncertainty and significance of geography to allometric calibrations.
 
@@ -1008,7 +1008,7 @@ text(x = 70, y = max(scbi_quercus$agb_species) * 0.9,
 
 Large trees exhibit greater prediction variance than small trees due to the power-law relationship (AGB ∝ DBH^\~2.5^). Without correction, uncertainty estimates are biased upward, particularly for canopy dominants.
 
-**Required corrections:**
+Required corrections:
 
 1.  Log-transformation of both variables
 2.  Weighted regression for residual heteroscedasticity
