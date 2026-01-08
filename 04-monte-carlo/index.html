@@ -276,7 +276,7 @@ window.Quarto = {
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content"><header id="title-block-header" class="quarto-title-block default"><div class="quarto-title">
-<div class="quarto-title-block"><div><h1 class="title"><span class="chapter-title">4. Monte Carlo</span></h1><button type="button" class="btn code-tools-button" id="quarto-code-tools-source"><i class="bi"></i> Code</button></div></div>
+<div class="quarto-title-block"><div><h1 class="title"><span class="chapter-title">4. Monte Carlo</span></h1><button type="button" class="btn code-tools-button dropdown-toggle" id="quarto-code-tools-menu" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi"></i> Code</button><ul class="dropdown-menu dropdown-menu-end" aria-labelelledby="quarto-code-tools-menu"><li><a id="quarto-show-all-code" class="dropdown-item" href="javascript:void(0)" role="button">Show All Code</a></li><li><a id="quarto-hide-all-code" class="dropdown-item" href="javascript:void(0)" role="button">Hide All Code</a></li><li><hr class="dropdown-divider"></li><li><a id="quarto-view-source" class="dropdown-item" href="javascript:void(0)" role="button">View Source</a></li></ul></div></div>
 </div>
 
 
@@ -299,7 +299,7 @@ UA_t = 0.524417 \times \frac{HW_{90\%}}{1.645006}
 <p>Where <span class="math inline">\(HW_{90\%}\)</span> represents the half-width of the 90% confidence interval around mean emissions. This UAF then determines the conservativeness deduction applied to creditable emissions.</p>
 <section id="environment-setup" class="level3 unnumbered"><h3 class="unnumbered anchored" data-anchor-id="environment-setup">Environment Setup</h3>
 <div class="cell">
-<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="fu">easypackages</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/easypackages/man/packages.html">packages</a></span><span class="op">(</span></span>
+<details class="code-fold"><summary>View Code</summary><div class="sourceCode" id="cb1"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="fu">easypackages</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/easypackages/man/packages.html">packages</a></span><span class="op">(</span></span>
 <span>  <span class="st">"ropensci/allodb"</span>, <span class="st">"animation"</span>, <span class="st">"BIOMASS"</span>, <span class="st">"cols4all"</span>, <span class="st">"covr"</span>, <span class="st">"cowplot"</span>, <span class="st">"caret"</span>,</span>
 <span>  <span class="st">"DescTools"</span>, <span class="st">"dataMaid"</span>, <span class="st">"dplyr"</span>, <span class="st">"FawR"</span>, <span class="st">"ForestToolsRS"</span>, <span class="st">"forestdata"</span>, </span>
 <span>  <span class="st">"flextable"</span>, <span class="st">"ggplot2"</span>, <span class="st">"giscoR"</span>, <span class="st">"ggfortify"</span>, <span class="st">"htmltools"</span>, <span class="st">"janitor"</span>, <span class="st">"jsonlite"</span>, </span>
@@ -311,12 +311,13 @@ UA_t = 0.524417 \times \frac{HW_{90\%}}{1.645006}
 <span>  <span class="st">"tidyverse"</span>, <span class="st">"tidyr"</span>, <span class="st">"tune"</span>, <span class="st">"useful"</span>,</span>
 <span>  prompt <span class="op">=</span> <span class="cn">F</span></span>
 <span>  <span class="op">)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 </div>
 </section></section><section id="simulation-design" class="level2"><h2 class="anchored" data-anchor-id="simulation-design">4.1 Simulation Design</h2>
 <p>Temporal Dimensions</p>
 <p>ART-TREES permits single-year or multi-year aggregation. Program participants may recognize that single-year simulations tend to reduce uncertainty by avoiding temporal error propagation. We discuss below some of the advantages and disadvantages in applying similar adjustments and aggregations to Monte Carlo simulated estimates.</p>
 <div class="cell">
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="co"># Single-year simulation (RECOMMENDED)</span></span>
+<details class="code-fold"><summary>View Code</summary><div class="sourceCode" id="cb2"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="co"># Single-year simulation (RECOMMENDED)</span></span>
 <span><span class="va">simulate_single_year</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">n_sim</span> <span class="op">=</span> <span class="fl">10000</span>, <span class="va">year_data</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  </span>
 <span>    <span class="co"># Sample activity data uncertainty</span></span>
@@ -360,13 +361,14 @@ UA_t = 0.524417 \times \frac{HW_{90\%}}{1.645006}
 <span><span class="co">## 90% CI Half-Width: 35.4%</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sprintf.html">sprintf</a></span><span class="op">(</span><span class="st">"Uncertainty Adjustment Factor: %.3f\n"</span>, <span class="va">results</span><span class="op">$</span><span class="va">uaf</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">## Uncertainty Adjustment Factor: 0.113</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 </div>
 <section id="baseline-treatment" class="level3"><h3 class="anchored" data-anchor-id="baseline-treatment">Baseline Treatment</h3>
 <p>Use the arithmetic mean of verified historical emissions as deterministic baseline, avoiding stochastic variance. For example, country X computed their HFLDCL as 21,037,534 tCO₂ rather than simulating historical variability <span class="citation" data-cites="artREDDEnvironmentalExcellence2021">(<a href="../references/index.html#ref-artREDDEnvironmentalExcellence2021" role="doc-biblioref">ART, 2021, Section 8.4</a>)</span>.</p>
 </section></section><section id="uncertainty-source-prioritization" class="level2"><h2 class="anchored" data-anchor-id="uncertainty-source-prioritization">4.2 Uncertainty Source Prioritization</h2>
 <section id="sensitivity-analysis" class="level3"><h3 class="anchored" data-anchor-id="sensitivity-analysis">Sensitivity Analysis</h3>
 <div class="cell">
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="co"># Sensitivity analysis across uncertainty sources</span></span>
+<details class="code-fold"><summary>View Code</summary><div class="sourceCode" id="cb3"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="co"># Sensitivity analysis across uncertainty sources</span></span>
 <span><span class="va">sensitivity_analysis</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">base_scenario</span>, <span class="va">n_sim</span> <span class="op">=</span> <span class="fl">10000</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  </span>
 <span>  <span class="va">scenarios</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span><span class="op">(</span></span>
@@ -398,13 +400,14 @@ UA_t = 0.524417 \times \frac{HW_{90\%}}{1.645006}
 <span><span class="co">## low_ad     X[[i]] 0.09896063  31.04225</span></span>
 <span><span class="co">## low_ef     X[[i]] 0.07895226  24.76597</span></span>
 <span><span class="co">## low_both   X[[i]] 0.05693012  17.85800</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 </div>
 <p>For jurisdictions where emission factor uncertainty dominates (typical in Tier 1 approaches), investments in plot-based Tier 2 emission factors yield greater UAF reductions than marginal improvements in classification accuracy.</p>
 </section></section><section id="optimization-strategies" class="level2"><h2 class="anchored" data-anchor-id="optimization-strategies">4.3 Optimization Strategies</h2>
 <section id="bootstrap-sampling" class="level3"><h3 class="anchored" data-anchor-id="bootstrap-sampling">Bootstrap Sampling</h3>
 <p>When probability distributions are unknown, ART-TREES requires bootstrap resampling. Efficient implementation draws samples from empirical error distributions:</p>
 <div class="cell">
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="co"># Bootstrap activity data from confusion matrix</span></span>
+<details class="code-fold"><summary>View Code</summary><div class="sourceCode" id="cb4"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="co"># Bootstrap activity data from confusion matrix</span></span>
 <span><span class="va">bootstrap_activity_data</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">n_sim</span>, <span class="va">confusion_matrix</span>, <span class="va">mapped_area_ha</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  </span>
 <span>  <span class="co"># Extract user's accuracy (precision) for focal class</span></span>
@@ -418,13 +421,14 @@ UA_t = 0.524417 \times \frac{HW_{90\%}}{1.645006}
 <span>  </span>
 <span>  <span class="kw"><a href="https://rdrr.io/r/base/function.html">return</a></span><span class="op">(</span><span class="va">true_area_ha</span><span class="op">)</span></span>
 <span><span class="op">}</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 </div>
 </section><section id="temporal-aggregation" class="level3"><h3 class="anchored" data-anchor-id="temporal-aggregation">Temporal Aggregation</h3>
 <section id="single-year-vs.-multi-year-simulation-design" class="level4"><h4 class="anchored" data-anchor-id="single-year-vs.-multi-year-simulation-design">Single-Year vs.&nbsp;Multi-Year Simulation Design</h4>
 <p>ART-TREES permits two approaches to temporal scope in Monte Carlo simulations. Recent validation work demonstrates that single-year simulation design substantially reduces uncertainty compared to multi-year aggregation approaches.</p>
 </section><section id="multi-year-aggregation" class="level4"><h4 class="anchored" data-anchor-id="multi-year-aggregation">Multi-Year Aggregation:</h4>
 <div class="cell">
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="co"># Multi-year approach: Propagates uncertainty forward through years</span></span>
+<details class="code-fold"><summary>View Code</summary><div class="sourceCode" id="cb5"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="co"># Multi-year approach: Propagates uncertainty forward through years</span></span>
 <span><span class="va">multi_year_simulation</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">n_sim</span> <span class="op">=</span> <span class="fl">10000</span>, <span class="va">years_data</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">cumulative_emissions</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric.html">numeric</a></span><span class="op">(</span><span class="va">n_sim</span><span class="op">)</span></span>
 <span>  </span>
@@ -445,12 +449,13 @@ UA_t = 0.524417 \times \frac{HW_{90\%}}{1.645006}
 <span>  </span>
 <span>  <span class="kw"><a href="https://rdrr.io/r/base/function.html">return</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span><span class="op">(</span>uaf <span class="op">=</span> <span class="va">uaf</span>, mean_emissions <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html">mean</a></span><span class="op">(</span><span class="va">cumulative_emissions</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="op">}</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 </div>
 <p>Note some important limitations to this. Error propagation across years inflates confidence interval width, which depending data dimensions, can produce UA &gt; 100% uncertainty as it exceeds mean emissions earlier in the trend.</p>
 </section><section id="single-year-design" class="level4"><h4 class="anchored" data-anchor-id="single-year-design">Single-Year Design:</h4>
 <p>On the other hand, the single-year approach constrains simulation to single monitoring period:</p>
 <div class="cell">
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="co"># Single-year approach: Isolates uncertainty to reporting period  </span></span>
+<details class="code-fold"><summary>View Code</summary><div class="sourceCode" id="cb6"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="co"># Single-year approach: Isolates uncertainty to reporting period  </span></span>
 <span><span class="va">single_year_simulation</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">n_sim</span> <span class="op">=</span> <span class="fl">10000</span>, <span class="va">year_data</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  </span>
 <span>  <span class="co"># Sample activity data</span></span>
@@ -493,12 +498,13 @@ UA_t = 0.524417 \times \frac{HW_{90\%}}{1.645006}
 <span><span class="co">## 90% CI Half-Width: 35.0%</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sprintf.html">sprintf</a></span><span class="op">(</span><span class="st">"Uncertainty Adjustment Factor: %.1f%%\n"</span>, <span class="va">results</span><span class="op">$</span><span class="va">uaf</span> <span class="op">*</span> <span class="fl">100</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">## Uncertainty Adjustment Factor: 11.2%</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 </div>
 <p>Validated performance: Jurisdictional program testing achieved 21-percentage-point reduction (from 104% to 83% UAF) by switching from multi-year to single-year design.</p>
 </section><section id="reference-level-treatment" class="level4"><h4 class="anchored" data-anchor-id="reference-level-treatment">Reference Level Treatment</h4>
 <p>Treat the HFLDCL baseline as deterministic or fixed verified value rather than stochastic and persistently in effect:</p>
 <div class="cell">
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="co"># CORRECT: Deterministic baseline (Guyana-validated approach)</span></span>
+<details class="code-fold"><summary>View Code</summary><div class="sourceCode" id="cb7"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="co"># CORRECT: Deterministic baseline (Guyana-validated approach)</span></span>
 <span><span class="va">hfldcl_fixed</span> <span class="op">&lt;-</span> <span class="fl">21037534</span>  <span class="co"># Arithmetic mean of verified 2016-2020 period (tCO2)</span></span>
 <span></span>
 <span><span class="co"># Simulate only crediting period emissions</span></span>
@@ -516,6 +522,7 @@ UA_t = 0.524417 \times \frac{HW_{90\%}}{1.645006}
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sprintf.html">sprintf</a></span><span class="op">(</span><span class="st">"\nDeterministic Baseline UAF: %.1f%%\n"</span>, <span class="va">uaf</span> <span class="op">*</span> <span class="fl">100</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## Deterministic Baseline UAF: 0.4%</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 </div>
 <p>One can assume the historical mean or a reference level that has been VVB-verified. By ART’s definition, audit statements are irreversible and issues are non-fungible, which therefore adds removes compliance concerns value and helps avoid artificially inflating UAF with repeat revisions.</p>
 </section><section id="credit-recovery-provision" class="level4"><h4 class="anchored" data-anchor-id="credit-recovery-provision">Credit Recovery Provision</h4>
@@ -528,7 +535,7 @@ UA_t = 0.524417 \times \frac{HW_{90\%}}{1.645006}
 <section id="multi-source-integration" class="level3"><h3 class="anchored" data-anchor-id="multi-source-integration">Multi-Source Integration</h3>
 <p>Combine uncertainties from all three chapters into crediting period simulation:</p>
 <div class="cell">
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="co"># Complete jurisdictional simulation</span></span>
+<details class="code-fold"><summary>View Code</summary><div class="sourceCode" id="cb8"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="co"># Complete jurisdictional simulation</span></span>
 <span><span class="va">jurisdictional_simulation</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">n_sim</span> <span class="op">=</span> <span class="fl">10000</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  </span>
 <span>  <span class="co"># Activity Data (Chapter 3: ±12% from accuracy assessment)</span></span>
@@ -581,6 +588,7 @@ UA_t = 0.524417 \times \frac{HW_{90\%}}{1.645006}
 <span><span class="co">## Uncertainty Deduction: 0.6%</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sprintf.html">sprintf</a></span><span class="op">(</span><span class="st">"Creditable Emissions: %.0f tCO2\n"</span>, <span class="va">program_results</span><span class="op">$</span><span class="va">creditable_tco2</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">## Creditable Emissions: 19827599 tCO2</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 </div>
 </section></section><section id="compliance-checklist" class="level2"><h2 class="anchored" data-anchor-id="compliance-checklist">4.5 Compliance Checklist</h2>
 <ul>
