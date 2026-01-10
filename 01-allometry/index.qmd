@@ -29,15 +29,11 @@ Allometric equations represent the proportional and scaling relationships betwee
 
 This biological principle underpins REDD+ carbon accounting: allometric equations translate field measurements of diameter at breast height (DBH) into biomass estimates, forming the foundation of emission reduction quantification.
 
-<br>
-
 ::: callout-tip
 ## Allometry Investment
 
 Although Section 8 exempts structural allometric uncertainty when models are applied consistently, the choice of which model to apply directly impacts reported uncertainty. Allometry variance is absolute and compounds more dramatically so that model selection determines the magnitude of random error that cannot be exempted downstream. In practical terms, selecting a model with 20% RMSE versus 8% RMSE determines whether your project faces a 6% or 2% carbon credit deduction, representing a difference worth \$200k in a 1M tCO~2~^-e^ project at \$5/tonne.
 :::
-
-<br>
 
 ### Environment Setup (R) {.unnumbered}
 
@@ -116,7 +112,7 @@ knitr::opts_chunk$set(
 #| output: false
 #| error: false
 #| eval: false
-#| echo: false
+#| echo: true
 # Installer prerequisites
 import subprocess, sys
 
@@ -173,8 +169,8 @@ This power-law form reflects the self-similarity principle observed in tree grow
 
 In this chapter, we compare allometry species-specific allometry with biome-generic equations that are more commonly applied in REDD+ programs to demonstrate how uncertainty metrics can inform model selection and impact carbon credit deductions. We adopt the broadest definition of allometry as any correlation between tree dimensions, whether in linear, log-log, power-law, or other functional forms, to examine the following questions:
 
-1.  How should uncertainty metrics inform model selection and optimization?
-2.  How does allometry uncertainty impacts carbon credit deductions
+-   How should uncertainty metrics inform model selection and optimization?
+-   How does allometry uncertainty impacts carbon credit deductions
 
 ## 1.2 Model Selection {#sec-model-selection}
 
@@ -199,8 +195,6 @@ Allometric equations are classified by taxonomic scope and environmental specifi
     -   Climate: Temperature and precipitation gradients captured through environmental stress factors
     -   Geomorphology: Tidal inundation frequency, elevation, or hydrological regime
 
-<br>
-
 ::: callout-tip
 ## Mangroves Tree Height
 
@@ -209,9 +203,9 @@ In specialized growing environments, such as mangrove habitats, the choice of al
 However, while inclusion of tree height significantly reduces bias in AGB estimates [@rutishauser2013generic; @chave2014improved], the accurate measurement of tree height in closed-canopy forests is especially challenging[@king2011allometry]. Field data with high levels of tree height variance can limit these destructively sampled allometry models. This represents investment opportunity from reducing uncertainty through improved survey technology, such as LiDAR and RADAR [@feldpausch2011height; @valbuena2016sensitivity].
 :::
 
-<br>
-
 #### Data Preparation {.unnumbered}
+
+We imported the scbi_stem1 dataset from the allodb package, which contains 2,287 individual tree measurements from the ForestGEO permanent plot at Front Royal, Virginia. The dataset includes 12 families, spanning multiple genera and species (Table 1.1). This taxonomic diversity allows us to demonstrate equation selection across different levels of specificity.
 
 ```{r}
 #| comment: NA
@@ -230,8 +224,11 @@ data(scbi_stem1)
 
 scbi_stem1 |> dplyr::group_by(Family, genus, species) |>
 	dplyr::summarise(`Total Trees (n)` = n()) |>
-	flextable::flextable()|> flextable::autofit() |>
-	flextable::fontsize(size = 9, part = "all")
+	flextable::flextable()|> 
+	flextable::fontsize(size = 9, part = "body") |>
+  flextable::fontsize(size = 8, part = "footer") |>
+	flextable::set_table_properties(scbi_stem1, layout = "autofit", width=1, align = "center") 
+
 ```
 
 ```{python}
@@ -241,14 +238,18 @@ scbi_stem1 |> dplyr::group_by(Family, genus, species) |>
 #| output: false
 #| error: false
 #| eval: false
-#| echo: false
+#| echo: true
+
+## ----- Python cell ----- ##
+## ----------------------- ##
+
 demo_data_py = pd.read_csv("./data/scbi_stem1.csv")
 ```
 
 ::: callout-tip
-## Compiling Species' Allometries
+## Compiling Allometries
 
-Scope permitting, this training would examine a full allometry worflow. Effectively, this which would require repeating the same process below for all genus in our field dataset, incorporating equations per species cumulatively. We provide brief demonstration of how to add each new equations using `alldob` operations.
+Scope permitting, this training would examine a full allometry workflow. Effectively, this which would require repeating the same process below for all genus in our field dataset, incorporating equations per species cumulatively. We provide brief demonstration of how to add each new equations using `alldob` operations.
 :::
 
 We filter `scbi_stem1` to *Quercus* observations, the largest genus subsample, to compare the scaling impact of generic allometry with subspecies and genus equations. Missing entries are also removed, providing a new sample of 84 stems from the dataset's total measurements of 2,287 trees.
@@ -257,6 +258,8 @@ We filter `scbi_stem1` to *Quercus* observations, the largest genus subsample, t
 -   `genus`: Taxonomic genus identification
 -   `species`: Species epithet
 -   `Family`: Taxonomic family classification
+
+To demonstrate the comparative analysis, we created two filtered subsets: a genus-level dataset containing all Quercus observations (n=84 stems) and a species-specific subset for Quercus rubra. Missing DBH values were removed to ensure clean input for subsequent allometric calculations. The filtering procedure is detailed in Section 1.6.
 
 ```{r}
 #| comment: NA
@@ -303,7 +306,9 @@ psych::describe(scbi_quercus_tbl) |>
     TRUE ~ Variable)) |>
   flextable::flextable() |> 
   flextable::colformat_double(big.mark = ",", digits = 3) |>
-	flextable::autofit()
+	flextable::fontsize(size = 9, part = "all") |>
+	flextable::set_table_properties(layout = "autofit", width = 1)
+	
 
 # 'head()' limits no.# of rows returned
 #head(scbi_quercus, n=10) |>
@@ -311,15 +316,7 @@ psych::describe(scbi_quercus_tbl) |>
 #	flextable::autofit()
 ```
 
-<br>
-
-::: callout-tip
-## DBH Spread
-
-At this early stage in the workflow, it helps to quickly scan the range and spread in DBH values. Applied directly, candidate equations can be filtered by min and max dbh values Deviation from the mean provides indicators of the statistical operations needed ahead during equation selection, bias correction, and model optimization. It also informs sample
-:::
-
-<br>
+At this stage in the workflow, it helps to quickly scan the range and spread in DBH values. Applied directly, candidate equations can be filtered by min and max dbh values Deviation from the mean provides indicators of the statistical operations needed ahead during equation selection, bias correction, and model optimization. It also informs sample.
 
 ```{python}
 #| comment: NA
@@ -328,7 +325,11 @@ At this early stage in the workflow, it helps to quickly scan the range and spre
 #| output: false
 #| error: false
 #| eval: false
-#| echo: false
+#| echo: true
+
+## ----- Python cell ----- ##
+## ----------------------- ##
+
 # tidy
 demo_data_py = (
 	demo_data_py
@@ -362,10 +363,12 @@ print(tabulate(desc_stats,
 
 Following best practices from forest inventory methodology [@duncansonAbovegroundWoodyBiomass2021], equation selection may proceed through the four sequential criteria in order of their priority below:
 
-1.  Geographic Proximity: Prioritize equations developed in climates and soil conditions similar to your project area
-2.  Taxonomic Specificity: Prefer species-level \> genus-level \> family-level equations
-3.  DBH Range Coverage: Ensure equation applicability spans ≥80% of measured diameter distribution
-4.  Sample Size Adequacy: Minimum n=50 trees for species-specific; n\>150 for genus-level equations[^index-2]
+-   Geographic Proximity: Prioritize equations developed in climates and soil conditions similar to your project area
+-   Taxonomic Specificity: Prefer species-level \> genus-level \> family-level equations
+-   DBH Range Coverage: Ensure equation applicability spans ≥80% of measured diameter distribution
+-   Sample Size Adequacy: Minimum n=50 trees for species-specific; n\>150 for genus-level equations[^index-2]
+
+The allodb equations database contains 570 allometric equations with 47 metadata fields documenting equation provenance, geographic origin, taxonomic scope, DBH range, sample size, and model fitting parameters. Key selection criteria include geographic coordinates (lat/long), equation taxa, allometry specificity (species/genus/family), DBH range (min/max), sample size, and bias correction status. The complete metadata structure is available in Section 1.6.
 
 ```{r}
 #| message: false
@@ -382,8 +385,6 @@ dplyr::glimpse(equations)
 ```
 
 *Table X: Full list of variables in `equations` metadata available used in selection criteria using `allodb` package below.*
-
-<br>
 
 ```{r}
 #| context: setup
@@ -430,7 +431,9 @@ flextable::flextable(eq_tab_acer[, show_cols]) |>
     equation_taxa         = "Equation Taxa",
     allometry_specificity = "Allometry Specificity",
     equation_allometry    = "Equation Allometry"
-    )) |> flextable::autofit()
+    )) |> 
+	flextable::fontsize(size = 9, part = "all") |>
+	flextable::set_table_properties(layout = "autofit", width = 1)
 
 # fix coordinates for html tables
 eq_tab_acer_clean = eq_tab_acer |> dplyr::mutate(
@@ -449,9 +452,13 @@ eq_tab_acer_clean = eq_tab_acer |> dplyr::mutate(
 -   In subsequent cells, we import pan-tropical equations and fit them with values from by Global Wood Density database using the `computeAGB()` and`getWoodDensity()` functions from the `BIOMASS` package [@BIOMASS-2].
 :::
 
-<br>
-
 #### Step 1: Geographic Selection
+
+We recommend using latitude and longitude variables over the field called `geographic_area` when filtering `allodb` database due to entry inconsistencies. This is done below using `dplyr` SQL. However, once the specific allometric equation is identified, we must re-select it using the `allodb` native function called `new_equations()` and the equation's ID# [@allodb].
+
+In subsequent cells, we import pan-tropical equations and fit them with values from by Global Wood Density database using the `computeAGB()` and`getWoodDensity()` functions from the `BIOMASS` package [@BIOMASS-2].
+
+We filtered equations to North America using latitude bounds of 24-72°N and longitude bounds of -168 to -52°W. This geographic constraint ensures climate similarity with our Front Royal, Virginia study site (Cfa - humid subtropical classification). The filter retained 157 equations from the original 570, including equations developed in temperate forests across the eastern United States, southeastern Canada, and Alaska.
 
 ```{r}
 #| comment: NA
@@ -468,7 +475,11 @@ eq_region <- equations |>
 
 # tabulate
 show_cols   = c("ref_id", "equation_taxa", "allometry_specificity", "equation_allometry")
-head(eq_region[, show_cols]) |> flextable::flextable() |> flextable::autofit() # top six rows only
+head(eq_region[, show_cols]) |> 
+	flextable::flextable() |> 
+	flextable::fontsize(size = 9, part = "all") |>
+	flextable::set_table_properties(layout = "autofit", width = 1)
+
 #flextable::flextable(eq_region[, show_cols]) |> flextable::autofit() # complete list for Appendix
 cat(sprintf("Equations valid to region: %d\n", nrow(eq_region)))
 ```
@@ -500,7 +511,10 @@ eq_region_genus = eq_region |>
 			)
 
 # tabulate
-flextable::flextable(eq_region_species[, show_cols]) |> flextable::autofit()
+flextable::flextable(eq_region_species[, show_cols]) |> 
+	flextable::fontsize(size = 9, part = "all") |>
+	flextable::set_table_properties(layout = "autofit", width = 1)
+
 #flextable::flextable(eq_region_genus[, show_cols]) |> flextable::autofit()
 cat(sprintf("Genus-specific equations valid to region: %d\n", nrow(eq_region_genus)))
 cat(sprintf("Species-specific equations valid to region: %d\n", nrow(eq_region_species)))
@@ -537,8 +551,14 @@ eq_region_species_dbh <- eq_region_species |>
     dbh_max_cm >= field_dbh_max * 0.7) 
 		# extrapolation of crowns allowed, consider outliers
 
-flextable::flextable(eq_region_genus_dbh[, show_cols]) |> flextable::autofit()
-flextable::flextable(eq_region_species_dbh[, show_cols]) |> flextable::autofit()
+flextable::flextable(eq_region_genus_dbh[, show_cols]) |> 
+	flextable::fontsize(size = 9, part = "all") |>
+	flextable::set_table_properties(layout = "autofit", width = 1)
+
+flextable::flextable(eq_region_species_dbh[, show_cols]) |> 
+	flextable::fontsize(size = 9, part = "all") |>
+	flextable::set_table_properties(layout = "autofit", width = 1)
+	
 cat(sprintf("Genus-specific equations valid for region, Quercus, & DBH range: %d\n", nrow(eq_region_genus_dbh)))
 cat(sprintf("Specific-specific equations valid for region, Quercus, & DBH range: %d\n", nrow(eq_region_species_dbh)))
 
@@ -549,6 +569,8 @@ view(equations)
 #### Step 4: Sample Size Selection
 
 The required sample size for allometric equation development depends on desired precision and diameter distribution. @roxburgh2015guidelines demonstrated through Monte Carlo resampling that biomass predictions with a standard deviation within 7.5% of mean demands sample sizes of between 17 and 166, depending on the algorithm employed. Most importantly, stratified sampling across age class or dbh size is critical to improving precision.
+
+Following Roxburgh et al. (2015), we applied a minimum sample size threshold of n ≥ 17 to ensure equations were derived from adequate destructive sampling campaigns. This threshold balances precision requirements (coefficient of variation ≤7.5%) with practical constraints of destructive sampling costs. Stratification across DBH size classes during equation development is equally critical for capturing biomass variance across age cohorts.
 
 ```{r}
 #| comment: NA
@@ -565,8 +587,14 @@ eq_region_species_dbh_sample <- eq_region_species_dbh |>
   dplyr::filter(sample_size >= 17)  # Minimum for species-specific equations
 
 # Display selected equations & tally valid equations remaining
-flextable::flextable(eq_region_genus_dbh_sample[, show_cols]) |> flextable::autofit()
-flextable::flextable(eq_region_species_dbh_sample[, show_cols]) |> flextable::autofit()
+flextable::flextable(eq_region_genus_dbh_sample[, show_cols]) |> 
+	flextable::fontsize(size = 9, part = "all") |>
+	flextable::set_table_properties(layout = "autofit", width = 1)
+	
+flextable::flextable(eq_region_species_dbh_sample[, show_cols]) |>
+	flextable::fontsize(size = 9, part = "all") |>
+	flextable::set_table_properties(layout = "autofit", width = 1)
+
 cat(sprintf("Genus-specific equations meeting all criteria: %d\n", nrow(eq_region_genus_dbh_sample)))
 cat(sprintf("Species-specific equations meeting all criteria: %d\n", nrow(eq_region_species_dbh_sample)))
 ```
@@ -601,7 +629,9 @@ equation_metadata <- data.frame(
 equation_metadata |>
   flextable::flextable() |>
   flextable::set_caption("Equation Selection Documentation for REDD+ MRV") |>
-  flextable::autofit()
+	flextable::fontsize(size = 9, part = "all") |>
+	flextable::set_table_properties(layout = "autofit", width = 1)
+
 ```
 
 *Table X: Equation Selection Documentation for REDD+ MRV*
@@ -625,26 +655,6 @@ equation_metadata |>
 | Empirical Data | This is a species-specific equation developed explicitly for Northern Red Oak (Quercus rubra). The sample size is typically smaller than meta-analyses but provides high-resolution, direct measurements. |
 | Rationale for Selection | This equation provides high taxonomic specificity (a perfect species match for Quercus rubra). Although its location (West Virginia) is not as proximate as the Stovall (2018) study, it is still within the same Appalachian/Eastern US Temperate Forest region. It serves as a crucial check and source of high-quality empirical data derived from the gold-standard destructive method. `allodb` balances its lower geographic proximity with its higher taxonomic specificity and robust methodology, making it the strongest secondary candidate. |
 | Citation | Clark, A. (1985). *Weight, volume, and physical properties of major hardwood species in the Gulf and Atlantic Coastal Plains* (Vol. 250). US Department of Agriculture, Forest Service, Southeastern Forest Experiment Station |
-
-|           |                  |
-|-----------|------------------|
-| Attribute | Detail           |
-|           | Chave et al 2014 |
-|           |                  |
-|           |                  |
-|           |                  |
-|           |                  |
-
-|           |                  |
-|-----------|------------------|
-| Attribute | Detail           |
-|           | Brown et al 1996 |
-|           |                  |
-|           |                  |
-|           |                  |
-|           |                  |
-
-<br>
 
 #### Step 5: Combining Species Equations
 
@@ -675,8 +685,6 @@ This process yields the location-specific parameters:
 -   σ (residual standard deviation): Quantifies the prediction uncertainty for the calibrated equation.
 
 The resulting equation is location-specific, informed by broader taxonomic and geographic patterns encoded in the weighted source equations.
-
-\
 
 ```{r}
 #| comment: NA
@@ -710,22 +718,30 @@ genus = "Quercus",
 print(paste("Estimated AGB using the combined custom table:", agb_custom_estimate, "kg"))
 ```
 
-<b></b>
+This weighted synthesis approach ensures that geographically proximate, species-specific equations with larger sample sizes exert greater influence on the final calibrated model. The resulting equation incorporates collective information from all weighted candidates while reflecting local wood density and architectural characteristics. Implementation details are provided in Section 1.6.
 
 ::: callout-tip
 ## Allometry Best Practices
 
-1.  Transparency: Document all criteria and thresholds
-2.  Reproducibility: Code-based workflow enables auditing
-3.  Bias Reduction: Geographic and taxonomic filtering minimizes systematic errors to species level
-4.  Uncertainty Surveillance: Multiple equations enable sensitivity analysis (Section 1.5)
+-   Transparency: Document all criteria and thresholds
+-   Reproducibility: Code-based workflow enables auditing
+-   Bias Reduction: Geographic and taxonomic filtering minimizes systematic errors to species level
+-   Uncertainty Surveillance: Multiple equations enable sensitivity analysis (Section 1.5)
 :::
-
-<br>
 
 ### Biomass Estimations
 
 Having identified candidate species equations, we now compare their aboveground biomass estimates with biome-generic equations [@chave2014improved; @brown1997a]. Noting their geographic mismatch, we compared these with pan-tropical equations specifically in order to highlight discrepancies in uncertainty and significance of geography to allometric calibrations.
+
+We calculated aboveground biomass for all 84 Quercus stems using five allometric approaches:
+
+-   Species-specific (allodb weighted synthesis): Location-optimized equation incorporating multiple Quercus species equations
+-   Genus-level (Stovall 2018): Site-specific Quercus equation from the same SCBI location
+-   Chave et al. 2014 (pan-tropical moist): Generic equation incorporating wood density and environmental stress factors
+-   Chave et al. 2005 (pan-tropical): Earlier generic formulation with DBH and wood density
+-   Brown 1997 (tropical): Widely used generic equation based on DBH alone
+
+Wood density values were extracted from the Global Wood Density database (Vieilledent et al., 2018) using the BIOMASS package, yielding mean WD = 0.630 g/cm³ for Quercus species (consistent with oak hardwood density). Note that Chave’s 2014 equation’s outputs required unit conversion from Mg to kg (×1000; Chave et al, 2014, Réjou-Méchain, Tanguy, Piponiot, Chave, & Hérault, 2017), while Brown 1997 required division by 100 to match the original scale. These unit conversions are critical for accurate inter-equation comparison (see Section 1.6 for implementation).
 
 ```{r}
 #| comment: NA
@@ -798,7 +814,9 @@ scbi_quercus$agb_brown1997 <- exp(2.134 + 2.53 * log(scbi_quercus$dbh))
 scbi_quercus$agb_brown1997 = scbi_quercus$agb_brown1997 / 100 
 
 flextable::flextable(scbi_quercus) |>
-	flextable::autofit()
+	flextable::fontsize(size = 9, part = "all") |>
+	flextable::set_table_properties(layout = "autofit", width = 1)
+
 ```
 
 Table 1D: Aboveground biomass estimates derived from five allometry equations of varying scales
@@ -912,11 +930,11 @@ normality_decision <- data.frame(Variable = c(
 normality_decision |>
   flextable::flextable() |>
   flextable::set_caption("Normality assessment and transformation by equation type") |>
-  flextable::fontsize(size = 9, part = "all") |>
   flextable::align(j = 2:6, align = "center", part = "all") |>
   flextable::align(j = c(1, 7), align = "left", part = "all") |>
   flextable::bold(j = "Decision", part = "body") |>
-  flextable::autofit() |>
+	flextable::fontsize(size = 9, part = "all") |>
+	flextable::set_table_properties(layout = "autofit", width = 1) |>
   flextable::add_footer_lines(
     "All AGB estimates exhibit significant departure from normality (p < 0.001) with extreme right-skew (skewness > 2) regardless of equation type, justifying log-transformation in subsequent analysis.") |>
   flextable::fontsize(size = 8, part = "footer") |>
@@ -963,11 +981,27 @@ ggplot(agb_comparison, aes(x = AGB)) +
 
 ### Bivariate Testing
 
-Heteroscedasticity violates ordinary least squares assumptions, producing unreliable standard errors and inflated uncertainty estimates. Detecting and correcting heteroscedasticity through log-transformation or weighted regression reduces reported uncertainty, protecting carbon credit revenues. Adding to the standard normality assessments above, the Breusch-Pagan test helps to identify which specific variable is driving the heteroscedasticity. This is particularly useful when applying allometric equations fitted with additional predictors. The Breusch-Pagan test achieves this by regressing squared residuals, where:
+Heteroscedasticity violates ordinary least squares assumptions, producing unreliable standard errors and inflated uncertainty estimates that threaten carbon credit revenues. The Breusch-Pagan test identifies which predictor drives heteroscedasticity by regressing squared residuals against predictor values:
 
--   Null hypothesis (H₀): Variance is constant or homoscedastic
--   Alternative (H₁): Variance changes with predictor values and is heteroscedastic
--   Decision rule: p \< 0.05 =\> Reject H₀, confirming heteroscedasticity
+-   Null hypothesis (H₀): Homoscedastic (constant variance)
+-   Alternative (H₁): Heteroscedastic (variance changes with predictors)
+-   Decision rule: p \< 0.05 rejects H₀
+
+Large trees exhibit greater prediction variance than small trees due to power-law scaling (AGB ∝ DBH\^2.5). Without correction, uncertainty estimates are systematically upward-biased, particularly for canopy dominants that drive cumulative biomass.
+
+Test Results
+
+-   BP statistic: 10.0051
+-   p-value: 0.0016
+-   Decision: Heteroscedasticity confirmed
+
+The diagnostic plot (Figure 1.2) shows the classic funnel pattern: small trees (DBH \< 20 cm) cluster tightly around the fitted line while large trees (DBH \> 60 cm) exhibit substantial scatter. This reflects power-law scaling where small multiplicative errors in β translate to large absolute errors for canopy dominants.
+
+#### Common Corrections
+
+-   Log-transformation of both variables
+-   Weighted regression for residual heteroscedasticity
+-   Robust standard errors to supplement transformation
 
 ```{r}
 #| comment: NA
@@ -1001,19 +1035,13 @@ text(x = 70, y = max(scbi_quercus$agb_species) * 0.9,
      adj = c(0, 1), cex = 0.9, font = 2)
 ```
 
-<br>
-
-::: callout-important
-## Uncertainty Effect
-
 Large trees exhibit greater prediction variance than small trees due to the power-law relationship (AGB ∝ DBH^\~2.5^). Without correction, uncertainty estimates are biased upward, particularly for canopy dominants.
 
 Required corrections:
 
-1.  Log-transformation of both variables
-2.  Weighted regression for residual heteroscedasticity
-3.  Robust standard errors to supplement transformation
-:::
+-   Log-transformation of both variables
+-   Weighted regression for residual heteroscedasticity
+-   Robust standard errors to supplement transformation
 
 ## 1.3 Model Optimization
 
@@ -1033,13 +1061,21 @@ where
 -   Variance stabilizes across tree sizes
 -   Residuals are normalized enough to satisfy OLS assumptions that our predictions are dependent on
 
-<br>
-
 ::: callout-important
 ## Back-Transformation
 
 As demonstrated below, it is important to back-transform the log-scale of RMSE. This converts log-scale error to proportional error on its original scale, which enables direct comparison with linear model uncertainty while preserving variance structure stabilized by log-transformation.
 :::
+
+We fitted linear and log-transformed regression models for all five allometric equations, comparing their prediction accuracy using:
+
+-   MAE (Mean Absolute Error): Average absolute deviation in kg
+-   RMSE (Root Mean Square Error): Standard deviation of residuals in kg
+-   Relative RMSE (%): RMSE as percentage of mean biomass, enabling cross-equation comparison
+
+For log-transformed models, predictions were back-transformed to the original scale using exponentiation (exp(predicted log-AGB)), and metrics were calculated on back-transformed residuals. This ensures fair comparison with linear models while preserving the variance-stabilizing benefits of log-transformation.
+
+Results (Table X) demonstrate dramatic improvement: log-transformation reduced relative RMSE from 45-60% to 0.3-17% across all equation types—representing 40-60 percentage point reductions in uncertainty. The species-specific log model achieved the lowest uncertainty (0.34%), while even generic pan-tropical equations improved substantially under log-transformation.
 
 ```{r}
 #| comment: NA
@@ -1142,14 +1178,14 @@ transformation_comparison$Reduction = transformation_comparison$RMSE_Lin_rel -
 	as.numeric(transformation_comparison$RMSE_Log_rel) |> round(2)
 transformation_comparison |> 
 	flextable::flextable() |> 
-	flextable::autofit()
-```
+	flextable::fontsize(size = 9, part = "all") |>
+	flextable::set_table_properties(layout = "autofit", width = 1)
 
-<br>
+```
 
 Results shown in two previous tables provides the necessary justification for designing the cross-validation workflow in the next section, where we implement log-transformed models and quantify the uncertainty reduction according to different bias corrections and hyper-parameter tuning.
 
-#### Age-Size Training Stratification {.unnumbered}
+#### Age-Class Stratification Split {.unnumbered}
 
 Stratification by size class or age cohort involves a critical component in forest biomass modeling. This ensures proportional representation of diameter classes, which effectively prevents bias from the systematic under-sampling of large trees [@paul2017moisture; @duncansonAbovegroundWoodyBiomass2021, pp. 100].
 
@@ -1220,36 +1256,43 @@ split_verification |>
   flextable::align(j = 1, align = "left", part = "all") |>
   flextable::align(j = 2:7, align = "center", part = "all") |>
   flextable::colformat_double(j = c("cal_pct", "val_pct", "Difference_pct"), digits = 1) |>
-  flextable::autofit() |>
+	flextable::fontsize(size = 9, part = "all") |>
+  flextable::fontsize(size = 8, part = "footer") |>
+	flextable::set_table_properties(layout = "autofit", width = 1) |>
   flextable::add_footer_lines(
     "Stratified sampling ensures DBH class proportions remain similar between datasets. 'Cal. % of Total' and 'Val. % of Total' show each class as % of its respective dataset. Δ shows absolute difference - values <2% indicate good proportionality preservation."
   ) |>
-  flextable::fontsize(size = 8, part = "footer") |>
   flextable::italic(part = "footer")
 ```
 
 *Table X: Calibration and Validation SubSet Proportionality Check*
 
-::: callout-tip
-## Training-Test Proportionality
-
 The above example showcases a successful outcome, where all size classes show \<3% difference between calibration and validation sets, confirming successful stratification. This prevents over-representation of small trees and under-representation of large trees in model training.
-:::
 
 ## 1.4 Cross-Validation
 
 Cross-validation quantifies out-of-sample prediction error, preventing over-fitting and providing realistic uncertainty estimates for REDD+ carbon credit deductions. We employ Monte Carlo Leave-Group-Out Cross-Validation (LGOCV) training regime using the `caret` library to demonstrate the following:
 
-1.  Assess generalization: Test model performance on unseen data
-2.  Quantify uncertainty: Calculate robust RMSE estimates
-3.  Compare models: Select best-performing equation type
-4.  Meet MRV standards: Demonstrate compliance with ART-TREES/VCS requirements
+-   Assess generalization: Test model performance on unseen data
+-   Quantify uncertainty: Calculate robust RMSE estimates
+-   Compare models: Select best-performing equation type
+-   Meet MRV standards: Demonstrate compliance with ART-TREES/VCS requirements
 
 #### Monte Carlo Simulation Design:
 
--   100 iterations: Each iteration randomly samples 80% calibration, 20% validation
--   Stratified sampling: Maintains DBH size class proportions (Section 1.3.3)
--   Log-transformed models: Apply transformation benefits identified in Section 1.3.2
+We implemented 100-iteration Monte Carlo cross-validation to quantify out-of-sample prediction error and prevent over-fitting. Each iteration:
+
+-   Randomly splits data into 80% calibration / 20% validation (stratified by DBH class)
+-   Fits the model on calibration data
+-   Predicts validation data
+-   Calculates performance metrics (MAE, RMSE, R²)
+
+This process was repeated for all 10 model configurations:
+
+-   5 allometric equations (Species-specific, Genus, Chave 2014, Brown 1997, Chave 2005)
+-   2 transformations each (Linear, Log-transformed)
+
+Across 100 iterations, we accumulated validation predictions per model, providing robust uncertainty estimates that reflect true generalization performance rather than training-set over-fitting. The Monte Carlo approach is particularly valuable for small datasets (n=84), where a single train-test split might yield unrepresentative results due to sampling variance.
 
 ```{r}
 #| warning: false
@@ -1355,8 +1398,6 @@ log_chave2005_mc <- caret::train(
   )
 ```
 
-<br>
-
 ## 1.5 Allometric Uncertainty
 
 ### Uncertainty Calculation
@@ -1368,6 +1409,9 @@ We evaluate models using metrics aligned with REDD+ MRV requirements:
 -   MAE (Mean Absolute Error): Robust alternative less sensitive to outliers
 -   R² (Coefficient of Determination): Proportion of variance explained
 -   Shapiro-Wilk p-value: Tests residual normality (OLS assumption verification)
+-   Deduction (%): Carbon credit deduction rate per ART-TREES Equation 11
+
+For log-transformed models, all metrics were calculated on back-transformed predictions to ensure fair comparison with linear models. Back-transformation applies exp() to log-scale predictions, restoring values to the original kg scale while preserving the variance structure stabilized by log-transformation.
 
 ```{r}
 #| warning: false
@@ -1480,19 +1524,21 @@ mc_performance |>
   ) |>
   flextable::align(j = 1:2, align = "left", part = "all") |>
   flextable::align(j = 3:9, align = "center", part = "all") |>
-  flextable::fontsize(size = 8, part = "all") |>
   flextable::bold(j = c("Rel_RMSE_pct", "Credit_Deduction_pct"), part = "body") |>
-  flextable::autofit() |>
-  flextable::add_footer_lines(
-    "Monte Carlo LGOCV (100 iterations, 80/20 split). Shapiro p < 0.001 displayed in scientific notation. Green highlighting: RMSE <20% (acceptable); red: RMSE ≥50% (poor). Log models show back-transformed metrics on original scale."
-  ) |>
+	flextable::fontsize(size = 9, part = "all") |>
   flextable::fontsize(size = 8, part = "footer") |>
+	flextable::set_table_properties(layout = "autofit", width = 1) |>
+  flextable::add_footer_lines("Monte Carlo LGOCV (100 iterations, 80/20 split). Shapiro p < 0.001 displayed in scientific notation. Green highlighting: RMSE <20% (acceptable); red: RMSE ≥50% (poor). Log models show back-transformed metrics on original scale.") |>
   flextable::italic(part = "footer")
 ```
 
 *Table 1.X: Monte Carlo LGOCV results demonstrate superiority of log-transformed models. Species-specific log model achieves lowest uncertainty RMSE = 15.2%, deduction = 4.8%), while linear models exceed 60% uncertainty, risking a deduction of \>20%.*
 
 ### Uncertainty Evaluation
+
+We ranked the five log-transformed models by relative RMSE (%), showing their performance hierarchy and financial implications for a hypothetical 1M tCO₂e REDD+ project at \$5/tonne carbon price:
+
+The ranking reveals that genus-level and Brown 1997 models achieved perfect fits (RMSE = 0.00%, R² = 1.000), which likely indicates over-fitting given the small sample size. The species-specific model provides a more realistic uncertainty estimate (0.35% RMSE, \$11k deduction), while pan-tropical equations show higher but acceptable uncertainty (11-17% RMSE, \$350-541k deductions).
 
 ```{r}
 #| message: false
@@ -1538,19 +1584,27 @@ log_models_ranked |>
   flextable::align(j = 1, align = "center", part = "all") |>
   flextable::align(j = 2, align = "left", part = "all") |>
   flextable::align(j = 3:6, align = "center", part = "all") |>
-  flextable::fontsize(size = 9, part = "all") |>
-  flextable::bold(i = 1, part = "body") |>
-  flextable::autofit() |>
-  flextable::add_footer_lines(
-    "Financial impact calculated assuming $5/tonne carbon price. Species-specific equation recommended for Quercus-dominated stands; genus-level provides acceptable alternative when species identification uncertain."
-  ) |>
+	flextable::fontsize(size = 9, part = "all") |>
   flextable::fontsize(size = 8, part = "footer") |>
+	flextable::set_table_properties(layout = "autofit", width = 1) |>
+  flextable::bold(i = 1, part = "body") |>
+  flextable::add_footer_lines("Financial impact calculated assuming $5/tonne carbon price. Species-specific equation recommended for Quercus-dominated stands; genus-level provides acceptable alternative when species identification uncertain.") |>
   flextable::italic(part = "footer")
 ```
 
 ### Uncertainty Deductions
 
-For REDD+ MRV reporting, we demonstrate the ART-TREES uncertainty deduction calculation:
+Following ART-TREES Equation 11, we calculated the carbon credit deduction for the best-performing model (genus-level log-transformed). The deduction formula converts relative RMSE into a half-width 90% confidence interval, then applies the UA (uncertainty adjustment) factor: $$
+UA_t = 0.524417 \times \frac{HW_{90\%}}{1.645006}
+$$
+
+Where:
+
+-   Half-width 90% CI = RMSE (%) / 100
+-   The constant 1.645006 is the z-score for 90% confidence
+-   The constant 0.524417 converts to ART-TREES deduction rate
+
+For a hypothetical 1M tCO₂e project at \$5/tonne, the calculation proceeds as shown in the output below. Note that the genus-level model's 0.00% RMSE yields zero deduction, which highlights the over-fitting concern mentioned previously. In practice, species-specific or validated generic equations would be more appropriate for MRV reporting. We demonstrate the ART-TREES uncertainty deduction calculationin following section 1.6.
 
 ```{r}
 #| message: false
@@ -1594,8 +1648,6 @@ cat(sprintf("  Net credited value: $%s\n",
             format(round(total_value - deduction_value), big.mark = ",")))
 ```
 
-<br>
-
 ::: callout-important
 ## Financial Impact
 
@@ -1612,30 +1664,512 @@ Over a 30-year REDD+ project crediting period with 100,000 tCO₂e/year:
 -   Return on investment: 12-24x
 :::
 
-<br>
+## 1.6 Reproducible Workflow[^index-3] {.unnumbered}
 
-## 1.6 Chapter Summary {.unnumbered}
+This section contains all executable code referenced throughout Chapter 1, organized sequentially to match the conceptual flow of Sections 1.2-1.5. Please note that the entire training and its four chapters markdown can be downloaded as completed scripts from the project’s code repository here and live eBook here.
+
+```{r}
+#| message: false
+#| warning: false
+#| error: false
+#| echo: true
+#| eval: false
+# ----------------------------------------------------------------------------
+# 1.6.1 Environment Setup
+# ----------------------------------------------------------------------------
+# Install and load required packages
+easypackages::packages(
+"animation", "BIOMASS", "cols4all", "covr", "cowplot", "caret",
+"DescTools", "dataMaid", "dplyr", "FawR", "ForestToolsRS", "forestdata",
+"flextable", "ggplot2", "giscoR", "ggfortify", "htmltools", "janitor", "jsonlite", "lattice",
+"leaflet.providers", "leaflet", "lmtest", "lwgeom", "kableExtra", "kernlab", "knitr", "mapedit",
+"mapview", "maptiles", "Mlmetrics", "ModelMetrics", "moments", "olsrr", "openxlsx",
+"plotly", "psych", "randomForest", "raster","RColorBrewer", "rmarkdown", "renv", "reticulate",
+"s2", "sf", "scales", "sits","spdep", "stars", "stringr", "terra", "tmap", "tmaptools",
+"tidymodels", "tidyverse", "tidyr", "tune", "useful",
+prompt = F)
+# ----------------------------------------------------------------------------
+# 1.6.2 Data Import and Preparation (Section 1.2)
+# ----------------------------------------------------------------------------
+# import dataset from allodb.pkg
+library("allodb")
+data(scbi_stem1)
+1 Parallel development of Python cells was paused to concentrate efforts on delivering a completed R workflow. However, initial
+python code was preserved in each chapter’s markdown file and can be rendered from cloning the repository and adjusting `echo`
+function to reveal and run python operations and compare computations.
+24
+scbi_stem1 |> dplyr::group_by(Family, genus, species) |>
+dplyr::summarise(`Total Trees (n)` = n()) |>
+flextable::flextable()|> 
+	flextable::fontsize(size = 9, part = "all") |>
+  flextable::fontsize(size = 8, part = "footer") |>
+	flextable::set_table_properties(layout = "autofit", width=1) |> head() # top10 rows only
+
+# Genus-specific subsample of dataset
+scbi_quercus = scbi_stem1 |>
+dplyr::filter(!is.na(dbh)) |>
+dplyr::filter(genus == "Quercus")
+# Species-specific subsample of dataset
+scbi_quercus_rubra = scbi_stem1 |>
+dplyr::filter(!is.na(dbh)) |>
+dplyr::filter(genus == "Quercus") |>
+dplyr::filter(species == "rubra")
+# ----------------------------------------------------------------------------
+# 1.6.3 Equation Selection (Section 1.2)
+# ----------------------------------------------------------------------------
+# Load allometric equations
+data(equations)
+data("equations_metadata")
+# display all equation criteria
+dplyr::glimpse(equations)
+NA Rows: 570
+NA Columns: 47
+NA $ ref_id <chr> "barney_1977_bdac", "baskerville_1966_dmp…
+NA $ equation_id <chr> "4b4063", "e2c7c7", "e42e41", "2bc879", "…
+NA $ equation_allometry <chr> "exp(3.63+2.54*log(dbh))", "exp(0.15+2.48…
+NA $ equation_form <chr> "exp(a+b*log(dbh))", "exp(a+b*(log(dbh))"…
+NA $ dependent_variable <chr> "Total aboveground biomass", "Total above…
+NA $ independent_variable <chr> "DBH", "DBH", "DBH", "DBH", "DBH", "DBH",…
+NA $ equation_taxa <chr> "Picea mariana", "Picea glauca", "Betula"…
+NA $ allometry_specificity <chr> "Species", "Species", "Genus", "Genus", "…
+NA $ equation_categ <chr> "sp_spec", "sp_spec", "generic", "generic…
+NA $ geographic_area <chr> "Alaska, USA", "New Brunswick, Canada", "…
+NA $ original_coord <chr> "64\xb0 45', 148\xb0 15'", "47\xb051' N, …
+NA $ lat <chr> "65.75", "47.9", "NRA", "NRA", "NRA", "NR…
+NA $ long <chr> "-148.25", "-68.3", "NRA", "NRA", "NRA", …
+NA $ elev_m <chr> "167-470", "500", "NRA", "NRA", "NRA", "N…
+NA $ geography_notes <chr> NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, N…
+NA $ mat_C <chr> "NI", "2.2", "NRA", "NRA", "NRA", "NRA", …
+NA $ min.temp_C <chr> "NI", "NI", "NRA", "NRA", "NRA", "NRA", "…
+NA $ max.temp_C <chr> "NI", "NI", "NRA", "NRA", "NRA", "NRA", "…
+NA $ map_mm <chr> "NI", "1069", "NRA", "NRA", "NRA", "NRA",…
+NA $ frost_free_period_days <chr> "NI", "110", "NRA", "NRA", "NRA", "NRA", …
+NA $ climate_notes <chr> NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, N…
+NA $ stand_age_range_yr <chr> "51-55 yrs", "35-48 yrs", "NRA", "NRA", "…
+NA $ stand_age_history <chr> "Recent fires in 1977", "Stand originated…
+NA $ stand_basal_area_m2_ha <chr> "NI", "NI", "NRA", "NRA", "NRA", "NRA", "…
+NA $ stand_trees_ha <chr> "NI", "NI", "NRA", "NRA", "NRA", "NRA", "…
+NA $ forest_description <chr> "Typical lowland and upland stands domina…
+NA $ ecosystem_type <chr> "Temperate forest", "Boreal forest", "Tem…
+NA $ koppen <chr> "Dfc", "Dfb", "Dfb; Cfa", "Dfb; Cfa", "Df…
+NA $ dbh_min_cm <chr> "1.5", "2.54", "5", "NRA", "5", "NRA", "5…
+NA $ dbh_max_cm <chr> "13", "25.4", "NRA", "NRA", "NRA", "NRA",…
+NA $ sample_size <chr> "18", "13", "NRA", "NRA", "NRA", "NRA", "…
+NA $ collection_year <chr> "1973", "1965", "1971, 1995", "1971, 1995…
+NA $ dbh_units_original <chr> "cm", "inch", "cm", "cm", "cm", "cm", "cm…
+NA $ dbh_unit_CF <chr> "1", "0.393701", "1", "1", "1", "1", "1",…
+NA $ output_units_original <chr> "g", "lbs", "metric_ton", "m", "metric_to…
+NA $ output_units_CF <chr> "0.001", "0.453592", "1000", "1", "1000",…
+NA $ allometry_development_method <chr> "harvest", "harvest", "harvest?", "harves…
+NA $ regression_model <chr> "log-transformed", "log-transformed", NA,…
+25
+NA $ r_squared <chr> "0.91", "0.99", "NI", "NI", "NI", "NI", "…
+NA $ other_equations_tested <chr> "NI", "NI", "NRA", "NRA", "NRA", "NRA", "…
+NA $ log_biomass <chr> "1", "1", "1", "0", "1", "0", "1", "0", "…
+NA $ bias_corrected <chr> "0", "0", NA, NA, NA, NA, NA, NA, NA, NA,…
+NA $ bias_correction_factor <chr> NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, N…
+NA $ notes_fitting_model <chr> NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, N…
+NA $ original_equation_id <chr> "Upland black spruce", NA, NA, NA, NA, NA…
+NA $ original_data_availability <chr> "NRA", "NRA", "NRA", "NRA", "NRA", "NRA",…
+NA $ equation_notes <chr> NA, NA, "Proved difficult to obtain origi…
+# Simple North America filter
+eq_region <- equations |>
+dplyr::mutate(lat = as.numeric(lat), long = as.numeric(long)) |>
+dplyr::filter(!is.na(lat), !is.na(long), lat >= 24, lat <= 72, long >= -168, long <= -52)
+# tabulate
+show_cols = c("ref_id", "equation_taxa", "allometry_specificity", "equation_allometry")
+head(eq_region[, show_cols]) |> flextable::flextable() |> flextable::autofit() # top six rows only
+# species-specific equations for all Quercus subspecies of North America
+eq_region_species <- eq_region |>
+dplyr::filter(allometry_specificity == "Species") |>
+dplyr::filter(grepl("^Quercus", equation_taxa, ignore.case = TRUE) | # Starts with "Quercus"
+(allometry_specificity %in% c("Genus", "Family") &
+grepl("Quercus", equation_taxa, ignore.case = TRUE))
+)
+# genus-specific equations for Quercus populations of North America
+eq_region_genus = eq_region |>
+dplyr::filter(allometry_specificity == "Genus") |>
+dplyr::filter(grepl("^Quercus", equation_taxa, ignore.case = TRUE) | # Starts with "Quercus"
+(allometry_specificity %in% c("Genus", "Family") &
+grepl("Quercus", equation_taxa, ignore.case = TRUE))
+)
+# tabulate
+flextable::flextable(eq_region_species[, show_cols]) |> flextable::autofit()
+# filter genus-specific equations by DBH range of field data
+field_dbh_min <- min(scbi_quercus$dbh, na.rm = T) # 1.04 cm
+field_dbh_max <- max(scbi_quercus$dbh, na.rm = T) # 83.5 cm
+eq_region_genus_dbh <- eq_region_genus |>
+dplyr::mutate(
+dbh_min_cm = as.numeric(dbh_min_cm),
+dbh_max_cm = as.numeric(dbh_max_cm)) |>
+dplyr::filter(!is.na(dbh_min_cm), !is.na(dbh_max_cm),
+# extrapolation of saplings (min=20cm), compensated below (Audit risk if sapling count is high)
+dbh_min_cm <= field_dbh_min * 20,
+dbh_max_cm >= field_dbh_max)
+eq_region_species_dbh <- eq_region_species |>
+dplyr::mutate(
+dbh_min_cm = as.numeric(dbh_min_cm),
+dbh_max_cm = as.numeric(dbh_max_cm)) |>
+dplyr::filter(!is.na(dbh_min_cm), !is.na(dbh_max_cm),
+dbh_max_cm >= field_dbh_max * 0.7)
+26
+# extrapolation of crowns allowed, consider outliers
+flextable::flextable(eq_region_genus_dbh[, show_cols]) |> flextable::autofit()
+flextable::flextable(eq_region_species_dbh[, show_cols]) |> flextable::autofit()
+# Sample size filtering
+eq_region_genus_dbh_sample <- eq_region_genus_dbh |>
+dplyr::filter(sample_size >= 17) # Minimum for genus-specific equations
+eq_region_species_dbh_sample <- eq_region_species_dbh |>
+dplyr::filter(sample_size >= 17) # Minimum for species-specific equations
+# Display selected equations & tally valid equations remaining
+flextable::flextable(eq_region_genus_dbh_sample[, show_cols]) |> flextable::autofit()
+flextable::flextable(eq_region_species_dbh_sample[, show_cols]) |> flextable::autofit()
+# This table includes filtered default Acer equations AND custom new equations.
+eq_tab_combined <- new_equations(
+subset_taxa = "Quercus",
+new_taxa = c("Quercus ilex", "Castanea sativa"),
+new_allometry = c("0.12*dbh^2.5", "0.15*dbh^2.7"),
+new_coords = c(4, 44),
+new_min_dbh = c(5, 10),
+new_max_dbh = c(35, 68),
+new_sample_size = c(143, 62)
+)
+# The get_biomass() function internally performs the weighting, resampling,
+# and calibration based on the equations in eq_tab_combined.
+agb_custom_estimate <- get_biomass(
+dbh = 50,
+genus = "Quercus",
+species = "rubrum",
+coords = c(-78.2, 38.9),
+new_eqtable = eq_tab_combined # Use the consolidated custom table
+)
+# Print the resulting AGB estimate
+print(paste("Estimated AGB using the combined custom table:", agb_custom_estimate, "kg"))
+# ----------------------------------------------------------------------------
+# 1.6.4 Biomass Estimation (Section 1.2)
+# ----------------------------------------------------------------------------
+# once allometry equation is confirmed, use native allodb to load it
+eq_region_genus_dbh_sample = allodb::new_equations(subset_ids = "a664c1")
+# species-specific biomass estimates
+scbi_quercus$agb_species <- allodb::get_biomass(
+dbh = scbi_quercus$dbh,
+genus = scbi_quercus$genus,
+species = scbi_quercus$species,
+coords = c(-78.2, 38.9)
+)
+# genus-specific biomass estimates
+scbi_quercus$agb_genus <- allodb::get_biomass(
+dbh = scbi_quercus$dbh,
+genus = scbi_quercus$genus,
+species = scbi_quercus$species,
+27
+coords = c(-78.2, 38.9),
+new_eqtable = eq_region_genus_dbh_sample
+)
+# derive generic estimates using standard equations
+wood_densities <- BIOMASS::getWoodDensity(
+genus = scbi_quercus$genus,
+species = scbi_quercus$species,
+stand = scbi_quercus$Plot)
+scbi_quercus$WD <- wood_densities$meanWD
+# Chave et al 2014
+scbi_quercus$agb_chave2014 <- BIOMASS::computeAGB(
+D = scbi_quercus$dbh,
+WD = scbi_quercus$WD,
+coord = c(-78.2, 38.9))
+# convert units
+scbi_quercus$agb_chave2014 = scbi_quercus$agb_chave2014 * 1000
+# Chave et al 2005 (MANUAL Fit)
+scbi_quercus$agb_chave2005 <- scbi_quercus$WD *
+exp(-1.499 + 2.148*log(scbi_quercus$dbh) +
+0.207*(log(scbi_quercus$dbh))^2 -
+0.0281*(log(scbi_quercus$dbh))^3)
+# Brown et al 1997 (MANUAL Fit)
+scbi_quercus$agb_brown1997 <- exp(2.134 + 2.53 * log(scbi_quercus$dbh))
+scbi_quercus$agb_brown1997 = scbi_quercus$agb_brown1997 / 100
+flextable::flextable(scbi_quercus) |>
+flextable::autofit() |> head() |>
+# ----------------------------------------------------------------------------
+# 1.6.5 Normality Testing (Section 1.3)
+# ----------------------------------------------------------------------------
+# Calculate skewness and kurtosis for DBH
+dbh_skew = moments::skewness(scbi_quercus$dbh)
+dbh_kurt = moments::kurtosis(scbi_quercus$dbh)
+dbh_shapiro = stats::shapiro.test(scbi_quercus$dbh)
+dbh_wilcox = stats::wilcox.test(scbi_quercus$dbh)
+# Calculate skewness and kurtosis for each AGB estimate
+agb_species_skew = moments::skewness(scbi_quercus$agb_species)
+agb_species_kurt = moments::kurtosis(scbi_quercus$agb_species)
+agb_species_shapiro = stats::shapiro.test(scbi_quercus$agb_species)
+agb_species_wilcox = stats::wilcox.test(scbi_quercus$agb_species)
+agb_genus_skew = moments::skewness(scbi_quercus$agb_genus)
+agb_genus_kurt = moments::kurtosis(scbi_quercus$agb_genus)
+agb_genus_shapiro = stats::shapiro.test(scbi_quercus$agb_genus)
+agb_genus_wilcox = stats::wilcox.test(scbi_quercus$agb_genus)
+agb_chave2014_skew = moments::skewness(scbi_quercus$agb_chave2014)
+agb_chave2014_kurt = moments::kurtosis(scbi_quercus$agb_chave2014)
+agb_chave2014_shapiro = stats::shapiro.test(scbi_quercus$agb_chave2014)
+agb_chave2014_wilcox = stats::wilcox.test(scbi_quercus$agb_chave2014)
+agb_brown1997_skew = moments::skewness(scbi_quercus$agb_brown1997)
+agb_brown1997_kurt = moments::kurtosis(scbi_quercus$agb_brown1997)
+28
+agb_brown1997_shapiro= stats::shapiro.test(scbi_quercus$agb_brown1997)
+agb_brown1997_wilcox = stats::wilcox.test(scbi_quercus$agb_brown1997)
+agb_chave2005_skew = moments::skewness(scbi_quercus$agb_chave2005)
+agb_chave2005_kurt = moments::kurtosis(scbi_quercus$agb_chave2005)
+agb_chave2005_shapiro= stats::shapiro.test(scbi_quercus$agb_chave2005)
+agb_chave2005_wilcox = stats::shapiro.test(scbi_quercus$agb_chave2005)
+# ----------------------------------------------------------------------------
+# 1.6.6 Heteroscedasticity Testing (Section 1.3)
+# ----------------------------------------------------------------------------
+# Derive results to test non-constant variance of selected predictor
+dbh_agb_species_lm <- lm(agb_species ~ dbh, data = scbi_quercus)
+bp_test <- lmtest::bptest(dbh_agb_species_lm)
+cat(sprintf("Breusch-Pagan Test Results:\n"))
+NA Breusch-Pagan Test Results:
+cat(sprintf("BP statistic: %.4f\n", bp_test$statistic))
+NA BP statistic: 10.0051
+cat(sprintf("p-value: %.4f\n", bp_test$p.value))
+NA p-value: 0.0016
+cat(sprintf("Decision: %s\n"
+, ifelse(bp_test$p.value < 0.05,
+"Reject H₀ - Heteroscedasticity present", "Fail to reject H₀ - Homoscedasticity")))
+NA Decision: Reject H₀ - Heteroscedasticity present
+# Visualize
+plot(scbi_quercus$dbh, scbi_quercus$agb_species,
+pch = 16, cex = 0.8, col = "steelblue",
+xlab = "DBH (cm)", ylab = "AGB (kg)",
+main = "DBH-AGB Relationship: Heteroscedasticity Assessment")
+abline(dbh_agb_species_lm, col = "red", lwd = 2)
+abline(v = c(20, 40, 60), col = "gray", lty = 2)
+legend("topleft",legend=c("Observed values", "Linear fit", "Size class breaks"),
+col=c("steelblue", "red", "gray"), pch = c(16, NA, NA),
+lty = c(NA, 1, 2), lwd = c(NA, 2, 1), bty = "n", cex = 0.8)
+text(x = 70, y = max(scbi_quercus$agb_species) * 0.9,
+labels = sprintf("BP test: p = %.4f\nHeteroscedasticity confirmed", bp_test$p.value),
+adj = c(0, 1), cex = 0.9, font = 2)
+# ----------------------------------------------------------------------------
+# 1.6.7 Log-Transformation Performance (Section 1.3)
+# ----------------------------------------------------------------------------
+# Derive performance metrics #
+lin_species = lm(agb_species ~ dbh, data = scbi_quercus)
+lin_genus = lm(agb_genus ~ dbh, data = scbi_quercus)
+lin_chave2014 = lm(agb_chave2014 ~ dbh, data = scbi_quercus)
+lin_brown1997 = lm(agb_brown1997 ~ dbh, data = scbi_quercus)
+lin_chave2005 = lm(agb_chave2005 ~ dbh, data = scbi_quercus)
+log_species = lm(log(agb_species) ~ log(dbh), data = scbi_quercus)
+log_genus = lm(log(agb_genus) ~ log(dbh), data = scbi_quercus)
+log_chave2014 = lm(log(agb_chave2014) ~ log(dbh), data = scbi_quercus)
+log_brown1997 = lm(log(agb_brown1997) ~ log(dbh), data = scbi_quercus)
+log_chave2005 = lm(log(agb_chave2005) ~ log(dbh), data = scbi_quercus)
+# Residuals: log models back-transformed **essential
+lin_species_resid = predict(lin_species, scbi_quercus, type='response')
+lin_genus_resid = predict(lin_genus, scbi_quercus, type="response")
+lin_chave2014_resid = predict(lin_chave2014, scbi_quercus, type="response")
+29
+lin_brown1997_resid = predict(lin_brown1997, scbi_quercus, type="response")
+lin_chave2005_resid = predict(lin_chave2005, scbi_quercus, type="response")
+log_species_resid = exp(predict(log_species, scbi_quercus))
+log_genus_resid = exp(predict(log_genus, scbi_quercus))
+log_chave2014_resid = exp(predict(log_chave2014, scbi_quercus))
+log_brown1997_resid = exp(predict(log_brown1997, scbi_quercus))
+log_chave2005_resid = exp(predict(log_chave2005, scbi_quercus))
+lin_species_mae = ModelMetrics::mae(scbi_quercus$agb_species, lin_species_resid) |> round(4)
+lin_species_rmse = ModelMetrics::rmse(scbi_quercus$agb_species, lin_species_resid) |> round(4)
+lin_species_rmse_rel= round(lin_species_rmse / mean(scbi_quercus$agb_species, na.rm = T) * 100,4)
+log_species_mae = ModelMetrics::mae(scbi_quercus$agb_species, log_species_resid) |> round(4)
+log_species_rmse = ModelMetrics::rmse(scbi_quercus$agb_species, log_species_resid) |> round(4)
+log_species_rmse_rel= round(log_species_rmse / mean(scbi_quercus$agb_species, na.rm = T) * 100,4)
+# ******** CRITICAL back-transformation = log_species_rmse_rel
+# Genus-level
+lin_genus_mae = ModelMetrics::mae(scbi_quercus$agb_genus, lin_genus_resid) |> round(4)
+lin_genus_rmse = ModelMetrics::rmse(scbi_quercus$agb_genus, lin_genus_resid) |> round(4)
+lin_genus_rmse_rel = round(lin_genus_rmse / mean(scbi_quercus$agb_genus, na.rm=T) * 100,4)
+log_genus_mae = sprintf("%.2e", ModelMetrics::mae(scbi_quercus$agb_brown1997, log_brown1997_resid))
+log_genus_rmse = sprintf("%.2e", ModelMetrics::rmse(scbi_quercus$agb_genus, log_genus_resid))
+log_genus_rmse_rel = sprintf("%.2e", (as.numeric(log_genus_rmse)/mean(scbi_quercus$agb_genus, na.rm=T) *100))
+# --------- CRITICAL back-transformation = log_genus_rmse_rel --------- #
+# Chave 2014
+lin_chave2014_mae = ModelMetrics::mae(scbi_quercus$agb_chave2014, lin_chave2014_resid) |> round(4)
+lin_chave2014_rmse = ModelMetrics::rmse(scbi_quercus$agb_chave2014, lin_chave2014_resid) |> round(4)
+lin_chave2014_rmse_rel = round(lin_chave2014_rmse /mean(scbi_quercus$agb_chave2014,na.rm=T) * 100, 4)
+log_chave2014_mae = ModelMetrics::mae(scbi_quercus$agb_chave2014, log_chave2014_resid) |> round(4)
+log_chave2014_rmse = ModelMetrics::rmse(scbi_quercus$agb_chave2014, log_chave2014_resid) |> round(4)
+log_chave2014_rmse_rel = round(log_chave2014_rmse / mean(scbi_quercus$agb_chave2014, na.rm=T) * 100, 4)
+# Brown 1997
+lin_brown1997_mae = ModelMetrics::mae(scbi_quercus$agb_brown1997, lin_brown1997_resid) |> round(4)
+lin_brown1997_rmse = ModelMetrics::rmse(scbi_quercus$agb_brown1997, lin_brown1997_resid) |> round(4)
+lin_brown1997_rmse_rel = round(lin_brown1997_rmse / mean(scbi_quercus$agb_brown1997, na.rm=T) * 100, 4)
+log_brown1997_mae = sprintf("%.2e", ModelMetrics::mae(scbi_quercus$agb_brown1997, log_brown1997_resid))
+log_brown1997_rmse = sprintf("%.2e", ModelMetrics::rmse(scbi_quercus$agb_brown1997, log_brown1997_resid))
+log_brown1997_rmse_rel = sprintf("%.2e", (as.numeric(log_brown1997_rmse) / mean(scbi_quercus$agb_brown1997, na.r
+m=T) *100))
+# Chave 2005
+linear_chave2005_mae = ModelMetrics::mae(scbi_quercus$agb_chave2005, lin_chave2005_resid) |> round(4)
+linear_chave2005_rmse = ModelMetrics::rmse(scbi_quercus$agb_chave2005, lin_chave2005_resid) |> round(4)
+linear_chave2005_rmse_rel= (linear_chave2005_rmse/mean(scbi_quercus$agb_chave2005, na.rm=T) * 100)|> round(2)
+log_chave2005_mae = ModelMetrics::mae(scbi_quercus$agb_chave2005, log_chave2005_resid) |> round(4)
+log_chave2005_rmse = ModelMetrics::rmse(scbi_quercus$agb_chave2005, log_chave2005_resid) |> round(4)
+log_chave2005_rmse_rel = (log_chave2005_rmse / mean(scbi_quercus$agb_chave2005, na.rm=T) * 100) |> round(4)
+# ----------------------------------------------------------------------------
+# 1.6.8 Stratified Sampling (Section 1.3)
+# ----------------------------------------------------------------------------
+set.seed(123)
+age_class = scbi_quercus |> dplyr::filter(
+!is.na(dbh), !is.na(agb_genus)) |>
+dplyr::mutate(dbh_class = cut(dbh,
+30
+breaks = c(0, 10, 20, 30, 40, 50, 100),
+labels = c("0-10", "10-20", "20-30", "30-40", "40-50", ">50")))
+# Check raw distribution across size classes
+age_class_distribution = age_class |>
+dplyr::group_by(dbh_class) |>
+dplyr::summarise(n = n(),
+mean_dbh = mean(dbh), mean_agb = mean(agb_genus),
+total_biomass_pct = sum(agb_genus) / sum(age_class$agb_genus) * 100,
+.groups = 'drop')
+# Check 80:20% to maintain proportional representation
+train_idx <- age_class |>
+dplyr::mutate(row_id = row_number()) |>
+dplyr::group_by(dbh_class) |>
+dplyr::slice_sample(prop = 0.8) |>
+dplyr::pull(row_id)
+calibration_data <- age_class[train_idx, ]
+validation_data <- age_class[-train_idx, ]
+cal_props <- calibration_data |>
+dplyr::count(dbh_class) |>
+dplyr::mutate(cal_pct = round((n / sum(n)) * 100, 1)) |>
+dplyr::rename(cal_n = n)
+val_props <- validation_data |>
+dplyr::count(dbh_class) |>
+dplyr::mutate(val_pct = round((n / sum(n)) * 100, 1)) |>
+dplyr::rename(val_n = n)
+split_verification <- cal_props |>
+dplyr::left_join(val_props, by = "dbh_class") |>
+dplyr::mutate(Total_n = cal_n + val_n, Difference_pct = abs(cal_pct - val_pct)) |>
+dplyr::select(dbh_class, cal_n, cal_pct, val_n, val_pct, Total_n, Difference_pct)
+# ----------------------------------------------------------------------------
+# 1.6.9 Monte Carlo Cross-Validation (Section 1.4)
+# ----------------------------------------------------------------------------
+# Define Monte Carlo cross-validation parameters
+monte_carlo_100 <- caret::trainControl(
+method = "LGOCV",
+number = 100, # no.# of full cycle resamples
+p = 0.8, # percentage of full cycle resampled
+savePredictions = "final"
+)
+# Species-Specific Model: Linear model tuned at species level with un-transformed covs
+lin_species_mc <- caret::train(
+agb_species ~ dbh,
+data = scbi_quercus,
+method = "lm",
+na.action = na.omit,
+trControl = monte_carlo_100
+)
+# Species-Specific Model: Logarithmic model tuned at species level withg log-transformed covs
+log_species_mc <- caret::train(
+log(agb_species) ~ log(dbh),
+data = scbi_quercus,
+method = "lm",
+na.action = na.omit,
+trControl = monte_carlo_100
+)
+# Genus-Specific Model: LINEAR model tuned at genus level with un-transformed covs
+31
+lin_genus_mc <- caret::train(
+agb_genus ~ dbh,
+data = scbi_quercus,
+method = "lm",
+na.action = na.omit,
+trControl = monte_carlo_100
+)
+# Genus-Specific Model: LOG model tuned at genus level with un-transformed covs
+log_genus_mc <- caret::train(
+log(agb_genus) ~ log(dbh),
+data = scbi_quercus,
+method = "lm",
+na.action = na.omit,
+trControl = monte_carlo_100
+)
+# Chave 2014 models: Generic scaled
+lin_chave2014_mc <- caret::train(
+agb_chave2014 ~ dbh,
+data = scbi_quercus,
+method = "lm",
+na.action = na.omit,
+trControl = monte_carlo_100)
+log_chave2014_mc <- caret::train(
+log(agb_chave2014) ~ log(dbh),
+data = scbi_quercus,
+method = "lm",
+na.action = na.omit,
+trControl = monte_carlo_100)
+# Brown 1997 models
+lin_brown1997_mc <- caret::train(
+agb_brown1997 ~ dbh,
+data = scbi_quercus,
+method = "lm",
+na.action = na.omit,
+trControl = monte_carlo_100
+)
+log_brown1997_mc <- caret::train(
+log(agb_brown1997) ~ log(dbh),
+data = scbi_quercus,
+method = "lm",
+na.action = na.omit,
+trControl = monte_carlo_100)
+# Chave 2005 models
+lin_chave2005_mc <- caret::train(
+agb_chave2005 ~ dbh,
+data = scbi_quercus,
+method = "lm",
+na.action = na.omit,
+trControl = monte_carlo_100)
+log_chave2005_mc <- caret::train(
+log(agb_chave2005) ~ log(dbh),
+data = scbi_quercus,
+method = "lm",
+na.action = na.omit,
+trControl = monte_carlo_100
+)
+# ----------------------------------------------------------------------------
+# 1.6.10 Model Ranking and Deduction Calculation (Section 1.5)
+# ----------------------------------------------------------------------------
+32
+# Extract log-transformed models as best performers
+log_models_ranked <- mc_performance |>
+dplyr::filter(Model_Type == "Log") |>
+dplyr::arrange(Rel_RMSE_pct) |>
+dplyr::mutate(
+Rank = row_number(),
+Financial_Impact_1M = sprintf("$%.0fk", Credit_Deduction_pct * 10000 / 100)) |>
+dplyr::select(Rank, Equation, Rel_RMSE_pct, R2, Credit_Deduction_pct, Financial_Impact_1M)
+```
+
+## 
+
+1.7 Chapter Summary
 
 ### Key Findings
 
-1.  Distribution diagnostics: DBH and AGB exhibit significant right-skew (p \< 0.001) across all equation types, violating parametric assumptions
-2.  Heteroscedasticity confirmed: Breusch-Pagan test (p \< 0.001) shows variance increases with tree size, requiring log-transformation
-3.  Transformation impact: Log-transformation reduces RMSE from \~70-75% (linear) to \~15-20% (log), achieving 50+ percentage point uncertainty reduction
-4.  Equation performance:
+-   Distribution: Data exhibits right-skew (p \< 0.001) across equations, violating parametric assumptions
+-   Heteroscedasticity confirmed: Breusch-Pagan test (p \< 0.001) shows variance increasing with tree size
+-   Transformation: Log-transformation reduces uncertainty RMSE \>50 percentage points
+-   Equation performance:
     -   Species-specific (log): 15.2% RMSE, 4.8% deduction
     -   Genus-level (log): 16.3% RMSE, 5.2% deduction
     -   Pan-tropical (log): 17-19% RMSE, 5.4-6.0% deduction
-5.  Cross-validation: 100-iteration Monte Carlo LGOCV confirms log-transformed models consistently outperform linear across all equation types
+-   Cross-Validation: 100-iteration Monte Carlo LGOCV confirms log-transformed models outperform across equations.
 
 ### REDD+ Best Practices
 
 To achieve commercially viable uncertainty levels (\<20% RMSE) and minimize carbon credit deductions:
 
 1.  Log-transformation (CRITICAL): Achieves 90-95% of possible uncertainty reduction at zero marginal cost
-2.  Species-specific equations: Reduces RMSE by 3-4 percentage points vs. genus-level, protecting \$10-15k per million tCO₂e
-3.  Stratified sampling: Ensures proportional representation across DBH classes, preventing bias from undersampling large trees
-4.  Cross-validation: Quantifies out-of-sample error, avoiding overfitting and providing defensible uncertainty estimates
-5.  Sample size adequacy: Minimum n≥50 trees per equation (Roxburgh et al. 2015), with stratification across ln(DBH) range
+2.  Species-specific: Reduces RMSE by 3-4 percentage points vs. genus-level, protecting \$10-15k per million tCO₂e
+3.  Stratified: Ensures proportional representation across DBH classes, preventing bias from undersampling large trees
+4.  Cross-Validation: Quantifies out-of-sample error, avoiding overfitting and providing defensible uncertainty estimates
+5.  Sample Size: Minimum n≥50 trees per equation (Roxburgh et al. 2015), with stratification across ln(DBH) range
 6.  Measurement precision: Target ±0.5 cm DBH error through calibrated instruments and trained field crews
 
 ### Investment Priorities
@@ -1656,11 +2190,11 @@ Strategic recommendation: Log-transformation delivers the largest uncertainty re
 
 For REDD+ MRV reporting under ART-TREES/VCS, include:
 
-1.  Equation rationale: Document geographic proximity, taxonomic specificity, DBH range coverage, sample size (Table from Section 1.2)
-2.  Transformation justification: Demonstrate non-normality (Shapiro-Wilk), heteroscedasticity (Breusch-Pagan), RMSE reduction
-3.  Cross-validation results: Report RMSE, relative RMSE, R², Shapiro-Wilk on residuals from Monte Carlo LGOCV
-4.  Uncertainty calculation: Show ART Equation 11 application with half-width 90% CI derivation
-5.  Stratification verification: Confirm proportional representation across DBH classes in calibration/validation splits
+-   Equation: Document geographic and taxonomic specificity, DBH range and sample size
+-   Transformation: Demonstrate non-normality (Shapiro-Wilk), heteroscedasticity (Breusch-Pagan), RMSE reduction
+-   Cross-Validation: Report RMSE, relative RMSE, R², Shapiro-Wilk on residuals from Monte Carlo LGOCV
+-   Uncertainty: Show ART Equation 11 application with half-width 90% CI derivation
+-   Stratification: Confirm proportional representation across DBH classes in calibration/validation splits
 
 ### Next Steps
 
@@ -1674,3 +2208,5 @@ Chapter 2: Emission Factors will address:
 [^index-1]: Removal of `python` workflow was requested during first review (November 24, 2025). For python users, these chunks have been rendered "hidden" and can be accessed when clone the repository from the markdown files used to compile each chapter.
 
 [^index-2]: Follow-up: Allometry Sample Size Guidelines [@roxburgh2015guidelines] = [Link](https://esajournals.onlinelibrary.wiley.com/doi/full/10.1890/ES14-00251.1#sa2).
+
+[^index-3]: Parallel development of Python cells was paused to concentrate efforts on delivering a completed R workflow. However, initial python code was preserved in each chapter’s markdown file and can be rendered from cloning the repository and adjusting \`echo\` function to reveal and run python operations and compare computation

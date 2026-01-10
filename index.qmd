@@ -120,7 +120,7 @@ $$
 Law of Large Numbers: As iterations increase, sample statistics converge to population parameters. Standard error decreases by $\sqrt{m}$ when samples increase by factor $m$. This informs ART requirement for minimum 10,000 iterations.
 
 ::: callout-important
-## Causal Dependence Trends of Forests
+## Causal Dependence in Forest Ecology
 
 This concept of causal dependence is crucial in forest carbon science because ecosystems are not a series of independent coin flips. They are dynamic systems where the state of the forest in Year ^*t+1*^ is heavily dependent on the state in Year ^*t*^.
 
@@ -129,15 +129,13 @@ This concept of causal dependence is crucial in forest carbon science because ec
 -   Modeling Uncertainty: By incorporating these dependent, causal relationships, Monte Carlo models can more realistically simulate the path-dependent uncertainty of carbon stocks over time, rather than treating all uncertainty sources as randomly independent variables
 :::
 
-------------------------------------------------------------------------
-
 ## Training Curriculum {.unnumbered}
 
-This curriculum addresses the four primary sources of uncertainty in REDD+ carbon accounting: allometric equations, emission factors, activity data, and their combined error propagation. Winrock International works with partner jurisdictions to implement targeted interventions using Monte Carlo simulation frameworks tailred to each domain. The curriculum draws on real-world examples and practical exercises from this ongoing work:
+This curriculum addresses the four primary sources of uncertainty in REDD+ carbon accounting: allometric equations, emission factors, activity data, and their combined error propagation. Winrock International works with partner jurisdictions to implement targeted interventions using Monte Carlo simulation frameworks tailred to each domain.[^index-4] The curriculum draws on real-world examples and practical exercises from this ongoing work:
 
 -   Chapter 1 Allometric Uncertainty: Strategic interventions in allometric estimation are presented that reduce uncertainty by 30-50%, including: development of localized equations (Tier 2) through destructive sampling; model ensemble approaches using Bayesian averaging; integration of wood density and height data from LiDAR or field measurements; and implementation of standardized measurement protocols with quality assurance/quality control (QA/QC) procedures.
 -   Chapter 2 Emission Factor Uncertainty: Multiple methodological interventions and strategic data selections offer important uncertainty reductions in emission factors, including: field validation campaigns, laboratory quantification of organic carbon and soil profiles; seasonal modelling of fuel loads, moisture content, and disturbance severity sampling; and analysis of stand regeneration and updated growth curves. Additionally, the strategic selection of IPCC default emission factors across land conversions represents an often-overlooked resource in emissions accounting. This chapter presents typical default emission factors ranked by their associated uncertainty levels.
--   Chapter 3 Activity Data Uncertainty: Significant uncertainty reductions can be achieved through: enhanced reference data collection; improved image classification algorithms; multi-temporal validation datasets; systematic accuracy assessment protocols; and integration of high-resolution imagery or LiDAR for forest/non-forest mapping.
+-   Chapter 3 Activity Data Uncertainty: Significant uncertainty reductions can be achieved through enhanced reference data collection and data cube processing informing improved image classification algorithms; multi-temporal validation datasets and noise signal seperation; systematic accuracy assessment protocols.
 -   Chapter 4 Monte Carlo Aggregation: Effective Monte Carlo simulation frameworks incorporate sensitivity analyses to identify uncertainty sources and quantify their contribution to overall credit deductions. Winrock provides technical assistance in implementing these strategies, drawing on use cases to help jurisdictions prioritize cost-effective improvements and quality assurance measures tailored to their specific forest conditions and monitoring infrastructure.
 
 [^index-1]: https://www.forestcarbonpartnership.org/sites/default/files/documents/fcpf_buffer_guidelines_v4.2_clean_cf28.pdf
@@ -145,3 +143,5 @@ This curriculum addresses the four primary sources of uncertainty in REDD+ carbo
 [^index-2]: The fundamentals of parametric statistics are all based on the calculation of mean estimates of large populations. Key to this, however, is the empirical assumption that true populations, when large enough numbers are sampled, all begin to converge around a specific shape in distribution that follows the dimensions of a bell-curve.
 
 [^index-3]: The `package::function()`notation (e.g., `DescTools::SD()`) explicitly identifies which package each function belongs to, helping users verify package installations and resolve naming conflicts.
+
+[^index-4]: i.e., <https://seamusmurphy.shinyapps.io/winrock-monte-carlo/>
