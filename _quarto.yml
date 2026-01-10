@@ -38,7 +38,7 @@ book:
     - AA-Appendix/additional-reading.qmd
   
   sidebar:
-    title: "REDD+ Uncertainty"
+    title: "eBook Layout"
     search: true
     style: "docked"
     collapse-level: 4
@@ -59,14 +59,14 @@ format:
   html:
     toc: true
     number-sections: false
-    toc-title: "**On this page**"
+    toc-title: "**Table of Contents**"
     toc-location: right
     toc-depth: 3
     theme: 
       - styles.scss
       - default
-    code-fold: false
-    code-summary: "Code"
+    code-fold: true
+    code-summary: "View Code"
     code-tools: true
     code-link: true
     
