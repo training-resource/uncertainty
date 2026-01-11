@@ -101,7 +101,7 @@ Where:
 
 For each SOC inventory period, an initial and and final value of carbon is computed using stock change factors estimated for the region and general growing conditions, as defined in Eq2.25b below:
 
-$SOC = SOC_{REF} \times F_{LU} \times F_{MG} \times F_I$
+$$SOC = SOC_{REF} \times F_{LU} \times F_{MG} \times F_I$$
 
 Where:
 
@@ -110,73 +110,7 @@ Where:
 -   F~MG~ = Management stock change factor (dimensionless) \[Practice-specific\]
 -   F~I~ = Input stock change factor (dimensionless) \[Organic amendment level\]
 
-::: callout-warning
-## SOC Depth Assumptions
-
-IPCC Tier 1 SOC emission factors assume 0-30 cm soil depth only (SOC~30~). Deeper soil disturbances and greater depth variance require Tier 2/3 approaches with site-specific measurements of ≥100 cm depth (SOC~100~). These data constraints in the IPCC SOC~REF~ values are discussed in Batjes' synthesis work, including:
-
--   Batjes @batjes2009ipcc *IPCC Default Soil Classes from HWSD*: taxotransfer reclassification of FAO data into soil parent groups (HAC, LAC, SAN, POD, VOL, WET, ORG) combining European Soil Database, China Soil Map, SOTER/WISE, FAO's Digital Soil Map and supplementary data
--   Batjes @batjes2010global - A *global framework of soil organic carbon stocks under native vegetation for use with the simple assessment option of the Carbon Benefits Project system.* Carbon Benefits Project (CBP) and ISRIC–World Soil Information. Wageningen
--   Batjes @batjes2011soil - *Soil Organic Carbon Stocks Under Native Vegetation*: Derived using ISRIC-WISE database combining \~10,250 soil profiles globally, filtering to \~5020 suitable profiles, removing outliers and calculating mean estimates per climate-soil cluster.
-
-Key Findings:
-
--   "Average SOC stocks to 30 cm presented here are lower than those listed in the 2006 IPCC Guidelines.
--   "Average SOC stocks, to the IPCC depth of 30cm, vary greatly within each functional group, with coefficients of variation range from 22% to 106%, with an average CV of 59%. The estimated default relative error of ±90% assumed in the 2006 IPCC Guidelines is too conservative" (Batjes, 201).
--   SOC data are right-skewed and mean-derived, allowing fewer extremely large outliers inflate the mean above the median (Batjes, 2010, p.14; Batjes, 2011, p.371).
-
-Documented Cases:
-
--   German Alps forest soils (Wiesmeier et al., 2014): Mean = 10.9 kg C/m², Median = 7.2 kg C/m² (34% difference)
--   German agricultural soils (Vos et al., 2018): Highly skewed iPOM distributions with outliers driving means upward
-
-Geographic Bias: Warm-temperate moist (W1) values elevated 15-25% due to disproportionate Brazilian sampling in WISE database, exercise caution applying to Andean/Chaco/Patagonian contexts.
-
-### South America Bias
-
-1.  Depth Underestimation (30-70% error)
-
-    The 30 cm limit may substantially underestimate emissions from deep disturbances. As Batjes (2010, p.21) notes, "The potential impact of land use change on SOC~30~ stocks, vis-à-vis SOC stocks to 100 cm depth (SOC~100~), may vary markedly according to IPCC climate zone and soil class."
-
-    As a result, this carries higher audit risk particularly around Andean road construction, reclaimed mining lands, mechanized agriculture on deep Andosols.
-
-2.  Regional Sampling Gaps:
-
-    1.  High-Andean páramo: \<50 profiles in WISE database
-    2.  Patagonian steppe: Underrepresented relative to area
-    3.  Chaco dry forests: Sparse coverage, dominated by Argentine samples
-    4.  Amazon deep soils: Most profiles limited to 0-30cm
-
-3.  Volcanic Soil Under-representation
-
-    Single "VOL" class with ±27-90% uncertainty represents the highest of all factors, which lumps all young ash soils, weathered Andosols, and paleosols with 3-5 times greater variance. Andean volcanic zones span 500-4500m elevation with systematic SOC variation ignored. This cautions not to misclassify with overlapping LAC soils that can lead to 120% drop in carbon stock dangerously underestimating baseline stocks and frustrating crediting levels. In these sites, consider prioritizing Tier 2 using national surveys.
-
-4.  Climate Reference Period (1985-2015)
-
-    IPCC climate zones based on 30-year normals do not capture post-2000 changes, including Andean glacier retreats, cloud forest elevation migrations, and rainfall declines in Páramo
-
-5.  Polygon Aggregation Ignores Variability
-
-    HWSD uses uniform values per map unit. Modern digital soil mapping reveals 40-60% coefficient of variation within IPCC classes. Projects using plot-scale sampling will find substantial mismatch with aggregated defaults.
-
-### 2019 Refinements Status
-
-Tier 1 Improvements:
-
--   Stock change factors (F~LU~, F~MG~, F~I~),
--   Agroforestry parameters (Cardinael et al., 2018),
--   20-year transition formalized (stock-difference), improved organic soil emission factors (Flux Method).
-
-Tier 1 Unchanged:
-
--   SOC~REF~ values (still based on WISE database)
--   Arithmetic mean approach (medians not adopted
--   Geographic sampling bias (no rebalancing) - 0-30 cm depth standard
-
-Cost-Effective Approach: Use SoilGrids250m validated with stratified field sampling (n=30-50 profiles per climate-soil zone) to develop project-specific SOC~REF~ distributions.
-:::
-
-## 2.3 Grassland Management Factors
+### Grassland Management Factors
 
 Grassland systems are stratified by management intensity and input levels, with separate factors for tropical versus temperate boreal zones.
 
@@ -194,7 +128,7 @@ Table 2.C: Grassland Management Stock Change Factors (IPCC 2019, Vol. 4, Ch. 6, 
 | Improved Grassland | Sustainable management (light/moderate grazing) PLUS ≥1 improvement: fertilization, species improvement, OR irrigation | 1.16 | ±40% | Tropical Montane |
 
 ::: callout-important
-## Important Operational Definitions:
+## "Improved Land" Definitions:
 
 -   Definition of "Improved land" requires classification of BOTH sustainable grazing intensity and at least one documented improvement practice (*`cite`*)
 -   High intensity grazing (F~MG~ = 0.90) represents moderate degradation with vegetation change but not presenting severe overgrazing and downstream erosion
@@ -223,7 +157,7 @@ Do not apply F~I~ = 1.11 to the single improvement used to justify F~MG~ = 1.17.
 
 ------------------------------------------------------------------------
 
-## 2.4 Cropland Management Factors
+### Cropland Management Factors
 
 Cropland accounting requires stratification by tillage system (F~LU~), tillage intensity (F~MG~), and organic input level (F~I~).
 
@@ -267,7 +201,7 @@ No-till systems in Tropical Moist climates provide a 10% SOC increase (F~MG~ = 1
 
 ------------------------------------------------------------------------
 
-## 2.5 Example Tier 1 Strategy
+### Example Tier 1 Strategy
 
 Input factors apply to both cropland and improved grassland systems, stratified by level of organic matter additions.
 
@@ -303,7 +237,7 @@ This demonstrates how strategic management can approach carbon neutrality for ne
 
 ------------------------------------------------------------------------
 
-## 2.6 Reference Stock Values
+### Reference Stock Values
 
 Reference stocks (SOC~REF~) represent soil organic carbon content under native vegetation, stratified by climate zone and soil type. For example, the following default pre-conversion soil conditions are estimated for the following soil types in Tropical Montane ecozones, reporting mean stock volumes and their associated uncertainty metrics.
 
@@ -340,7 +274,7 @@ Table 2.H: Reference SOC Stocks, Tropical Moist *(IPCC 2019, Vol. 4, Ch. 2, Tabl
 Table 2.I: Reference SOC Stocks, Tropical Wet *(IPCC 2019, Vol. 4, Ch. 2, Table 2.3)*
 
 | Soil Type | SOC~REF~ (tC/ha) | Uncertainty | Context                             |
-|----------------|----------------|----------------|-------------------------|
+|---------------|---------------|---------------|-----------------------------|
 | HAC       | 60               | ±8%         | Rich alluvial floodplains           |
 | LAC       | 52               | ±6%         | Standard humid rainforest soils     |
 | SAN       | 46               | ±20%        | Poor drainage; seasonally saturated |
@@ -365,7 +299,7 @@ Tropical dry zones have inherently low SOC baselines (19-21 tC/ha for mineral so
 
 ------------------------------------------------------------------------
 
-## 2.7. Aboveground Stock Change
+## 2.3 Aboveground Stock Change
 
 ### Agroforestry Systems {.unnumbered}
 
@@ -460,14 +394,14 @@ Shaded coffee/cacao (Multistrata system: 3.25 tC/ha/yr) accumulates 3.6× more c
 
 ------------------------------------------------------------------------
 
-## 2.8 Post-Clearance Stock Retention
+### Post-Clearance Stock Retention
 
 When forest is converted to perennial cropland, IPCC provides specific "Year 1" biomass retention values representing residual carbon after clearing but before full crop maturity.
 
 Table 2.O: First-Year Biomass Stock After Forest Conversion (*IPCC 2019, Vol. 4, Ch. 5, Table 5.9)*
 
 | Crop Type             | Climate          | Year-1 AGB (C~G~) | Source            |
-|-------------------|------------------|------------------|------------------|
+|--------------------|------------------|------------------|------------------|
 | Perennial (generic)   | Tropical Moist   | 4.7 tC/ha         | Default           |
 | Perennial (generic)   | Tropical Montane | 4.7 tC/ha         | Default           |
 | Oil Palm              | Tropical         | 2.4 tC/ha         | Specific factor   |
@@ -484,11 +418,11 @@ The C~G~ value represents biomass present in Year 1 only. Subsequent years accum
 
 ------------------------------------------------------------------------
 
-## 2.9 Forest Stock Regrowth
+### Forest Stock Regrowth
 
 Secondary forest regrowth rates are age-dependent, with young stands (≤20 years) showing substantially higher accumulation than mature forests (*`cite`*). This has critical implications for this module's objectives, to support project prioritization through strategic emission factor selections.
 
-### Tropical Rainforest - Americas
+#### Tropical Rainforest - Americas
 
 Table 2.P: Secondary Rainforest Growth Rates (Americas) (*IPCC 2019, Vol. 4, Ch. 4, Table 4.9*)
 
@@ -505,7 +439,7 @@ Example: Young secondary forest (Americas, ≤20 yr)
 2.77 tC/ha/yr × 3.67 = 10.2 tCO₂e/ha/yr
 ```
 
-### Tropical Rainforest - Asia
+#### Tropical Rainforest - Asia
 
 Table 2.Q: Secondary Rainforest Growth Rates (Asia)
 
@@ -514,7 +448,7 @@ Table 2.Q: Secondary Rainforest Growth Rates (Asia)
 | ≤ 20 years  | 3.4 t DM/ha/yr  | 1.60 tC/ha/yr | 45.6 t DM/ha  |
 | \> 20 years | 2.0 t DM/ha/yr  | 0.94 tC/ha/yr | 151.2 t DM/ha |
 
-### Tropical Rainforest - Africa
+#### Tropical Rainforest - Africa
 
 Table 2.R: Secondary Rainforest Growth Rates (Africa)
 
@@ -523,7 +457,7 @@ Table 2.R: Secondary Rainforest Growth Rates (Africa)
 | ≤ 20 years  | 3.6 t DM/ha/yr  | 1.69 tC/ha/yr | 56.8 t DM/ha  |
 | \> 20 years | 2.4 t DM/ha/yr  | 1.13 tC/ha/yr | 198.4 t DM/ha |
 
-### Tropical Moist Deciduous - Africa
+#### Tropical Moist Deciduous - Africa
 
 Table 2.S: Secondary Moist Deciduous Forest Growth (Africa)
 
@@ -532,7 +466,7 @@ Table 2.S: Secondary Moist Deciduous Forest Growth (Africa)
 | ≤ 20 years  | 5.2 t DM/ha/yr  | 2.44 tC/ha/yr | 55.7 t DM/ha  |
 | \> 20 years | 2.1 t DM/ha/yr  | 0.99 tC/ha/yr | 179.0 t DM/ha |
 
-### Tropical Dry Forest - Americas
+#### Tropical Dry Forest - Americas
 
 Table 2.T: Secondary Dry Forest Growth (Americas)
 
@@ -544,7 +478,7 @@ Table 2.T: Secondary Dry Forest Growth (Americas)
 ------------------------------------------------------------------------
 
 ::: callout-tip
-## Age-Class Strategies
+## Age/Size Classes
 
 Young secondary forests (≤20 years) grow 2-3× faster than mature stands across all forest types. This means that protection or restoration projects targeting 0-20 year regeneration areas generate maximum credit velocity (annual tonnes CO₂e/ha). However, mature forests (\>20 years) hold larger carbon stocks and provide greater permanence security. Recommendation:
 
@@ -552,8 +486,6 @@ Young secondary forests (≤20 years) grow 2-3× faster than mature stands acros
 :::
 
 ------------------------------------------------------------------------
-
-## 2.10 Worked Examples
 
 ### Example A: Tropical Moist Grassland Restoration {.unnumbered}
 
@@ -760,7 +692,7 @@ This makes areas with 20 year regeneration rates prime candidates for Tier 1 rep
 
 ------------------------------------------------------------------------
 
-## 2.11 Double-Counting Risks
+## 2.4 Double-Counting Risks
 
 ### Double-Counting SOC Timelines {.unnumbered}
 
@@ -862,7 +794,7 @@ Required: Document choice and scientific justification for VVB audit
 When uncertain about cumulative versus saturating effects, apply the most conservative interpretation and document rationale clearly.
 :::
 
-## 2.12 Uncertainty Quantification
+## 2.5 Uncertainty Quantification
 
 ### Error Propagation {.unnumbered}
 
@@ -883,7 +815,7 @@ Table 2.U: Typical Range in Uncertainty from Tier 1 Emission Factors
 | Biomass Stock | Remote sensing error; allometric equation selection | ±20-40% | High—one-time loss calculation |
 | Activity Data (Area) | Land use classification; GPS accuracy | ±5-15% | Scales all estimates |
 
-## 2.13 Worked Examples
+### Worked Examples
 
 Project: 1,000 ha improved silvopasture (F~MG~ = 1.17, F~I~ = 1.11, G = 3.07 tC/ha/yr)
 
@@ -915,7 +847,7 @@ Upper Bound:
 95% Confidence Interval: 5,328 - 31,672 tCO₂e/yr
 ```
 
-## 2.14 Chapter Summary
+## 2.6 Chapter Summary
 
 The following were compiled as critical decision points for program proponents.
 
@@ -946,14 +878,3 @@ Table 2.V Emissions Factor Uncertainty Enhancements
 | 3 | Young secondary forest conservation | 2.77-5.9 tC/ha/yr + avoided loss | High additionality, rapid credits |
 | 4 | Multistrata coffee/cacao conversion | 4.05 tC/ha/yr + commodity income | Market-dependent feasibility |
 | 5 | Conservation agriculture adoption | 22% SOC retention vs. tillage | Cumulative with other practices |
-
-## 2.15 Next Steps
-
-Practitioners should now be prepared to:
-
--   Select appropriate emission factors from IPCC 2019 Tier 1 values.
--   Calculate SOC and biomass changes using standardized equations
--   Identify strategic opportunities for credit generation
--   Implement MRV safeguards to improve compliance and reduce audit risk
-
-Pending this review, we will proceed to Chapter 3 on Activity Data Uncertainty to address spatial and landcover classification errors
